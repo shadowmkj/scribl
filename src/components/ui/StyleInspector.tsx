@@ -29,73 +29,108 @@ export const StyleInspector: React.FC = () => {
   if (currentTool !== 'pen') return null;
 
   return (
-    <div
+    <aside
       style={{
         position: 'absolute',
-        top: 80,
-        left: 20,
-        background: 'rgba(30, 41, 59, 0.85)',
-        backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(71, 85, 105, 0.5)',
-        borderRadius: 12,
+        top: 70,
+        left: 16,
+        background: 'rgba(15, 23, 42, 0.78)',
+        backdropFilter: 'blur(16px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        borderRadius: 14,
         padding: '12px',
-        zIndex: 20,
-        boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+        zIndex: 25,
+        boxShadow: '0 12px 36px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06)',
         display: 'flex',
         flexDirection: 'column',
         gap: 12,
       }}
     >
       <div>
-        <div style={{ fontSize: 10, textTransform: 'uppercase', color: '#64748b', fontWeight: 700, marginBottom: 6 }}>
+        <div style={{ fontSize: 10, textTransform: 'uppercase', color: '#64748b', fontWeight: 700, letterSpacing: '0.05em', marginBottom: 8 }}>
           Color
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 24px)', gap: 6 }}>
-          {COLOR_SWATCHES.map((swatch) => (
-            <button
-              key={swatch.hex}
-              title={swatch.name}
-              onClick={() => setColor(swatch.hex)}
-              style={{
-                width: 24,
-                height: 24,
-                borderRadius: 6,
-                background: swatch.hex,
-                border: color === swatch.hex ? '2px solid #38bdf8' : '1px solid #475569',
-                cursor: 'pointer',
-                outline: 'none',
-              }}
-            />
-          ))}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 26px)', gap: 6 }}>
+          {COLOR_SWATCHES.map((swatch) => {
+            const isSelected = color === swatch.hex;
+            return (
+              <button
+                key={swatch.hex}
+                title={swatch.name}
+                onClick={() => setColor(swatch.hex)}
+                style={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: 7,
+                  background: swatch.hex,
+                  border: isSelected
+                    ? '2px solid #38bdf8'
+                    : '1px solid rgba(255, 255, 255, 0.12)',
+                  boxShadow: isSelected ? '0 0 8px rgba(56, 189, 248, 0.5)' : 'none',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  transition: 'transform 0.1s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              />
+            );
+          })}
         </div>
       </div>
 
-      <div style={{ height: 1, background: '#334155' }} />
+      <div style={{ height: 1, background: 'rgba(255, 255, 255, 0.08)' }} />
 
       <div>
-        <div style={{ fontSize: 10, textTransform: 'uppercase', color: '#64748b', fontWeight: 700, marginBottom: 6 }}>
+        <div style={{ fontSize: 10, textTransform: 'uppercase', color: '#64748b', fontWeight: 700, letterSpacing: '0.05em', marginBottom: 8 }}>
           Thickness
         </div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          {STROKE_SIZES.map((s) => (
-            <button
-              key={s.value}
-              onClick={() => setStrokeSize(s.value)}
-              style={{
-                background: strokeSize === s.value ? '#0284c7' : '#0f172a',
-                color: strokeSize === s.value ? '#fff' : '#94a3b8',
-                border: '1px solid #334155',
-                borderRadius: 6,
-                padding: '4px 8px',
-                fontSize: 11,
-                cursor: 'pointer',
-              }}
-            >
-              {s.label}
-            </button>
-          ))}
+        <div style={{ display: 'flex', gap: 5 }}>
+          {STROKE_SIZES.map((s) => {
+            const isSelected = strokeSize === s.value;
+            return (
+              <button
+                key={s.value}
+                onClick={() => setStrokeSize(s.value)}
+                style={{
+                  background: isSelected
+                    ? 'rgba(2, 132, 199, 0.25)'
+                    : 'rgba(255, 255, 255, 0.04)',
+                  color: isSelected ? '#38bdf8' : '#94a3b8',
+                  border: isSelected
+                    ? '1px solid rgba(56, 189, 248, 0.4)'
+                    : '1px solid rgba(255, 255, 255, 0.06)',
+                  borderRadius: 6,
+                  padding: '4px 7px',
+                  fontSize: 11,
+                  fontWeight: isSelected ? 600 : 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isSelected) {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                    e.currentTarget.style.color = '#f1f5f9';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isSelected) {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                    e.currentTarget.style.color = '#94a3b8';
+                  }
+                }}
+              >
+                {s.label}
+              </button>
+            );
+          })}
         </div>
       </div>
-    </div>
+    </aside>
   );
 };

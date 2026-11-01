@@ -39,151 +39,332 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
   };
 
   return (
-    <div
+    <header
       style={{
         position: 'absolute',
-        top: 16,
-        left: 20,
-        right: 20,
+        top: 14,
+        left: 16,
+        right: 16,
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        zIndex: 20,
+        zIndex: 30,
         pointerEvents: 'none',
+        gap: 12,
       }}
     >
-      {/* Brand & Document Name */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, pointerEvents: 'auto' }}>
-        <div
-          style={{
-            background: 'rgba(30, 41, 59, 0.85)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(71, 85, 105, 0.5)',
-            borderRadius: 8,
-            padding: '6px 12px',
-            color: '#f8fafc',
-            fontWeight: 700,
-            fontSize: 14,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
+      {/* Left: Brand Identity & Document Title */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          background: 'rgba(15, 23, 42, 0.78)',
+          backdropFilter: 'blur(16px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+          borderRadius: 12,
+          padding: '4px 10px',
+          pointerEvents: 'auto',
+          height: 42,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <img
             src="/logo.png"
-            alt="Scribl Logo"
-            style={{ width: 22, height: 22, borderRadius: 4, objectFit: 'contain' }}
+            alt="Scribl"
+            style={{
+              width: 22,
+              height: 22,
+              borderRadius: 6,
+              objectFit: 'contain',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+            }}
           />
-          Scribl
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              letterSpacing: '0.04em',
+              color: '#f8fafc',
+              textTransform: 'uppercase',
+            }}
+          >
+            Scribl
+          </span>
         </div>
+
+        <div style={{ width: 1, height: 16, background: 'rgba(255, 255, 255, 0.12)', margin: '0 2px' }} />
+
         <input
           value={docName}
           onChange={(e) => setDocName(e.target.value)}
+          placeholder="Untitled Drawing"
+          title="Click to rename drawing"
           style={{
-            background: 'rgba(30, 41, 59, 0.6)',
-            border: '1px solid rgba(71, 85, 105, 0.4)',
+            background: 'transparent',
+            border: '1px solid transparent',
             borderRadius: 6,
-            padding: '6px 10px',
+            padding: '3px 8px',
             color: '#cbd5e1',
             fontSize: 13,
+            fontWeight: 500,
             outline: 'none',
+            minWidth: 140,
+            maxWidth: 240,
+            transition: 'all 0.15s ease',
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.background = 'rgba(2, 6, 23, 0.6)';
+            e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.4)';
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.background = 'transparent';
+            e.currentTarget.style.borderColor = 'transparent';
+          }}
+          onMouseEnter={(e) => {
+            if (document.activeElement !== e.currentTarget) {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (document.activeElement !== e.currentTarget) {
+              e.currentTarget.style.background = 'transparent';
+            }
           }}
         />
       </div>
 
-      {/* Actions: Undo / Redo / Files */}
-      <div style={{ display: 'flex', gap: 8, pointerEvents: 'auto' }}>
-        <div
+      {/* Right: Actions, Undo/Redo & Export */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          background: 'rgba(15, 23, 42, 0.78)',
+          backdropFilter: 'blur(16px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+          borderRadius: 12,
+          padding: '4px',
+          pointerEvents: 'auto',
+          height: 42,
+        }}
+      >
+        {/* Undo */}
+        <button
+          disabled={!canUndo}
+          onClick={undo}
+          title="Undo (⌘Z / Ctrl+Z)"
           style={{
-            background: 'rgba(30, 41, 59, 0.85)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(71, 85, 105, 0.5)',
+            background: 'transparent',
+            border: 'none',
             borderRadius: 8,
-            padding: '4px',
+            width: 32,
+            height: 32,
             display: 'flex',
-            gap: 4,
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: canUndo ? '#f1f5f9' : '#475569',
+            cursor: canUndo ? 'pointer' : 'default',
+            transition: 'background 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            if (canUndo) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent';
           }}
         >
-          <button
-            disabled={!canUndo}
-            onClick={undo}
-            title="Undo (Cmd+Z)"
-            style={{
-              background: 'none',
-              border: 'none',
-              color: canUndo ? '#f8fafc' : '#475569',
-              padding: '4px 8px',
-              borderRadius: 4,
-              cursor: canUndo ? 'pointer' : 'default',
-            }}
-          >
-            ⤺
-          </button>
-          <button
-            disabled={!canRedo}
-            onClick={redo}
-            title="Redo (Cmd+Shift+Z)"
-            style={{
-              background: 'none',
-              border: 'none',
-              color: canRedo ? '#f8fafc' : '#475569',
-              padding: '4px 8px',
-              borderRadius: 4,
-              cursor: canRedo ? 'pointer' : 'default',
-            }}
-          >
-            ⤻
-          </button>
-        </div>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 7v6h6" />
+            <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
+          </svg>
+        </button>
 
-        <div
+        {/* Redo */}
+        <button
+          disabled={!canRedo}
+          onClick={redo}
+          title="Redo (⇧⌘Z / Ctrl+Y)"
           style={{
-            background: 'rgba(30, 41, 59, 0.85)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(71, 85, 105, 0.5)',
+            background: 'transparent',
+            border: 'none',
             borderRadius: 8,
-            padding: '4px 8px',
+            width: 32,
+            height: 32,
             display: 'flex',
-            gap: 6,
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: canRedo ? '#f1f5f9' : '#475569',
+            cursor: canRedo ? 'pointer' : 'default',
+            transition: 'background 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            if (canRedo) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent';
           }}
         >
-          <button
-            onClick={onOpen}
-            style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', fontSize: 12 }}
-          >
-            Open
-          </button>
-          <button
-            onClick={onSave}
-            style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', fontSize: 12 }}
-          >
-            Save
-          </button>
-          <button
-            onClick={onExportPNG}
-            style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', fontSize: 12 }}
-          >
-            Export PNG
-          </button>
-          <button
-            onClick={handleClearClick}
-            title={confirmClear ? 'Click again to confirm clearing canvas' : 'Clear all strokes'}
-            style={{
-              background: confirmClear ? 'rgba(239, 68, 68, 0.2)' : 'none',
-              border: confirmClear ? '1px solid rgba(239, 68, 68, 0.4)' : 'none',
-              borderRadius: 4,
-              padding: '4px 8px',
-              color: confirmClear ? '#f87171' : '#f43f5e',
-              cursor: 'pointer',
-              fontSize: 12,
-              fontWeight: confirmClear ? 600 : 400,
-              transition: 'all 0.15s ease',
-            }}
-          >
-            {confirmClear ? 'Confirm Clear?' : 'Clear'}
-          </button>
-        </div>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 7v6h-6" />
+            <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7" />
+          </svg>
+        </button>
+
+        <div style={{ width: 1, height: 16, background: 'rgba(255, 255, 255, 0.1)', margin: '0 2px' }} />
+
+        {/* Open */}
+        <button
+          onClick={onOpen}
+          title="Open .scribl drawing"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            borderRadius: 8,
+            padding: '0 10px',
+            height: 32,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            color: '#cbd5e1',
+            fontSize: 12,
+            fontWeight: 500,
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+            e.currentTarget.style.color = '#f8fafc';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent';
+            e.currentTarget.style.color = '#cbd5e1';
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
+            <path d="M2 10h20" />
+          </svg>
+          Open
+        </button>
+
+        {/* Save */}
+        <button
+          onClick={onSave}
+          title="Save drawing as .scribl"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            borderRadius: 8,
+            padding: '0 10px',
+            height: 32,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            color: '#cbd5e1',
+            fontSize: 12,
+            fontWeight: 500,
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+            e.currentTarget.style.color = '#f8fafc';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent';
+            e.currentTarget.style.color = '#cbd5e1';
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+            <polyline points="17 21 17 13 7 13 7 21" />
+            <polyline points="7 3 7 8 15 8" />
+          </svg>
+          Save
+        </button>
+
+        {/* Export PNG */}
+        <button
+          onClick={onExportPNG}
+          title="Export as PNG image"
+          style={{
+            background: 'rgba(2, 132, 199, 0.16)',
+            border: '1px solid rgba(56, 189, 248, 0.28)',
+            borderRadius: 8,
+            padding: '0 12px',
+            height: 32,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            color: '#38bdf8',
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(2, 132, 199, 0.3)';
+            e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.5)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(2, 132, 199, 0.16)';
+            e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.28)';
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Export
+        </button>
+
+        <div style={{ width: 1, height: 16, background: 'rgba(255, 255, 255, 0.1)', margin: '0 2px' }} />
+
+        {/* Clear Canvas */}
+        <button
+          onClick={handleClearClick}
+          title={confirmClear ? 'Click again to confirm clearing canvas' : 'Clear all strokes'}
+          style={{
+            background: confirmClear ? 'rgba(239, 68, 68, 0.2)' : 'transparent',
+            border: confirmClear ? '1px solid rgba(239, 68, 68, 0.4)' : 'none',
+            borderRadius: 8,
+            padding: '0 10px',
+            height: 32,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            color: confirmClear ? '#f87171' : '#94a3b8',
+            fontSize: 12,
+            fontWeight: confirmClear ? 600 : 500,
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            if (!confirmClear) {
+              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+              e.currentTarget.style.color = '#f87171';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!confirmClear) {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color = '#94a3b8';
+            }
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          </svg>
+          {confirmClear ? 'Confirm Clear?' : 'Clear'}
+        </button>
       </div>
-    </div>
+    </header>
   );
 };
