@@ -51,6 +51,55 @@ Engineered from the ground up to support high-refresh-rate displays (120Hz–240
   - Debounced autosave to local storage.
   - Open & Save native `.scribl` JSON documents.
   - 2x high-resolution PNG export bounded tightly to content.
+- ⚙️ **Neovim-Style Lua Configuration**:
+  - Fully customizable via `~/.config/scribl/init.lua` using native Lua 5.4 (`mlua`).
+  - Configure every keybinding with Vim notation (`<C-z>`, `<D-z>`, `<leader>c`, `<S-0>`).
+  - Reorder, customize, and relocate the floating dock (`bottom`, `top`, `left`, `right`).
+  - Native filesystem watcher (`notify`) hot-reloads configuration instantly on save without reloading the canvas.
+
+---
+
+## ⚙️ Lua Configuration (`~/.config/scribl/init.lua`)
+
+Scribl automatically creates a documented starter configuration at `~/.config/scribl/init.lua` on first launch.
+
+```lua
+local scribl = require("scribl")
+
+-- Leader key
+scribl.g.mapleader = " "
+
+-- App options
+scribl.opt.dot_grid = true
+scribl.opt.default_tool = "pen"
+scribl.opt.zoom_mode = "scrubby"
+scribl.opt.stroke_smoothing = 0.5
+scribl.opt.auto_save = true
+
+-- Custom Keymaps
+scribl.keymap.set("n", "p", "tool.pen", { desc = "Pen Tool" })
+scribl.keymap.set("n", "e", "tool.eraser", { desc = "Eraser Tool" })
+scribl.keymap.set("n", "v", "tool.select", { desc = "Select Tool" })
+scribl.keymap.set("n", "z", "tool.zoom", { desc = "Zoom Tool" })
+scribl.keymap.set("n", "<leader>c", "canvas.clear", { desc = "Clear Canvas" })
+scribl.keymap.set("n", "<leader>f", "zoom.fit_all", { desc = "Fit Drawing" })
+
+-- Dynamic Toolbar Layout
+scribl.ui.toolbar = {
+  position = "bottom", -- "bottom", "top", "left", "right"
+  items = {
+    "select",
+    "pen",
+    "eraser",
+    "zoom",
+    "|",
+    "undo",
+    "redo",
+    "|",
+    "clear",
+  },
+}
+```
 
 ---
 
