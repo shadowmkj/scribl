@@ -26,6 +26,8 @@ export const CanvasViewport: React.FC = () => {
   const elementIds = useDocumentStore((s) => s.elementIds);
   const selectedIds = useDocumentStore((s) => s.selectedIds);
   const currentTool = useToolStore((s) => s.currentTool);
+  const isSpacePressed = useCameraStore((s) => s.isSpacePressed);
+  const isPanning = useCameraStore((s) => s.isPanning);
 
   const [marqueeBox, setMarqueeBox] = useState<MarqueeBox | null>(null);
   const scratchRendererRef = useRef<ScratchRenderer>(new ScratchRenderer());
@@ -84,7 +86,15 @@ export const CanvasViewport: React.FC = () => {
         background: '#090d16',
         touchAction: 'none',
         userSelect: 'none',
-        cursor: currentTool === 'eraser' ? ERASER_CURSOR : currentTool === 'pen' ? 'crosshair' : 'default',
+        cursor: isPanning
+          ? 'grabbing'
+          : isSpacePressed
+            ? 'grab'
+            : currentTool === 'eraser'
+              ? ERASER_CURSOR
+              : currentTool === 'pen'
+                ? 'crosshair'
+                : 'default',
       }}
       onWheel={handleWheel}
       onPointerDown={(e) => pointerRouterRef.current?.handlePointerDown(e.nativeEvent, containerRef.current!)}

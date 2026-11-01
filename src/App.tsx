@@ -30,6 +30,12 @@ export function App() {
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       const cmdKey = isMac ? e.metaKey : e.ctrlKey;
 
+      if (e.code === 'Space') {
+        e.preventDefault();
+        useCameraStore.getState().setIsSpacePressed(true);
+        return;
+      }
+
       if (cmdKey && e.key.toLowerCase() === 'z') {
         e.preventDefault();
         if (e.shiftKey) {
@@ -51,8 +57,25 @@ export function App() {
       }
     };
 
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        useCameraStore.getState().setIsSpacePressed(false);
+      }
+    };
+
+    const handleBlur = () => {
+      useCameraStore.getState().setIsSpacePressed(false);
+      useCameraStore.getState().setIsPanning(false);
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
+    };
   }, []);
 
   const handleSave = () => {

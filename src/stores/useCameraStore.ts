@@ -6,17 +6,23 @@ interface CameraState {
   camera: Camera;
   viewportWidth: number;
   viewportHeight: number;
+  isSpacePressed: boolean;
+  isPanning: boolean;
   setDimensions: (width: number, height: number) => void;
   setPan: (x: number, y: number) => void;
   panBy: (dx: number, dy: number) => void;
   zoomAt: (screenX: number, screenY: number, newZoom: number) => void;
   resetZoom: () => void;
+  setIsSpacePressed: (pressed: boolean) => void;
+  setIsPanning: (panning: boolean) => void;
 }
 
 export const useCameraStore = create<CameraState>((set, get) => ({
   camera: { x: 0, y: 0, zoom: 1.0 },
   viewportWidth: window.innerWidth || 800,
   viewportHeight: window.innerHeight || 600,
+  isSpacePressed: false,
+  isPanning: false,
 
   setDimensions: (width, height) => set({ viewportWidth: width, viewportHeight: height }),
 
@@ -37,4 +43,8 @@ export const useCameraStore = create<CameraState>((set, get) => ({
   },
 
   resetZoom: () => set((s) => ({ camera: { ...s.camera, zoom: 1.0 } })),
+
+  setIsSpacePressed: (isSpacePressed) => set({ isSpacePressed }),
+
+  setIsPanning: (isPanning) => set({ isPanning }),
 }));

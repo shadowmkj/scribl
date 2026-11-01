@@ -43,9 +43,11 @@ export class PointerRouter {
     const isHardwareEraser = e.pointerType === 'pen' && (e.buttons === 32 || e.button === 5);
     const activeTool: ToolType = isHardwareEraser ? 'eraser' : useToolStore.getState().currentTool;
 
-    // Spacebar held or Middle Click = Pan
-    if (e.buttons === 4 || (e.shiftKey && e.buttons === 1)) {
+    const isSpacePressed = useCameraStore.getState().isSpacePressed;
+    // Spacebar held, Middle Click, or Shift+LeftClick = Pan
+    if (isSpacePressed || e.buttons === 4 || (e.shiftKey && e.buttons === 1)) {
       this.state = 'PANNING';
+      useCameraStore.getState().setIsPanning(true);
       this.lastDragWorld = { x: e.clientX, y: e.clientY };
       return;
     }
@@ -153,7 +155,9 @@ export class PointerRouter {
     const width = useCameraStore.getState().viewportWidth;
     const height = useCameraStore.getState().viewportHeight;
 
-    if (this.state === 'DRAWING') {
+    if (this.state === 'PANNING') {
+      useCameraStore.getState().setIsPanning(false);
+    } else if (this.state === 'DRAWING') {
       const points = this.scratchRenderer.finishStroke();
       this.scratchRenderer.clear(width, height);
 
