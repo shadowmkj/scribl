@@ -207,6 +207,12 @@ impl Default for ScriblConfig {
                     rhs: "zoom.fit_all".into(),
                     desc: Some("Fit Drawing".into()),
                 },
+                KeymapEntry {
+                    mode: "n".into(),
+                    lhs: "<D-,>".into(),
+                    rhs: "app.settings".into(),
+                    desc: Some("Open Settings".into()),
+                },
             ],
             toolbar: ToolbarConfig::default(),
         }

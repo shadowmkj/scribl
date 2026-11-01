@@ -126,6 +126,25 @@ describe('KeybindingEngine', () => {
       expect(executedCommands).toEqual(['canvas.clear']);
     });
 
+    it('dispatches Command/Ctrl + comma to app.settings', () => {
+      engine.registerKeymaps([
+        { mode: 'n', lhs: '<D-,>', rhs: 'app.settings' },
+      ]);
+
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const event = new KeyboardEvent('keydown', {
+        key: ',',
+        code: 'Comma',
+        metaKey: isMac,
+        ctrlKey: !isMac,
+        cancelable: true,
+      });
+
+      const handled = engine.handleKeyDown(event);
+      expect(handled).toBe(true);
+      expect(executedCommands).toEqual(['app.settings']);
+    });
+
     it('ignores input elements', () => {
       engine.registerKeymaps([
         { mode: 'n', lhs: 'p', rhs: 'tool.pen' },

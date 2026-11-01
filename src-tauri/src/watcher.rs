@@ -72,6 +72,7 @@ scribl.keymap.set("n", "<D-s>", "file.save", { desc = "Save Drawing" })
 scribl.keymap.set("n", "<D-o>", "file.open", { desc = "Open Drawing" })
 scribl.keymap.set("n", "c", "canvas.clear", { desc = "Clear Canvas" })
 scribl.keymap.set("n", "f", "zoom.fit_all", { desc = "Fit Drawing" })
+scribl.keymap.set("n", "<D-,>", "app.settings", { desc = "Open Settings" })
 
 --------------------------------------------------------------------------------
 -- 3. Floating Toolbar Layout
