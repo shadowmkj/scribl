@@ -61,6 +61,9 @@ export const DEFAULT_CONFIG: ScriblConfig = {
     { mode: 'n', lhs: 'c', rhs: 'canvas.clear', desc: 'Clear Canvas' },
     { mode: 'n', lhs: 'f', rhs: 'zoom.fit_all', desc: 'Fit Drawing' },
     { mode: 'n', lhs: '<D-,>', rhs: 'app.settings', desc: 'Open Settings' },
+    { mode: 'v', lhs: 'r', rhs: 'selection.rotate', desc: 'Rotate Selection' },
+    { mode: 'v', lhs: '<Esc>', rhs: 'selection.deselect', desc: 'Deselect' },
+    { mode: 'v', lhs: 'd', rhs: 'selection.delete', desc: 'Delete Selected' },
   ],
   toolbar: {
     position: 'bottom',

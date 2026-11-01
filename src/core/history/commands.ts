@@ -130,3 +130,34 @@ export class MoveElementsCommand implements Command {
     return { ...data, elements: nextElements };
   }
 }
+
+export class TransformElementsCommand implements Command {
+  id = `transform_${Date.now()}`;
+  name = 'Transform Elements';
+
+  constructor(
+    private elementIds: string[],
+    private initialElements: Record<string, CanvasElement>,
+    private finalElements: Record<string, CanvasElement>,
+  ) {}
+
+  execute(data: DocumentData): DocumentData {
+    const next = { ...data.elements };
+    for (const id of this.elementIds) {
+      if (this.finalElements[id]) {
+        next[id] = this.finalElements[id];
+      }
+    }
+    return { ...data, elements: next };
+  }
+
+  undo(data: DocumentData): DocumentData {
+    const next = { ...data.elements };
+    for (const id of this.elementIds) {
+      if (this.initialElements[id]) {
+        next[id] = this.initialElements[id];
+      }
+    }
+    return { ...data, elements: next };
+  }
+}

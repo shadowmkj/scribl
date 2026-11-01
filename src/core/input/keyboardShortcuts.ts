@@ -1,10 +1,12 @@
 import { useCameraStore } from '../../stores/useCameraStore';
 import { DEFAULT_CONFIG } from '../../stores/useConfigStore';
+import { useDocumentStore } from '../../stores/useDocumentStore';
 import { commandRegistry } from '../commands/CommandRegistry';
 import { KeybindingEngine } from './KeybindingEngine';
 
 export const keybindingEngine = new KeybindingEngine({
   executeCommand: (id: string) => commandRegistry.execute(id),
+  getActiveMode: () => (useDocumentStore.getState().selectedIds.length > 0 ? 'v' : 'n'),
 });
 
 // Initialize with default keymaps

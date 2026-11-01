@@ -85,4 +85,34 @@ describe('useDocumentStore - movement and atomic undo/redo', () => {
     store.undo();
     expect(useDocumentStore.getState().elementIds.length).toBe(0);
   });
+
+  it('transforms elements live and commits a single undo step', () => {
+    const store = useDocumentStore.getState();
+    const initialElements = { s1: store.elements['s1'] };
+    const scaledElement = {
+      ...store.elements['s1'],
+      x: 10,
+      y: 20,
+      width: 60,
+      height: 80,
+      size: 4,
+    };
+
+    // Live update during drag
+    store.transformSelectedLive({ s1: scaledElement });
+    expect(useDocumentStore.getState().elements['s1'].width).toBe(60);
+
+    // Commit on pointer up
+    store.commitTransformSelected(initialElements, { s1: scaledElement });
+
+    // One undo restores original dimensions
+    store.undo();
+    expect(useDocumentStore.getState().elements['s1'].width).toBe(30);
+    expect(useDocumentStore.getState().elements['s1'].size).toBe(2);
+
+    // One redo restores transformed dimensions
+    store.redo();
+    expect(useDocumentStore.getState().elements['s1'].width).toBe(60);
+    expect(useDocumentStore.getState().elements['s1'].size).toBe(4);
+  });
 });

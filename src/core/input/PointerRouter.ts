@@ -1,7 +1,7 @@
 import { useCameraStore } from '../../stores/useCameraStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
-import { Camera, ToolType } from '../../types/canvas';
+import { Camera, CanvasElement, ToolType } from '../../types/canvas';
 import {
   calculateBoxFitCamera,
   calculateScrubbyZoom,
@@ -11,6 +11,13 @@ import {
 import { hitTestMarquee, hitTestPoint } from '../engine/HitTester';
 import { createStrokeElement } from '../engine/InkingEngine';
 import { ScratchRenderer } from '../engine/ScratchRenderer';
+import {
+  computeSelectionBounds,
+  HandleType,
+  hitTestHandles,
+  rotateElement,
+  scaleElement,
+} from '../geometry/transformMath';
 import { FSMState, MarqueeBox } from './ToolFSM';
 
 export class PointerRouter {
@@ -25,9 +32,28 @@ export class PointerRouter {
   private zoomHasDragged: boolean = false;
   public marqueeBox: MarqueeBox | null = null;
   public onMarqueeUpdate?: (box: MarqueeBox | null) => void;
+  public isRotateKeyHeld: boolean = false;
+  public rotationAngle: number | null = null;
+  public onRotationUpdate?: (angle: number | null) => void;
+
+  private transformInitialElements: Record<string, CanvasElement> = {};
+  private activeHandle: HandleType | null = null;
+  private resizeAnchor: { x: number; y: number; } = { x: 0, y: 0 };
+  private resizeStartDist: { dx: number; dy: number; } = { dx: 1, dy: 1 };
+  private resizeCenter: { x: number; y: number; } = { x: 0, y: 0 };
+  private rotationCenter: { x: number; y: number; } = { x: 0, y: 0 };
+  private rotationStartAngle: number = 0;
 
   constructor(scratchRenderer: ScratchRenderer) {
     this.scratchRenderer = scratchRenderer;
+  }
+
+  public getState(): FSMState {
+    return this.state;
+  }
+
+  public getActiveHandle(): HandleType | null {
+    return this.activeHandle;
   }
 
   handlePointerDown(e: PointerEvent, container: HTMLElement) {
@@ -74,6 +100,81 @@ export class PointerRouter {
       this.performEraseAt(worldPoint);
     } else if (activeTool === 'select') {
       const doc = useDocumentStore.getState();
+
+      // 1. If elements are selected, check for Corner Handle Hit or Rotation Trigger
+      if (doc.selectedIds.length > 0) {
+        const bounds = computeSelectionBounds(doc.elements, doc.selectedIds);
+        if (bounds) {
+          const screenHandles = {
+            nw: worldToScreen(bounds.minX, bounds.minY, camera, width, height),
+            ne: worldToScreen(bounds.maxX, bounds.minY, camera, width, height),
+            se: worldToScreen(bounds.maxX, bounds.maxY, camera, width, height),
+            sw: worldToScreen(bounds.minX, bounds.maxY, camera, width, height),
+          };
+
+          const hitHandle = hitTestHandles({ x: e.clientX, y: e.clientY }, screenHandles, 12);
+          if (hitHandle) {
+            this.state = 'RESIZING_SELECTION';
+            this.activeHandle = hitHandle;
+
+            // Snapshot selected elements
+            this.transformInitialElements = {};
+            for (const id of doc.selectedIds) {
+              if (doc.elements[id]) {
+                this.transformInitialElements[id] = { ...doc.elements[id] };
+              }
+            }
+
+            // Determine opposite corner anchor
+            let anchor = { x: bounds.centerX, y: bounds.centerY };
+            if (hitHandle === 'nw') anchor = { x: bounds.maxX, y: bounds.maxY };
+            else if (hitHandle === 'ne') anchor = { x: bounds.minX, y: bounds.maxY };
+            else if (hitHandle === 'se') anchor = { x: bounds.minX, y: bounds.minY };
+            else if (hitHandle === 'sw') anchor = { x: bounds.maxX, y: bounds.minY };
+
+            this.resizeAnchor = anchor;
+            this.resizeCenter = { x: bounds.centerX, y: bounds.centerY };
+            this.resizeStartDist = {
+              dx: worldPoint.x - anchor.x,
+              dy: worldPoint.y - anchor.y,
+            };
+            return;
+          }
+
+          if (this.isRotateKeyHeld) {
+            this.state = 'ROTATING_SELECTION';
+            this.transformInitialElements = {};
+            for (const id of doc.selectedIds) {
+              if (doc.elements[id]) {
+                this.transformInitialElements[id] = { ...doc.elements[id] };
+              }
+            }
+            this.rotationCenter = { x: bounds.centerX, y: bounds.centerY };
+            this.rotationStartAngle = Math.atan2(
+              worldPoint.y - bounds.centerY,
+              worldPoint.x - bounds.centerX,
+            );
+            this.rotationAngle = 0;
+            this.onRotationUpdate?.(0);
+            return;
+          }
+
+          // Check if clicked inside selection bounds for dragging
+          if (
+            worldPoint.x >= bounds.minX
+            && worldPoint.x <= bounds.maxX
+            && worldPoint.y >= bounds.minY
+            && worldPoint.y <= bounds.maxY
+          ) {
+            this.state = 'DRAGGING_SELECTION';
+            this.lastDragWorld = worldPoint;
+            this.dragTotalDelta = { x: 0, y: 0 };
+            return;
+          }
+        }
+      }
+
+      // 2. Element hit test
       const hitId = hitTestPoint(doc.elements, doc.elementIds, worldPoint);
 
       if (hitId) {
@@ -192,6 +293,51 @@ export class PointerRouter {
         this.dragTotalDelta.y += dy;
         useDocumentStore.getState().translateSelected(dx, dy);
         this.lastDragWorld = worldPoint;
+      } else if (this.state === 'RESIZING_SELECTION') {
+        const anchor = ev.altKey ? this.resizeCenter : this.resizeAnchor;
+        const dx = worldPoint.x - anchor.x;
+        const dy = worldPoint.y - anchor.y;
+        const startDx = this.resizeStartDist.dx;
+        const startDy = this.resizeStartDist.dy;
+
+        let sx = startDx !== 0 ? dx / startDx : 1;
+        let sy = startDy !== 0 ? dy / startDy : 1;
+
+        // Proportional constraint (default, unless Shift is held)
+        if (!ev.shiftKey) {
+          const signX = sx < 0 ? -1 : 1;
+          const signY = sy < 0 ? -1 : 1;
+          const mag = Math.max(Math.abs(sx), Math.abs(sy));
+          sx = mag * signX;
+          sy = mag * signY;
+        }
+
+        const updated: Record<string, CanvasElement> = {};
+        for (const [id, initialEl] of Object.entries(this.transformInitialElements)) {
+          updated[id] = scaleElement(initialEl, anchor, sx, sy);
+        }
+        useDocumentStore.getState().transformSelectedLive(updated);
+      } else if (this.state === 'ROTATING_SELECTION') {
+        const currentAngle = Math.atan2(
+          worldPoint.y - this.rotationCenter.y,
+          worldPoint.x - this.rotationCenter.x,
+        );
+        let deltaAngle = currentAngle - this.rotationStartAngle;
+
+        // Snap to 15 degrees if Shift is held
+        if (ev.shiftKey) {
+          const snapRad = (15 * Math.PI) / 180;
+          deltaAngle = Math.round(deltaAngle / snapRad) * snapRad;
+        }
+
+        this.rotationAngle = deltaAngle;
+        this.onRotationUpdate?.(deltaAngle);
+
+        const updated: Record<string, CanvasElement> = {};
+        for (const [id, initialEl] of Object.entries(this.transformInitialElements)) {
+          updated[id] = rotateElement(initialEl, this.rotationCenter, deltaAngle);
+        }
+        useDocumentStore.getState().transformSelectedLive(updated);
       } else if (this.state === 'SELECTING_MARQUEE' && this.marqueeBox) {
         this.marqueeBox.currentX = worldPoint.x;
         this.marqueeBox.currentY = worldPoint.y;
@@ -247,6 +393,16 @@ export class PointerRouter {
         );
       }
       this.dragTotalDelta = { x: 0, y: 0 };
+    } else if (this.state === 'RESIZING_SELECTION' || this.state === 'ROTATING_SELECTION') {
+      const current = useDocumentStore.getState().elements;
+      useDocumentStore.getState().commitTransformSelected(
+        this.transformInitialElements,
+        current,
+      );
+      this.transformInitialElements = {};
+      this.rotationAngle = null;
+      this.onRotationUpdate?.(null);
+      this.activeHandle = null;
     } else if (this.state === 'ERASING') {
       this.scratchRenderer.stopEraserTrail();
     } else if (this.state === 'SELECTING_MARQUEE') {

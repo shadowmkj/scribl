@@ -179,6 +179,7 @@ function matchesStroke(e: KeyboardEvent, s: KeyStroke): boolean {
 }
 
 interface CompiledKeymap {
+  mode: string;
   stroke: KeyStroke;
   commandId: string;
   desc?: string;
@@ -187,13 +188,19 @@ interface CompiledKeymap {
 export class KeybindingEngine {
   private keymaps: CompiledKeymap[] = [];
   private executeCommand: (id: string) => boolean;
+  private getActiveMode?: () => string;
 
-  constructor(options: { executeCommand: (id: string) => boolean; }) {
+  constructor(options: {
+    executeCommand: (id: string) => boolean;
+    getActiveMode?: () => string;
+  }) {
     this.executeCommand = options.executeCommand;
+    this.getActiveMode = options.getActiveMode;
   }
 
   registerKeymaps(entries: KeymapEntry[]) {
     this.keymaps = entries.map((entry) => ({
+      mode: entry.mode || 'n',
       stroke: parseVimKeyNotation(entry.lhs),
       commandId: entry.rhs,
       desc: entry.desc,
@@ -205,11 +212,28 @@ export class KeybindingEngine {
       return false;
     }
 
+    const currentMode = this.getActiveMode?.() || 'n';
+
+    // 1. Check exact match for active mode
     for (const km of this.keymaps) {
-      if (matchesStroke(e, km.stroke)) {
+      if (km.mode === currentMode && matchesStroke(e, km.stroke)) {
         e.preventDefault();
         this.executeCommand(km.commandId);
         return true;
+      }
+    }
+
+    // 2. Fallback to normal mode for global shortcuts (e.g. Cmd+Z, Cmd+S)
+    if (currentMode !== 'n') {
+      for (const km of this.keymaps) {
+        if (km.mode === 'n' && matchesStroke(e, km.stroke)) {
+          // Do not leak single-character drawing tools into visual mode
+          if (km.stroke.ctrl || km.stroke.meta) {
+            e.preventDefault();
+            this.executeCommand(km.commandId);
+            return true;
+          }
+        }
       }
     }
 

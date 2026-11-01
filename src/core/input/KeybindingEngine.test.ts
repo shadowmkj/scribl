@@ -176,5 +176,32 @@ describe('KeybindingEngine', () => {
       expect(engine.handleKeyDown(eventP)).toBe(false);
       expect(executedCommands).toEqual(['tool.pen', 'tool.pen']);
     });
+
+    it('dispatches visual mode keybindings when in visual mode', () => {
+      let isVisual = true;
+      const visualEngine = new KeybindingEngine({
+        executeCommand: (id) => {
+          executedCommands.push(id);
+          return true;
+        },
+        getActiveMode: () => (isVisual ? 'v' : 'n'),
+      });
+
+      visualEngine.registerKeymaps([
+        { mode: 'n', lhs: 'r', rhs: 'history.redo' },
+        { mode: 'v', lhs: 'r', rhs: 'selection.rotate' },
+        { mode: 'v', lhs: '<Esc>', rhs: 'selection.deselect' },
+      ]);
+
+      // Pressing 'r' in visual mode invokes selection.rotate
+      executedCommands.length = 0;
+      visualEngine.handleKeyDown(new KeyboardEvent('keydown', { key: 'r' }));
+      expect(executedCommands).toEqual(['selection.rotate']);
+
+      // Switch to normal mode: pressing 'r' invokes history.redo
+      isVisual = false;
+      visualEngine.handleKeyDown(new KeyboardEvent('keydown', { key: 'r' }));
+      expect(executedCommands).toEqual(['selection.rotate', 'history.redo']);
+    });
   });
 });

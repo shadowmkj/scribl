@@ -199,6 +199,24 @@ export function registerDefaultCommands(handlers?: {
     },
   });
 
+  commandRegistry.register({
+    id: 'selection.deselect',
+    label: 'Deselect',
+    category: 'selection',
+    description: 'Clear the active selection',
+    execute: () => {
+      useDocumentStore.getState().setSelected([]);
+    },
+  });
+
+  commandRegistry.register({
+    id: 'selection.rotate',
+    label: 'Rotate Selection',
+    category: 'selection',
+    description: 'Trigger selection rotation mode',
+    execute: () => {},
+  });
+
   // File & Canvas
   commandRegistry.register({
     id: 'file.save',

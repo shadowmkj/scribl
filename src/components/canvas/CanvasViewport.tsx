@@ -1,6 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { worldToScreen } from '../../core/camera/cameraMath';
 import { renderCommittedCanvas } from '../../core/engine/CanvasRenderer';
 import { ScratchRenderer } from '../../core/engine/ScratchRenderer';
+import {
+  computeSelectionBounds,
+  HandleType,
+  hitTestHandles,
+} from '../../core/geometry/transformMath';
 import { PointerRouter } from '../../core/input/PointerRouter';
 import { MarqueeBox } from '../../core/input/ToolFSM';
 import { useCameraStore } from '../../stores/useCameraStore';
@@ -34,6 +40,10 @@ export const CanvasViewport: React.FC = () => {
 
   const [marqueeBox, setMarqueeBox] = useState<MarqueeBox | null>(null);
   const [isAltPressed, setIsAltPressed] = useState(false);
+  const [rotationAngle, setRotationAngle] = useState<number | null>(null);
+  const [isRotateKeyHeld, setIsRotateKeyHeld] = useState(false);
+  const [hoveredHandle, setHoveredHandle] = useState<HandleType | null>(null);
+
   const scratchRendererRef = useRef<ScratchRenderer>(new ScratchRenderer());
   const pointerRouterRef = useRef<PointerRouter | null>(null);
 
@@ -63,6 +73,55 @@ export const CanvasViewport: React.FC = () => {
     };
   }, []);
 
+  // Track 'r' key for rotation mode when selection is active (Visual mode)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      if ((e.key === 'r' || e.key === 'R') && selectedIds.length > 0) {
+        if (pointerRouterRef.current) {
+          pointerRouterRef.current.isRotateKeyHeld = true;
+        }
+        setIsRotateKeyHeld(true);
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'r' || e.key === 'R') {
+        if (pointerRouterRef.current) {
+          pointerRouterRef.current.isRotateKeyHeld = false;
+        }
+        setIsRotateKeyHeld(false);
+      }
+    };
+
+    const handleBlur = () => {
+      if (pointerRouterRef.current) {
+        pointerRouterRef.current.isRotateKeyHeld = false;
+      }
+      setIsRotateKeyHeld(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, [selectedIds.length]);
+
+  useEffect(() => {
+    if (selectedIds.length === 0) {
+      setIsRotateKeyHeld(false);
+      if (pointerRouterRef.current) {
+        pointerRouterRef.current.isRotateKeyHeld = false;
+      }
+    }
+  }, [selectedIds.length]);
+
   // Resize handler
   useEffect(() => {
     const handleResize = () => {
@@ -82,6 +141,7 @@ export const CanvasViewport: React.FC = () => {
       scratchRendererRef.current.init(scratchCanvasRef.current);
       const router = new PointerRouter(scratchRendererRef.current);
       router.onMarqueeUpdate = setMarqueeBox;
+      router.onRotationUpdate = setRotationAngle;
       pointerRouterRef.current = router;
     }
   }, []);
@@ -103,7 +163,71 @@ export const CanvasViewport: React.FC = () => {
     zoomAt(e.clientX, e.clientY, camera.zoom * zoomFactor);
   };
 
+  const handlePointerMove = (e: React.PointerEvent) => {
+    pointerRouterRef.current?.handlePointerMove(e.nativeEvent);
+
+    if (
+      pointerRouterRef.current?.getState() === 'IDLE'
+      && currentTool === 'select'
+      && selectedIds.length > 0
+    ) {
+      const bounds = computeSelectionBounds(elements, selectedIds);
+      if (bounds) {
+        const screenHandles = {
+          nw: worldToScreen(bounds.minX, bounds.minY, camera, width, height),
+          ne: worldToScreen(bounds.maxX, bounds.minY, camera, width, height),
+          se: worldToScreen(bounds.maxX, bounds.maxY, camera, width, height),
+          sw: worldToScreen(bounds.minX, bounds.maxY, camera, width, height),
+        };
+        const hit = hitTestHandles({ x: e.clientX, y: e.clientY }, screenHandles, 12);
+        setHoveredHandle(hit);
+        return;
+      }
+    }
+    if (hoveredHandle !== null) {
+      setHoveredHandle(null);
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    pointerRouterRef.current?.handlePointerUp(e.nativeEvent, containerRef.current!);
+    setHoveredHandle(null);
+  };
+
+  const handlePointerLeave = () => {
+    setHoveredHandle(null);
+  };
+
   const dpr = window.devicePixelRatio || 1;
+
+  let cursorStyle = 'default';
+  if (isPanning) {
+    cursorStyle = 'grabbing';
+  } else if (isSpacePressed) {
+    cursorStyle = 'grab';
+  } else if (currentTool === 'eraser') {
+    cursorStyle = ERASER_CURSOR;
+  } else if (currentTool === 'pen') {
+    cursorStyle = 'crosshair';
+  } else if (currentTool === 'zoom') {
+    cursorStyle = isAltPressed ? 'zoom-out' : 'zoom-in';
+  } else if (currentTool === 'select') {
+    const fsmState = pointerRouterRef.current?.getState() ?? 'IDLE';
+    if (fsmState === 'ROTATING_SELECTION' || isRotateKeyHeld) {
+      cursorStyle = 'crosshair';
+    } else if (fsmState === 'RESIZING_SELECTION') {
+      const handle = pointerRouterRef.current?.getActiveHandle();
+      cursorStyle = handle === 'nw' || handle === 'se' ? 'nwse-resize' : 'nesw-resize';
+    } else if (fsmState === 'DRAGGING_SELECTION') {
+      cursorStyle = 'move';
+    } else if (hoveredHandle) {
+      cursorStyle = hoveredHandle === 'nw' || hoveredHandle === 'se'
+        ? 'nwse-resize'
+        : 'nesw-resize';
+    } else {
+      cursorStyle = 'default';
+    }
+  }
 
   return (
     <div
@@ -116,24 +240,14 @@ export const CanvasViewport: React.FC = () => {
         background: '#090d16',
         touchAction: 'none',
         userSelect: 'none',
-        cursor: isPanning
-          ? 'grabbing'
-          : isSpacePressed
-          ? 'grab'
-          : currentTool === 'eraser'
-          ? ERASER_CURSOR
-          : currentTool === 'pen'
-          ? 'crosshair'
-          : currentTool === 'zoom'
-          ? (isAltPressed ? 'zoom-out' : 'zoom-in')
-          : 'default',
+        cursor: cursorStyle,
       }}
       onWheel={handleWheel}
       onPointerDown={(e) =>
         pointerRouterRef.current?.handlePointerDown(e.nativeEvent, containerRef.current!)}
-      onPointerMove={(e) => pointerRouterRef.current?.handlePointerMove(e.nativeEvent)}
-      onPointerUp={(e) =>
-        pointerRouterRef.current?.handlePointerUp(e.nativeEvent, containerRef.current!)}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerLeave}
     >
       {dotGrid && <InfiniteGrid camera={camera} width={width} height={height} />}
 
@@ -172,6 +286,7 @@ export const CanvasViewport: React.FC = () => {
         width={width}
         height={height}
         marqueeBox={marqueeBox}
+        rotationAngle={rotationAngle}
       />
     </div>
   );

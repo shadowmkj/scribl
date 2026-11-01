@@ -277,4 +277,157 @@ describe('PointerRouter - Zoom Tool', () => {
     expect(redone.elements['drag-stroke-1'].x).toBe(60);
     expect(redone.elements['drag-stroke-1'].y).toBe(40);
   });
+
+  it('scales selection proportionally on SE corner handle drag with single undo step', async () => {
+    const { useDocumentStore } = await import('../../stores/useDocumentStore');
+    const docStore = useDocumentStore.getState();
+    docStore.clearDocument();
+
+    const testStroke = {
+      id: 'scale-stroke-1',
+      type: 'stroke' as const,
+      x: 0,
+      y: 0,
+      width: 40,
+      height: 40,
+      zIndex: 1,
+      color: '#000',
+      size: 4,
+      thinning: 0.6,
+      smoothing: 0.5,
+      points: [
+        { x: 0, y: 0, pressure: 0.5 },
+        { x: 40, y: 40, pressure: 0.5 },
+      ],
+    };
+
+    docStore.addElement(testStroke);
+    docStore.setSelected(['scale-stroke-1']);
+
+    useToolStore.setState({ currentTool: 'select' });
+
+    // Center screen is (500, 400), which corresponds to world (0, 0).
+    // The SE corner of stroke [0..40, 0..40] is at world (40, 40), which maps to screen (540, 440).
+    // Pointer down on SE handle at (540, 440)
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 540,
+        clientY: 440,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+      container,
+    );
+
+    // Drag SE corner to screen (580, 480) -> world (80, 80), scaling by 2.0x
+    router.handlePointerMove(
+      new PointerEvent('pointermove', {
+        clientX: 580,
+        clientY: 480,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+    );
+
+    router.handlePointerUp(
+      new PointerEvent('pointerup', {
+        clientX: 580,
+        clientY: 480,
+        pointerId: 1,
+        pointerType: 'mouse',
+      }),
+      container,
+    );
+
+    const scaled = useDocumentStore.getState();
+    expect(scaled.elements['scale-stroke-1'].width).toBe(80);
+    expect(scaled.elements['scale-stroke-1'].height).toBe(80);
+    expect(scaled.elements['scale-stroke-1'].size).toBe(8); // Scaled proportionally
+
+    // Exactly 1 undo restores original dimensions
+    scaled.undo();
+    const undone = useDocumentStore.getState();
+    expect(undone.elements['scale-stroke-1'].width).toBe(40);
+    expect(undone.elements['scale-stroke-1'].height).toBe(40);
+    expect(undone.elements['scale-stroke-1'].size).toBe(4);
+  });
+
+  it('rotates selection around center when r is held with single undo step', async () => {
+    const { useDocumentStore } = await import('../../stores/useDocumentStore');
+    const docStore = useDocumentStore.getState();
+    docStore.clearDocument();
+
+    const testStroke = {
+      id: 'rotate-stroke-1',
+      type: 'stroke' as const,
+      x: 10,
+      y: 10,
+      width: 20,
+      height: 20,
+      zIndex: 1,
+      color: '#000',
+      size: 4,
+      thinning: 0.6,
+      smoothing: 0.5,
+      points: [
+        { x: 10, y: 20, pressure: 0.5 },
+        { x: 30, y: 20, pressure: 0.5 },
+      ],
+    };
+
+    docStore.addElement(testStroke);
+    docStore.setSelected(['rotate-stroke-1']);
+
+    useToolStore.setState({ currentTool: 'select' });
+
+    // Enable rotation mode via r key
+    router.isRotateKeyHeld = true;
+
+    // Center of stroke [10..30, 10..30] is world (20, 20), screen (520, 420).
+    // Pointer down at world (40, 20) -> screen (540, 420), which is angle 0 relative to center
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 540,
+        clientY: 420,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+      container,
+    );
+
+    // Drag to world (20, 40) -> screen (520, 440), rotating by +90 degrees (Math.PI / 2)
+    router.handlePointerMove(
+      new PointerEvent('pointermove', {
+        clientX: 520,
+        clientY: 440,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+    );
+
+    router.handlePointerUp(
+      new PointerEvent('pointerup', {
+        clientX: 520,
+        clientY: 440,
+        pointerId: 1,
+        pointerType: 'mouse',
+      }),
+      container,
+    );
+
+    const rotated = useDocumentStore.getState();
+    // After 90 deg rotation, horizontal line (10, 20)->(30, 20) becomes vertical line
+    expect(rotated.elements['rotate-stroke-1'].points[0].x).toBeCloseTo(20, 1);
+    expect(rotated.elements['rotate-stroke-1'].points[1].x).toBeCloseTo(20, 1);
+
+    // Exactly 1 undo restores original horizontal line
+    rotated.undo();
+    const undone = useDocumentStore.getState();
+    expect(undone.elements['rotate-stroke-1'].points[0].y).toBeCloseTo(20, 1);
+    expect(undone.elements['rotate-stroke-1'].points[1].y).toBeCloseTo(20, 1);
+  });
 });

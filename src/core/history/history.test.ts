@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { StrokeElement } from '../../types/canvas';
 import { DocumentData } from '../../types/commands';
-import { AddElementCommand, DeleteElementsCommand, MoveElementsCommand } from './commands';
+import {
+  AddElementCommand,
+  DeleteElementsCommand,
+  MoveElementsCommand,
+  TransformElementsCommand,
+} from './commands';
 import { HistoryStack } from './HistoryStack';
 
 describe('HistoryStack and Commands', () => {
@@ -90,5 +95,30 @@ describe('HistoryStack and Commands', () => {
     // One redo snaps back to dragged place (50, 50)
     data = history.redo(data);
     expect(data.elements['s1'].x).toBe(50);
+  });
+
+  it('executes TransformElementsCommand and restores original state on undo', () => {
+    const history = new HistoryStack();
+    const initial = { s1: { ...dummyStroke, x: 0, y: 0, size: 2 } };
+    const final = { s1: { ...dummyStroke, x: 100, y: 100, size: 6 } };
+
+    let data: DocumentData = {
+      elements: final,
+      elementIds: ['s1'],
+      selectedIds: ['s1'],
+    };
+
+    history.pushExecuted(new TransformElementsCommand(['s1'], initial, final));
+    expect(history.canUndo()).toBe(true);
+
+    // Undo returns to initial
+    data = history.undo(data);
+    expect(data.elements['s1'].x).toBe(0);
+    expect(data.elements['s1'].size).toBe(2);
+
+    // Redo returns to final
+    data = history.redo(data);
+    expect(data.elements['s1'].x).toBe(100);
+    expect(data.elements['s1'].size).toBe(6);
   });
 });

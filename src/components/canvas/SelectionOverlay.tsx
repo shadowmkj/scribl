@@ -1,5 +1,6 @@
 import React from 'react';
 import { worldToScreen } from '../../core/camera/cameraMath';
+import { computeSelectionBounds } from '../../core/geometry/transformMath';
 import { MarqueeBox } from '../../core/input/ToolFSM';
 import { Camera, CanvasElement } from '../../types/canvas';
 
@@ -10,6 +11,7 @@ interface SelectionOverlayProps {
   width: number;
   height: number;
   marqueeBox: MarqueeBox | null;
+  rotationAngle?: number | null;
 }
 
 export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
@@ -19,7 +21,10 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
   width,
   height,
   marqueeBox,
+  rotationAngle,
 }) => {
+  const bounds = computeSelectionBounds(elements, selectedIds);
+
   return (
     <svg
       style={{
@@ -31,29 +36,113 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
         zIndex: 10,
       }}
     >
-      {/* Selected elements bounding boxes */}
-      {selectedIds.map((id) => {
-        const el = elements[id];
-        if (!el) return null;
-        const topLeft = worldToScreen(el.x, el.y, camera, width, height);
-        const w = el.width * camera.zoom;
-        const h = el.height * camera.zoom;
+      {/* Unified selected elements bounding box and handles */}
+      {bounds && (() => {
+        const screenTL = worldToScreen(bounds.minX, bounds.minY, camera, width, height);
+        const screenBR = worldToScreen(bounds.maxX, bounds.maxY, camera, width, height);
+        const boxW = Math.max(1, screenBR.x - screenTL.x);
+        const boxH = Math.max(1, screenBR.y - screenTL.y);
+        const screenCenter = worldToScreen(bounds.centerX, bounds.centerY, camera, width, height);
 
         return (
-          <g key={id}>
+          <g key='unified-selection'>
+            {/* Unified bounding box rectangle */}
             <rect
-              x={topLeft.x}
-              y={topLeft.y}
-              width={w}
-              height={h}
-              fill='none'
+              data-testid='unified-selection-box'
+              x={screenTL.x}
+              y={screenTL.y}
+              width={boxW}
+              height={boxH}
+              fill='rgba(2, 132, 199, 0.04)'
               stroke='#0284c7'
               strokeWidth={1.5}
-              strokeDasharray='4 4'
             />
+
+            {/* 4 Corner Resize Handles */}
+            <rect
+              data-testid='handle-nw'
+              x={screenTL.x - 4.5}
+              y={screenTL.y - 4.5}
+              width={9}
+              height={9}
+              fill='#ffffff'
+              stroke='#0284c7'
+              strokeWidth={1.5}
+              rx={1.5}
+            />
+            <rect
+              data-testid='handle-ne'
+              x={screenBR.x - 4.5}
+              y={screenTL.y - 4.5}
+              width={9}
+              height={9}
+              fill='#ffffff'
+              stroke='#0284c7'
+              strokeWidth={1.5}
+              rx={1.5}
+            />
+            <rect
+              data-testid='handle-se'
+              x={screenBR.x - 4.5}
+              y={screenBR.y - 4.5}
+              width={9}
+              height={9}
+              fill='#ffffff'
+              stroke='#0284c7'
+              strokeWidth={1.5}
+              rx={1.5}
+            />
+            <rect
+              data-testid='handle-sw'
+              x={screenTL.x - 4.5}
+              y={screenBR.y - 4.5}
+              width={9}
+              height={9}
+              fill='#ffffff'
+              stroke='#0284c7'
+              strokeWidth={1.5}
+              rx={1.5}
+            />
+
+            {/* Rotation Center Pivot and HUD Badge */}
+            {rotationAngle !== undefined && rotationAngle !== null && (
+              <g>
+                <circle
+                  cx={screenCenter.x}
+                  cy={screenCenter.y}
+                  r={4}
+                  fill='#38bdf8'
+                  stroke='#ffffff'
+                  strokeWidth={1.5}
+                />
+                <g transform={`translate(${screenCenter.x + 12}, ${screenCenter.y - 12})`}>
+                  <rect
+                    x={-4}
+                    y={-14}
+                    width={56}
+                    height={20}
+                    rx={10}
+                    fill='#0f172a'
+                    stroke='#38bdf8'
+                    strokeWidth={1}
+                  />
+                  <text
+                    x={24}
+                    y={0}
+                    textAnchor='middle'
+                    fill='#f8fafc'
+                    fontSize={11}
+                    fontWeight={600}
+                    fontFamily='monospace'
+                  >
+                    {`${((rotationAngle * 180) / Math.PI).toFixed(1)}°`}
+                  </text>
+                </g>
+              </g>
+            )}
           </g>
         );
-      })}
+      })()}
 
       {/* Marquee rubber-band box */}
       {marqueeBox

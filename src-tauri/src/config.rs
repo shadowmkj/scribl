@@ -213,6 +213,24 @@ impl Default for ScriblConfig {
                     rhs: "app.settings".into(),
                     desc: Some("Open Settings".into()),
                 },
+                KeymapEntry {
+                    mode: "v".into(),
+                    lhs: "r".into(),
+                    rhs: "selection.rotate".into(),
+                    desc: Some("Rotate Selection".into()),
+                },
+                KeymapEntry {
+                    mode: "v".into(),
+                    lhs: "<Esc>".into(),
+                    rhs: "selection.deselect".into(),
+                    desc: Some("Deselect".into()),
+                },
+                KeymapEntry {
+                    mode: "v".into(),
+                    lhs: "d".into(),
+                    rhs: "selection.delete".into(),
+                    desc: Some("Delete Selected".into()),
+                },
             ],
             toolbar: ToolbarConfig::default(),
         }

@@ -4,6 +4,7 @@ import {
   applyElementDelta,
   DeleteElementsCommand,
   MoveElementsCommand,
+  TransformElementsCommand,
 } from '../core/history/commands';
 import { HistoryStack } from '../core/history/HistoryStack';
 import { CanvasElement } from '../types/canvas';
@@ -18,6 +19,11 @@ interface DocumentState extends DocumentData {
   moveSelected: (dx: number, dy: number) => void;
   translateSelected: (dx: number, dy: number) => void;
   commitMoveSelected: (totalDx: number, totalDy: number) => void;
+  transformSelectedLive: (updated: Record<string, CanvasElement>) => void;
+  commitTransformSelected: (
+    initial: Record<string, CanvasElement>,
+    final: Record<string, CanvasElement>,
+  ) => void;
   setSelected: (ids: string[]) => void;
   undo: () => void;
   redo: () => void;
@@ -90,6 +96,25 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     const { selectedIds, history } = get();
     if (selectedIds.length === 0 || (totalDx === 0 && totalDy === 0)) return;
     history.pushExecuted(new MoveElementsCommand([...selectedIds], totalDx, totalDy));
+    set({
+      canUndo: history.canUndo(),
+      canRedo: history.canRedo(),
+    });
+  },
+
+  transformSelectedLive: (updated: Record<string, CanvasElement>) => {
+    set((state) => ({
+      elements: { ...state.elements, ...updated },
+    }));
+  },
+
+  commitTransformSelected: (
+    initial: Record<string, CanvasElement>,
+    final: Record<string, CanvasElement>,
+  ) => {
+    const { selectedIds, history } = get();
+    if (selectedIds.length === 0) return;
+    history.pushExecuted(new TransformElementsCommand([...selectedIds], initial, final));
     set({
       canUndo: history.canUndo(),
       canRedo: history.canRedo(),

@@ -74,6 +74,11 @@ scribl.keymap.set("n", "c", "canvas.clear", { desc = "Clear Canvas" })
 scribl.keymap.set("n", "f", "zoom.fit_all", { desc = "Fit Drawing" })
 scribl.keymap.set("n", "<D-,>", "app.settings", { desc = "Open Settings" })
 
+-- Visual Mode (When selection is active)
+scribl.keymap.set("v", "r", "selection.rotate", { desc = "Rotate Selection" })
+scribl.keymap.set("v", "<Esc>", "selection.deselect", { desc = "Deselect" })
+scribl.keymap.set("v", "d", "selection.delete", { desc = "Delete Selected" })
+
 --------------------------------------------------------------------------------
 -- 3. Floating Toolbar Layout
 -- Position: "bottom", "top", "left", "right"
