@@ -4,6 +4,11 @@ import { FloatingDock } from './components/ui/FloatingDock';
 import { StyleInspector } from './components/ui/StyleInspector';
 import { TopHeader } from './components/ui/TopHeader';
 import { ZoomHUD } from './components/ui/ZoomHUD';
+import {
+  handleGlobalBlur,
+  handleGlobalKeyDown,
+  handleGlobalKeyUp,
+} from './core/input/keyboardShortcuts';
 import { restoreAutoSave, setupAutoSave } from './core/persistence/autoSave';
 import {
   exportToPng,
@@ -13,7 +18,6 @@ import {
 } from './core/persistence/fileIO';
 import { useCameraStore } from './stores/useCameraStore';
 import { useDocumentStore } from './stores/useDocumentStore';
-import { useToolStore } from './stores/useToolStore';
 import './App.css';
 
 export function App() {
@@ -26,60 +30,13 @@ export function App() {
 
   // Keyboard shortcut listener
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if typing in text input
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-
-      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-      const cmdKey = isMac ? e.metaKey : e.ctrlKey;
-
-      if (e.code === 'Space') {
-        e.preventDefault();
-        useCameraStore.getState().setIsSpacePressed(true);
-        return;
-      }
-
-      if (cmdKey && e.key.toLowerCase() === 'z') {
-        e.preventDefault();
-        if (e.shiftKey) {
-          useDocumentStore.getState().redo();
-        } else {
-          useDocumentStore.getState().undo();
-        }
-      } else if (cmdKey && e.key.toLowerCase() === 'y') {
-        e.preventDefault();
-        useDocumentStore.getState().redo();
-      } else if (e.key.toLowerCase() === 'v' || e.key === '1') {
-        useToolStore.getState().setTool('select');
-      } else if (e.key.toLowerCase() === 'p' || e.key === '2') {
-        useToolStore.getState().setTool('pen');
-      } else if (e.key.toLowerCase() === 'e' || e.key === '3') {
-        useToolStore.getState().setTool('eraser');
-      } else if (e.key === 'Backspace' || e.key === 'Delete') {
-        useDocumentStore.getState().deleteSelected();
-      }
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        useCameraStore.getState().setIsSpacePressed(false);
-      }
-    };
-
-    const handleBlur = () => {
-      useCameraStore.getState().setIsSpacePressed(false);
-      useCameraStore.getState().setIsPanning(false);
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-    window.addEventListener('blur', handleBlur);
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    window.addEventListener('keyup', handleGlobalKeyUp);
+    window.addEventListener('blur', handleGlobalBlur);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-      window.removeEventListener('blur', handleBlur);
+      window.removeEventListener('keydown', handleGlobalKeyDown);
+      window.removeEventListener('keyup', handleGlobalKeyUp);
+      window.removeEventListener('blur', handleGlobalBlur);
     };
   }, []);
 
