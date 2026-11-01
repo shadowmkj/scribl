@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 
 interface TopHeaderProps {
@@ -9,11 +9,34 @@ interface TopHeaderProps {
 
 export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPNG }) => {
   const [docName, setDocName] = useState('Untitled Drawing');
+  const [confirmClear, setConfirmClear] = useState(false);
+
   const canUndo = useDocumentStore((s) => s.canUndo);
   const canRedo = useDocumentStore((s) => s.canRedo);
   const undo = useDocumentStore((s) => s.undo);
   const redo = useDocumentStore((s) => s.redo);
   const clearDocument = useDocumentStore((s) => s.clearDocument);
+
+  // Auto-reset clear confirmation after 3 seconds
+  useEffect(() => {
+    if (!confirmClear) return;
+    const timeout = setTimeout(() => setConfirmClear(false), 3000);
+    return () => clearTimeout(timeout);
+  }, [confirmClear]);
+
+  const handleClearClick = () => {
+    if (confirmClear) {
+      clearDocument();
+      try {
+        localStorage.removeItem('scribl_active_doc');
+      } catch (e) {
+        // Ignore localStorage error
+      }
+      setConfirmClear(false);
+    } else {
+      setConfirmClear(true);
+    }
+  };
 
   return (
     <div
@@ -143,12 +166,21 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
             Export PNG
           </button>
           <button
-            onClick={() => {
-              if (confirm('Clear current canvas?')) clearDocument();
+            onClick={handleClearClick}
+            title={confirmClear ? 'Click again to confirm clearing canvas' : 'Clear all strokes'}
+            style={{
+              background: confirmClear ? 'rgba(239, 68, 68, 0.2)' : 'none',
+              border: confirmClear ? '1px solid rgba(239, 68, 68, 0.4)' : 'none',
+              borderRadius: 4,
+              padding: '4px 8px',
+              color: confirmClear ? '#f87171' : '#f43f5e',
+              cursor: 'pointer',
+              fontSize: 12,
+              fontWeight: confirmClear ? 600 : 400,
+              transition: 'all 0.15s ease',
             }}
-            style={{ background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer', fontSize: 12 }}
           >
-            Clear
+            {confirmClear ? 'Confirm Clear?' : 'Clear'}
           </button>
         </div>
       </div>
