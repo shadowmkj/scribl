@@ -1,0 +1,153 @@
+import React, { useState } from 'react';
+import { useDocumentStore } from '../../stores/useDocumentStore';
+
+interface TopHeaderProps {
+  onSave: () => void;
+  onOpen: () => void;
+  onExportPNG: () => void;
+}
+
+export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPNG }) => {
+  const [docName, setDocName] = useState('Untitled Drawing');
+  const canUndo = useDocumentStore((s) => s.canUndo);
+  const canRedo = useDocumentStore((s) => s.canRedo);
+  const undo = useDocumentStore((s) => s.undo);
+  const redo = useDocumentStore((s) => s.redo);
+  const clearDocument = useDocumentStore((s) => s.clearDocument);
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: 16,
+        left: 20,
+        right: 20,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        zIndex: 20,
+        pointerEvents: 'none',
+      }}
+    >
+      {/* Brand & Document Name */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, pointerEvents: 'auto' }}>
+        <div
+          style={{
+            background: 'rgba(30, 41, 59, 0.85)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(71, 85, 105, 0.5)',
+            borderRadius: 8,
+            padding: '6px 12px',
+            color: '#f8fafc',
+            fontWeight: 700,
+            fontSize: 14,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#38bdf8' }} />
+          Scribl
+        </div>
+        <input
+          value={docName}
+          onChange={(e) => setDocName(e.target.value)}
+          style={{
+            background: 'rgba(30, 41, 59, 0.6)',
+            border: '1px solid rgba(71, 85, 105, 0.4)',
+            borderRadius: 6,
+            padding: '6px 10px',
+            color: '#cbd5e1',
+            fontSize: 13,
+            outline: 'none',
+          }}
+        />
+      </div>
+
+      {/* Actions: Undo / Redo / Files */}
+      <div style={{ display: 'flex', gap: 8, pointerEvents: 'auto' }}>
+        <div
+          style={{
+            background: 'rgba(30, 41, 59, 0.85)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(71, 85, 105, 0.5)',
+            borderRadius: 8,
+            padding: '4px',
+            display: 'flex',
+            gap: 4,
+          }}
+        >
+          <button
+            disabled={!canUndo}
+            onClick={undo}
+            title="Undo (Cmd+Z)"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: canUndo ? '#f8fafc' : '#475569',
+              padding: '4px 8px',
+              borderRadius: 4,
+              cursor: canUndo ? 'pointer' : 'default',
+            }}
+          >
+            ⤺
+          </button>
+          <button
+            disabled={!canRedo}
+            onClick={redo}
+            title="Redo (Cmd+Shift+Z)"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: canRedo ? '#f8fafc' : '#475569',
+              padding: '4px 8px',
+              borderRadius: 4,
+              cursor: canRedo ? 'pointer' : 'default',
+            }}
+          >
+            ⤻
+          </button>
+        </div>
+
+        <div
+          style={{
+            background: 'rgba(30, 41, 59, 0.85)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(71, 85, 105, 0.5)',
+            borderRadius: 8,
+            padding: '4px 8px',
+            display: 'flex',
+            gap: 6,
+          }}
+        >
+          <button
+            onClick={onOpen}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', fontSize: 12 }}
+          >
+            Open
+          </button>
+          <button
+            onClick={onSave}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', fontSize: 12 }}
+          >
+            Save
+          </button>
+          <button
+            onClick={onExportPNG}
+            style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', fontSize: 12 }}
+          >
+            Export PNG
+          </button>
+          <button
+            onClick={() => {
+              if (confirm('Clear current canvas?')) clearDocument();
+            }}
+            style={{ background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer', fontSize: 12 }}
+          >
+            Clear
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
