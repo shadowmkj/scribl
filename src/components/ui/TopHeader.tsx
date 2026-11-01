@@ -46,7 +46,11 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
             gap: 8,
           }}
         >
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#38bdf8' }} />
+          <img
+            src="/logo.png"
+            alt="Scribl Logo"
+            style={{ width: 22, height: 22, borderRadius: 4, objectFit: 'contain' }}
+          />
           Scribl
         </div>
         <input
