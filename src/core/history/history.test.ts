@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { HistoryStack } from './HistoryStack';
-import { AddElementCommand, DeleteElementsCommand, MoveElementsCommand } from './commands';
-import { DocumentData } from '../../types/commands';
+import { describe, expect, it } from 'vitest';
 import { StrokeElement } from '../../types/canvas';
+import { DocumentData } from '../../types/commands';
+import { AddElementCommand, DeleteElementsCommand, MoveElementsCommand } from './commands';
+import { HistoryStack } from './HistoryStack';
 
 describe('HistoryStack and Commands', () => {
   const dummyStroke: StrokeElement = {

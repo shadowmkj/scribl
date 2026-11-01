@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { Camera } from '../types/canvas';
 import { calculateZoomAtCursor } from '../core/camera/cameraMath';
+import { Camera } from '../types/canvas';
 
 interface CameraState {
   camera: Camera;
@@ -28,17 +28,25 @@ export const useCameraStore = create<CameraState>((set, get) => ({
 
   setPan: (x, y) => set((s) => ({ camera: { ...s.camera, x, y } })),
 
-  panBy: (dx, dy) => set((s) => ({
-    camera: {
-      ...s.camera,
-      x: s.camera.x + dx / s.camera.zoom,
-      y: s.camera.y + dy / s.camera.zoom,
-    },
-  })),
+  panBy: (dx, dy) =>
+    set((s) => ({
+      camera: {
+        ...s.camera,
+        x: s.camera.x + dx / s.camera.zoom,
+        y: s.camera.y + dy / s.camera.zoom,
+      },
+    })),
 
   zoomAt: (screenX, screenY, newZoom) => {
     const { camera, viewportWidth, viewportHeight } = get();
-    const updated = calculateZoomAtCursor(screenX, screenY, camera, newZoom, viewportWidth, viewportHeight);
+    const updated = calculateZoomAtCursor(
+      screenX,
+      screenY,
+      camera,
+      newZoom,
+      viewportWidth,
+      viewportHeight,
+    );
     set({ camera: updated });
   },
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 
 interface TopHeaderProps {
@@ -72,8 +72,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <img
-            src="/logo.png"
-            alt="Scribl"
+            src='/logo.png'
+            alt='Scribl'
             style={{
               width: 22,
               height: 22,
@@ -95,13 +95,15 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
           </span>
         </div>
 
-        <div style={{ width: 1, height: 16, background: 'rgba(255, 255, 255, 0.12)', margin: '0 2px' }} />
+        <div
+          style={{ width: 1, height: 16, background: 'rgba(255, 255, 255, 0.12)', margin: '0 2px' }}
+        />
 
         <input
           value={docName}
           onChange={(e) => setDocName(e.target.value)}
-          placeholder="Untitled Drawing"
-          title="Click to rename drawing"
+          placeholder='Untitled Drawing'
+          title='Click to rename drawing'
           style={{
             background: 'transparent',
             border: '1px solid transparent',
@@ -157,7 +159,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
         <button
           disabled={!canUndo}
           onClick={undo}
-          title="Undo (⌘Z / Ctrl+Z)"
+          title='Undo (⌘Z / Ctrl+Z)'
           style={{
             background: 'transparent',
             border: 'none',
@@ -178,9 +180,18 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
             e.currentTarget.style.background = 'transparent';
           }}
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 7v6h6" />
-            <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
+          <svg
+            width='15'
+            height='15'
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+          >
+            <path d='M3 7v6h6' />
+            <path d='M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13' />
           </svg>
         </button>
 
@@ -188,7 +199,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
         <button
           disabled={!canRedo}
           onClick={redo}
-          title="Redo (⇧⌘Z / Ctrl+Y)"
+          title='Redo (⇧⌘Z / Ctrl+Y)'
           style={{
             background: 'transparent',
             border: 'none',
@@ -209,18 +220,29 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
             e.currentTarget.style.background = 'transparent';
           }}
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 7v6h-6" />
-            <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7" />
+          <svg
+            width='15'
+            height='15'
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+          >
+            <path d='M21 7v6h-6' />
+            <path d='M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7' />
           </svg>
         </button>
 
-        <div style={{ width: 1, height: 16, background: 'rgba(255, 255, 255, 0.1)', margin: '0 2px' }} />
+        <div
+          style={{ width: 1, height: 16, background: 'rgba(255, 255, 255, 0.1)', margin: '0 2px' }}
+        />
 
         {/* Open */}
         <button
           onClick={onOpen}
-          title="Open .scribl drawing"
+          title='Open .scribl drawing'
           style={{
             background: 'transparent',
             border: 'none',
@@ -245,9 +267,18 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
             e.currentTarget.style.color = '#cbd5e1';
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
-            <path d="M2 10h20" />
+          <svg
+            width='14'
+            height='14'
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+          >
+            <path d='M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z' />
+            <path d='M2 10h20' />
           </svg>
           Open
         </button>
@@ -255,7 +286,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
         {/* Save */}
         <button
           onClick={onSave}
-          title="Save drawing as .scribl"
+          title='Save drawing as .scribl'
           style={{
             background: 'transparent',
             border: 'none',
@@ -280,10 +311,19 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
             e.currentTarget.style.color = '#cbd5e1';
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-            <polyline points="17 21 17 13 7 13 7 21" />
-            <polyline points="7 3 7 8 15 8" />
+          <svg
+            width='14'
+            height='14'
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+          >
+            <path d='M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z' />
+            <polyline points='17 21 17 13 7 13 7 21' />
+            <polyline points='7 3 7 8 15 8' />
           </svg>
           Save
         </button>
@@ -291,7 +331,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
         {/* Export PNG */}
         <button
           onClick={onExportPNG}
-          title="Export as PNG image"
+          title='Export as PNG image'
           style={{
             background: 'rgba(2, 132, 199, 0.16)',
             border: '1px solid rgba(56, 189, 248, 0.28)',
@@ -316,15 +356,26 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
             e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.28)';
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="7 10 12 15 17 10" />
-            <line x1="12" y1="15" x2="12" y2="3" />
+          <svg
+            width='14'
+            height='14'
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+          >
+            <path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' />
+            <polyline points='7 10 12 15 17 10' />
+            <line x1='12' y1='15' x2='12' y2='3' />
           </svg>
           Export
         </button>
 
-        <div style={{ width: 1, height: 16, background: 'rgba(255, 255, 255, 0.1)', margin: '0 2px' }} />
+        <div
+          style={{ width: 1, height: 16, background: 'rgba(255, 255, 255, 0.1)', margin: '0 2px' }}
+        />
 
         {/* Clear Canvas */}
         <button
@@ -358,9 +409,18 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
             }
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="3 6 5 6 21 6" />
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          <svg
+            width='14'
+            height='14'
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+          >
+            <polyline points='3 6 5 6 21 6' />
+            <path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' />
           </svg>
           {confirmClear ? 'Confirm Clear?' : 'Clear'}
         </button>

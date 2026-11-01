@@ -1,6 +1,6 @@
+import { useCameraStore } from '../../stores/useCameraStore';
 import { Camera, StrokePoint } from '../../types/canvas';
 import { getStrokeOutline, getSvgPathFromStroke } from './InkingEngine';
-import { useCameraStore } from '../../stores/useCameraStore';
 
 export interface TrailPoint {
   x: number;
@@ -49,13 +49,13 @@ export class ScratchRenderer {
     this.activePoints.push(point);
   }
 
-  startEraserTrail(initialPoint: { x: number; y: number }) {
+  startEraserTrail(initialPoint: { x: number; y: number; }) {
     this.isErasing = true;
     this.eraserTrail = [{ ...initialPoint, timestamp: performance.now() }];
     this.startAnimLoop();
   }
 
-  addEraserTrailPoint(point: { x: number; y: number }) {
+  addEraserTrailPoint(point: { x: number; y: number; }) {
     if (!this.isErasing) return;
     const last = this.eraserTrail[this.eraserTrail.length - 1];
     if (last) {
@@ -88,7 +88,12 @@ export class ScratchRenderer {
     this.animFrameId = requestAnimationFrame(tick);
   }
 
-  render(camera: Camera, width: number, height: number, dpr: number = window.devicePixelRatio || 1) {
+  render(
+    camera: Camera,
+    width: number,
+    height: number,
+    dpr: number = window.devicePixelRatio || 1,
+  ) {
     if (!this.ctx || !this.canvas) return;
 
     this.ctx.save();
@@ -105,7 +110,7 @@ export class ScratchRenderer {
         0,
         camera.zoom * dpr,
         (width / 2 - camera.x * camera.zoom) * dpr,
-        (height / 2 - camera.y * camera.zoom) * dpr
+        (height / 2 - camera.y * camera.zoom) * dpr,
       );
 
       const outline = getStrokeOutline(this.activePoints, this.strokeSize);
@@ -130,7 +135,7 @@ export class ScratchRenderer {
         0,
         camera.zoom * dpr,
         (width / 2 - camera.x * camera.zoom) * dpr,
-        (height / 2 - camera.y * camera.zoom) * dpr
+        (height / 2 - camera.y * camera.zoom) * dpr,
       );
 
       this.ctx.lineCap = 'round';

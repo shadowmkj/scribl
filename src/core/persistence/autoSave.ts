@@ -1,6 +1,6 @@
-import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useCameraStore } from '../../stores/useCameraStore';
-import { serializeScriblDoc, parseScriblJSON } from './fileIO';
+import { useDocumentStore } from '../../stores/useDocumentStore';
+import { parseScriblJSON, serializeScriblDoc } from './fileIO';
 
 const AUTOSAVE_KEY = 'scribl_active_doc';
 

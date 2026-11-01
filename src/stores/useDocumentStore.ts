@@ -1,8 +1,12 @@
 import { create } from 'zustand';
+import {
+  AddElementCommand,
+  DeleteElementsCommand,
+  MoveElementsCommand,
+} from '../core/history/commands';
+import { HistoryStack } from '../core/history/HistoryStack';
 import { CanvasElement } from '../types/canvas';
 import { DocumentData } from '../types/commands';
-import { HistoryStack } from '../core/history/HistoryStack';
-import { AddElementCommand, DeleteElementsCommand, MoveElementsCommand } from '../core/history/commands';
 
 interface DocumentState extends DocumentData {
   history: HistoryStack;
@@ -14,7 +18,7 @@ interface DocumentState extends DocumentData {
   setSelected: (ids: string[]) => void;
   undo: () => void;
   redo: () => void;
-  loadDocument: (data: { elements: Record<string, CanvasElement>; elementIds: string[] }) => void;
+  loadDocument: (data: { elements: Record<string, CanvasElement>; elementIds: string[]; }) => void;
   clearDocument: () => void;
 }
 
@@ -43,7 +47,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     const { elements, elementIds, selectedIds, history } = get();
     if (selectedIds.length === 0) return;
     const currentData: DocumentData = { elements, elementIds, selectedIds };
-    const nextData = history.execute(new DeleteElementsCommand(selectedIds, currentData), currentData);
+    const nextData = history.execute(
+      new DeleteElementsCommand(selectedIds, currentData),
+      currentData,
+    );
     set({
       ...nextData,
       canUndo: history.canUndo(),

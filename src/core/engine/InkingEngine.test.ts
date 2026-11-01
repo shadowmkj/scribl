@@ -1,6 +1,11 @@
-import { describe, it, expect } from 'vitest';
-import { getStrokeOutline, getSvgPathFromStroke, createStrokeElement, computeBoundingBox } from './InkingEngine';
+import { describe, expect, it } from 'vitest';
 import { StrokePoint } from '../../types/canvas';
+import {
+  computeBoundingBox,
+  createStrokeElement,
+  getStrokeOutline,
+  getSvgPathFromStroke,
+} from './InkingEngine';
 
 describe('InkingEngine', () => {
   const samplePoints: StrokePoint[] = [

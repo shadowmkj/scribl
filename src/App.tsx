@@ -2,13 +2,18 @@ import React, { useEffect, useRef } from 'react';
 import { CanvasViewport } from './components/canvas/CanvasViewport';
 import { FloatingDock } from './components/ui/FloatingDock';
 import { StyleInspector } from './components/ui/StyleInspector';
-import { ZoomHUD } from './components/ui/ZoomHUD';
 import { TopHeader } from './components/ui/TopHeader';
+import { ZoomHUD } from './components/ui/ZoomHUD';
+import { restoreAutoSave, setupAutoSave } from './core/persistence/autoSave';
+import {
+  exportToPng,
+  parseScriblJSON,
+  serializeScriblDoc,
+  triggerDownload,
+} from './core/persistence/fileIO';
+import { useCameraStore } from './stores/useCameraStore';
 import { useDocumentStore } from './stores/useDocumentStore';
 import { useToolStore } from './stores/useToolStore';
-import { useCameraStore } from './stores/useCameraStore';
-import { setupAutoSave, restoreAutoSave } from './core/persistence/autoSave';
-import { serializeScriblDoc, triggerDownload, exportToPng, parseScriblJSON } from './core/persistence/fileIO';
 import './App.css';
 
 export function App() {
@@ -127,11 +132,11 @@ export function App() {
   };
 
   return (
-    <div className="scribl-app">
+    <div className='scribl-app'>
       <input
         ref={fileInputRef}
-        type="file"
-        accept=".scribl,application/json"
+        type='file'
+        accept='.scribl,application/json'
         style={{ display: 'none' }}
         onChange={handleFileChange}
       />

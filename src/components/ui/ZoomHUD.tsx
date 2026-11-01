@@ -34,7 +34,7 @@ export const ZoomHUD: React.FC = () => {
     >
       <button
         onClick={() => zoomAt(width / 2, height / 2, camera.zoom * 0.85)}
-        title="Zoom Out (-)"
+        title='Zoom Out (-)'
         style={{
           background: 'none',
           border: 'none',
@@ -68,7 +68,7 @@ export const ZoomHUD: React.FC = () => {
           color: '#cbd5e1',
           transition: 'all 0.15s ease',
         }}
-        title="Click to reset zoom (100% / Shift+0)"
+        title='Click to reset zoom (100% / Shift+0)'
         onMouseEnter={(e) => {
           e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
           e.currentTarget.style.color = '#38bdf8';
@@ -83,7 +83,7 @@ export const ZoomHUD: React.FC = () => {
 
       <button
         onClick={() => zoomAt(width / 2, height / 2, camera.zoom * 1.15)}
-        title="Zoom In (+)"
+        title='Zoom In (+)'
         style={{
           background: 'none',
           border: 'none',

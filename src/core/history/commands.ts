@@ -1,5 +1,5 @@
-import { Command, DocumentData } from '../../types/commands';
 import { CanvasElement } from '../../types/canvas';
+import { Command, DocumentData } from '../../types/commands';
 
 export class AddElementCommand implements Command {
   id = `add_${Date.now()}`;
@@ -30,9 +30,12 @@ export class DeleteElementsCommand implements Command {
   id = `del_${Date.now()}`;
   name = 'Delete Elements';
   private deletedElements: CanvasElement[] = [];
-  private deletedIndices: { id: string; index: number }[] = [];
+  private deletedIndices: { id: string; index: number; }[] = [];
 
-  constructor(private targetIds: string[], currentData: DocumentData) {
+  constructor(
+    private targetIds: string[],
+    currentData: DocumentData,
+  ) {
     this.targetIds.forEach((id) => {
       const el = currentData.elements[id];
       if (el) {
@@ -85,7 +88,7 @@ export class MoveElementsCommand implements Command {
   constructor(
     private elementIds: string[],
     private deltaX: number,
-    private deltaY: number
+    private deltaY: number,
   ) {}
 
   execute(data: DocumentData): DocumentData {

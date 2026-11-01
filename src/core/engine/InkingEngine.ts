@@ -1,11 +1,11 @@
 import { getStroke } from 'perfect-freehand';
-import { StrokePoint, StrokeElement, BoundingBox } from '../../types/canvas';
+import { BoundingBox, StrokeElement, StrokePoint } from '../../types/canvas';
 
 export function getStrokeOutline(
   points: StrokePoint[],
   size: number,
   thinning: number = 0.6,
-  smoothing: number = 0.5
+  smoothing: number = 0.5,
 ): number[][] {
   if (points.length === 0) return [];
   return getStroke(points, {
@@ -65,7 +65,7 @@ export function createStrokeElement(
   points: StrokePoint[],
   color: string,
   size: number,
-  zIndex: number
+  zIndex: number,
 ): StrokeElement {
   const bbox = computeBoundingBox(points, size);
   const outline = getStrokeOutline(points, size);

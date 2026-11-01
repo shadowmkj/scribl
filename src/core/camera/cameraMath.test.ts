@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { screenToWorld, worldToScreen, calculateZoomAtCursor } from './cameraMath';
+import { describe, expect, it } from 'vitest';
 import { Camera } from '../../types/canvas';
+import { calculateZoomAtCursor, screenToWorld, worldToScreen } from './cameraMath';
 
 describe('cameraMath', () => {
   const camera: Camera = { x: 0, y: 0, zoom: 1 };
@@ -35,7 +35,14 @@ describe('cameraMath', () => {
     const cursorScreenY = 600;
     const initialWorld = screenToWorld(cursorScreenX, cursorScreenY, camera, width, height);
 
-    const updatedCamera = calculateZoomAtCursor(cursorScreenX, cursorScreenY, camera, 2.0, width, height);
+    const updatedCamera = calculateZoomAtCursor(
+      cursorScreenX,
+      cursorScreenY,
+      camera,
+      2.0,
+      width,
+      height,
+    );
     expect(updatedCamera.zoom).toBe(2.0);
 
     const postZoomWorld = screenToWorld(cursorScreenX, cursorScreenY, updatedCamera, width, height);

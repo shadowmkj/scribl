@@ -1,10 +1,10 @@
-import { CanvasElement, BoundingBox } from '../../types/canvas';
+import { BoundingBox, CanvasElement } from '../../types/canvas';
 
 export function hitTestPoint(
   elements: Record<string, CanvasElement>,
   elementIds: string[],
-  point: { x: number; y: number },
-  threshold: number = 8
+  point: { x: number; y: number; },
+  threshold: number = 8,
 ): string | null {
   // Check from top z-index down
   for (let i = elementIds.length - 1; i >= 0; i--) {
@@ -14,10 +14,10 @@ export function hitTestPoint(
 
     // Fast rejection: outside bounding box + threshold
     if (
-      point.x < el.x - threshold ||
-      point.x > el.x + el.width + threshold ||
-      point.y < el.y - threshold ||
-      point.y > el.y + el.height + threshold
+      point.x < el.x - threshold
+      || point.x > el.x + el.width + threshold
+      || point.y < el.y - threshold
+      || point.y > el.y + el.height + threshold
     ) {
       continue;
     }
@@ -27,7 +27,7 @@ export function hitTestPoint(
         const p1 = el.points[j];
         const p2 = el.points[j + 1];
         const dist = distanceToSegment(point.x, point.y, p1.x, p1.y, p2.x, p2.y);
-        if (dist <= (el.size / 2) + threshold) {
+        if (dist <= el.size / 2 + threshold) {
           return el.id;
         }
       }
@@ -40,7 +40,7 @@ export function hitTestPoint(
 export function hitTestMarquee(
   elements: Record<string, CanvasElement>,
   elementIds: string[],
-  bounds: BoundingBox
+  bounds: BoundingBox,
 ): string[] {
   const result: string[] = [];
   const minX = Math.min(bounds.minX, bounds.maxX);
@@ -58,12 +58,7 @@ export function hitTestMarquee(
     const elMaxY = el.y + el.height;
 
     // Check intersection
-    const overlaps = !(
-      elMaxX < minX ||
-      elMinX > maxX ||
-      elMaxY < minY ||
-      elMinY > maxY
-    );
+    const overlaps = !(elMaxX < minX || elMinX > maxX || elMaxY < minY || elMinY > maxY);
 
     if (overlaps) {
       result.push(id);
@@ -79,7 +74,7 @@ function distanceToSegment(
   x1: number,
   y1: number,
   x2: number,
-  y2: number
+  y2: number,
 ): number {
   const l2 = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
   if (l2 === 0) return Math.hypot(px - x1, py - y1);

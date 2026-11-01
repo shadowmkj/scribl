@@ -48,7 +48,16 @@ export const StyleInspector: React.FC = () => {
       }}
     >
       <div>
-        <div style={{ fontSize: 10, textTransform: 'uppercase', color: '#64748b', fontWeight: 700, letterSpacing: '0.05em', marginBottom: 8 }}>
+        <div
+          style={{
+            fontSize: 10,
+            textTransform: 'uppercase',
+            color: '#64748b',
+            fontWeight: 700,
+            letterSpacing: '0.05em',
+            marginBottom: 8,
+          }}
+        >
           Color
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 26px)', gap: 6 }}>
@@ -64,9 +73,7 @@ export const StyleInspector: React.FC = () => {
                   height: 26,
                   borderRadius: 7,
                   background: swatch.hex,
-                  border: isSelected
-                    ? '2px solid #38bdf8'
-                    : '1px solid rgba(255, 255, 255, 0.12)',
+                  border: isSelected ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.12)',
                   boxShadow: isSelected ? '0 0 8px rgba(56, 189, 248, 0.5)' : 'none',
                   cursor: 'pointer',
                   outline: 'none',
@@ -87,7 +94,16 @@ export const StyleInspector: React.FC = () => {
       <div style={{ height: 1, background: 'rgba(255, 255, 255, 0.08)' }} />
 
       <div>
-        <div style={{ fontSize: 10, textTransform: 'uppercase', color: '#64748b', fontWeight: 700, letterSpacing: '0.05em', marginBottom: 8 }}>
+        <div
+          style={{
+            fontSize: 10,
+            textTransform: 'uppercase',
+            color: '#64748b',
+            fontWeight: 700,
+            letterSpacing: '0.05em',
+            marginBottom: 8,
+          }}
+        >
           Thickness
         </div>
         <div style={{ display: 'flex', gap: 5 }}>
@@ -98,9 +114,7 @@ export const StyleInspector: React.FC = () => {
                 key={s.value}
                 onClick={() => setStrokeSize(s.value)}
                 style={{
-                  background: isSelected
-                    ? 'rgba(2, 132, 199, 0.25)'
-                    : 'rgba(255, 255, 255, 0.04)',
+                  background: isSelected ? 'rgba(2, 132, 199, 0.25)' : 'rgba(255, 255, 255, 0.04)',
                   color: isSelected ? '#38bdf8' : '#94a3b8',
                   border: isSelected
                     ? '1px solid rgba(56, 189, 248, 0.4)'

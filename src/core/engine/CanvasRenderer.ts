@@ -8,7 +8,7 @@ export function renderCommittedCanvas(
   camera: Camera,
   width: number,
   height: number,
-  dpr: number = window.devicePixelRatio || 1
+  dpr: number = window.devicePixelRatio || 1,
 ) {
   // Clear full canvas
   ctx.save();
@@ -24,7 +24,7 @@ export function renderCommittedCanvas(
     0,
     camera.zoom * dpr,
     (width / 2 - camera.x * camera.zoom) * dpr,
-    (height / 2 - camera.y * camera.zoom) * dpr
+    (height / 2 - camera.y * camera.zoom) * dpr,
   );
 
   // Compute Viewport Frustum in World Coordinates
@@ -42,10 +42,10 @@ export function renderCommittedCanvas(
 
     // Viewport Culling check (AABB overlap)
     if (
-      el.x + el.width < viewMinX ||
-      el.x > viewMaxX ||
-      el.y + el.height < viewMinY ||
-      el.y > viewMaxY
+      el.x + el.width < viewMinX
+      || el.x > viewMaxX
+      || el.y + el.height < viewMinY
+      || el.y > viewMaxY
     ) {
       continue; // Culled out of screen
     }

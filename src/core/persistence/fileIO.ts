@@ -16,7 +16,7 @@ export function serializeScriblDoc(
   elements: Record<string, CanvasElement>,
   elementIds: string[],
   camera: Camera,
-  name: string = 'Untitled Drawing'
+  name: string = 'Untitled Drawing',
 ): string {
   // Strip non-serializable cached Path2D
   const cleanElements: Record<string, CanvasElement> = {};
@@ -50,7 +50,11 @@ export function parseScriblJSON(jsonString: string): ScriblFileData {
   return data;
 }
 
-export function triggerDownload(content: string, filename: string, mimeType: string = 'application/json') {
+export function triggerDownload(
+  content: string,
+  filename: string,
+  mimeType: string = 'application/json',
+) {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -62,7 +66,10 @@ export function triggerDownload(content: string, filename: string, mimeType: str
   URL.revokeObjectURL(url);
 }
 
-export function exportToPng(elements: Record<string, CanvasElement>, elementIds: string[]): Promise<string> {
+export function exportToPng(
+  elements: Record<string, CanvasElement>,
+  elementIds: string[],
+): Promise<string> {
   return new Promise((resolve, reject) => {
     if (elementIds.length === 0) {
       reject(new Error('Canvas is empty'));

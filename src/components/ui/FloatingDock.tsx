@@ -17,9 +17,18 @@ export const FloatingDock: React.FC = () => {
       label: 'Select',
       shortcut: 'V',
       icon: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z" />
-          <path d="m13 13 6 6" />
+        <svg
+          width='15'
+          height='15'
+          viewBox='0 0 24 24'
+          fill='none'
+          stroke='currentColor'
+          strokeWidth='2'
+          strokeLinecap='round'
+          strokeLinejoin='round'
+        >
+          <path d='m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z' />
+          <path d='m13 13 6 6' />
         </svg>
       ),
     },
@@ -28,8 +37,17 @@ export const FloatingDock: React.FC = () => {
       label: 'Pen',
       shortcut: 'P',
       icon: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+        <svg
+          width='15'
+          height='15'
+          viewBox='0 0 24 24'
+          fill='none'
+          stroke='currentColor'
+          strokeWidth='2'
+          strokeLinecap='round'
+          strokeLinejoin='round'
+        >
+          <path d='M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z' />
         </svg>
       ),
     },
@@ -38,10 +56,19 @@ export const FloatingDock: React.FC = () => {
       label: 'Eraser',
       shortcut: 'E',
       icon: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21" />
-          <path d="M22 21H7" />
-          <path d="m5 11 9 9" />
+        <svg
+          width='15'
+          height='15'
+          viewBox='0 0 24 24'
+          fill='none'
+          stroke='currentColor'
+          strokeWidth='2'
+          strokeLinecap='round'
+          strokeLinejoin='round'
+        >
+          <path d='m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21' />
+          <path d='M22 21H7' />
+          <path d='m5 11 9 9' />
         </svg>
       ),
     },
@@ -79,9 +106,7 @@ export const FloatingDock: React.FC = () => {
                 ? 'linear-gradient(180deg, #0284c7 0%, #0369a1 100%)'
                 : 'transparent',
               color: isActive ? '#ffffff' : '#94a3b8',
-              border: isActive
-                ? '1px solid rgba(56, 189, 248, 0.4)'
-                : '1px solid transparent',
+              border: isActive ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid transparent',
               borderRadius: 10,
               padding: '6px 14px',
               fontSize: 13,

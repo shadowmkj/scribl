@@ -1,7 +1,7 @@
 import React from 'react';
-import { Camera, CanvasElement } from '../../types/canvas';
 import { worldToScreen } from '../../core/camera/cameraMath';
 import { MarqueeBox } from '../../core/input/ToolFSM';
+import { Camera, CanvasElement } from '../../types/canvas';
 
 interface SelectionOverlayProps {
   elements: Record<string, CanvasElement>;
@@ -46,38 +46,39 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
               y={topLeft.y}
               width={w}
               height={h}
-              fill="none"
-              stroke="#0284c7"
+              fill='none'
+              stroke='#0284c7'
               strokeWidth={1.5}
-              strokeDasharray="4 4"
+              strokeDasharray='4 4'
             />
           </g>
         );
       })}
 
       {/* Marquee rubber-band box */}
-      {marqueeBox && (() => {
-        const minX = Math.min(marqueeBox.startX, marqueeBox.currentX);
-        const minY = Math.min(marqueeBox.startY, marqueeBox.currentY);
-        const maxX = Math.max(marqueeBox.startX, marqueeBox.currentX);
-        const maxY = Math.max(marqueeBox.startY, marqueeBox.currentY);
+      {marqueeBox
+        && (() => {
+          const minX = Math.min(marqueeBox.startX, marqueeBox.currentX);
+          const minY = Math.min(marqueeBox.startY, marqueeBox.currentY);
+          const maxX = Math.max(marqueeBox.startX, marqueeBox.currentX);
+          const maxY = Math.max(marqueeBox.startY, marqueeBox.currentY);
 
-        const screenTopLeft = worldToScreen(minX, minY, camera, width, height);
-        const boxW = (maxX - minX) * camera.zoom;
-        const boxH = (maxY - minY) * camera.zoom;
+          const screenTopLeft = worldToScreen(minX, minY, camera, width, height);
+          const boxW = (maxX - minX) * camera.zoom;
+          const boxH = (maxY - minY) * camera.zoom;
 
-        return (
-          <rect
-            x={screenTopLeft.x}
-            y={screenTopLeft.y}
-            width={boxW}
-            height={boxH}
-            fill="rgba(2, 132, 199, 0.15)"
-            stroke="#0284c7"
-            strokeWidth={1}
-          />
-        );
-      })()}
+          return (
+            <rect
+              x={screenTopLeft.x}
+              y={screenTopLeft.y}
+              width={boxW}
+              height={boxH}
+              fill='rgba(2, 132, 199, 0.15)'
+              stroke='#0284c7'
+              strokeWidth={1}
+            />
+          );
+        })()}
     </svg>
   );
 };

@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { parseScriblJSON, serializeScriblDoc } from './fileIO';
+import { describe, expect, it } from 'vitest';
 import { StrokeElement } from '../../types/canvas';
+import { parseScriblJSON, serializeScriblDoc } from './fileIO';
 
 describe('fileIO', () => {
   const dummyStroke: StrokeElement = {

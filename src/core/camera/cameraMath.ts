@@ -5,8 +5,8 @@ export function screenToWorld(
   screenY: number,
   camera: Camera,
   viewportWidth: number,
-  viewportHeight: number
-): { x: number; y: number } {
+  viewportHeight: number,
+): { x: number; y: number; } {
   const cx = viewportWidth / 2;
   const cy = viewportHeight / 2;
   return {
@@ -20,8 +20,8 @@ export function worldToScreen(
   worldY: number,
   camera: Camera,
   viewportWidth: number,
-  viewportHeight: number
-): { x: number; y: number } {
+  viewportHeight: number,
+): { x: number; y: number; } {
   const cx = viewportWidth / 2;
   const cy = viewportHeight / 2;
   return {
@@ -36,7 +36,7 @@ export function calculateZoomAtCursor(
   currentCamera: Camera,
   newZoom: number,
   viewportWidth: number,
-  viewportHeight: number
+  viewportHeight: number,
 ): Camera {
   const clampedZoom = Math.min(8.0, Math.max(0.1, newZoom));
   const cx = viewportWidth / 2;

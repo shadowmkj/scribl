@@ -1,11 +1,11 @@
-import { ToolType } from '../../types/canvas';
-import { screenToWorld } from '../camera/cameraMath';
-import { ScratchRenderer } from '../engine/ScratchRenderer';
-import { createStrokeElement } from '../engine/InkingEngine';
-import { hitTestPoint, hitTestMarquee } from '../engine/HitTester';
+import { useCameraStore } from '../../stores/useCameraStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
-import { useCameraStore } from '../../stores/useCameraStore';
+import { ToolType } from '../../types/canvas';
+import { screenToWorld } from '../camera/cameraMath';
+import { hitTestMarquee, hitTestPoint } from '../engine/HitTester';
+import { createStrokeElement } from '../engine/InkingEngine';
+import { ScratchRenderer } from '../engine/ScratchRenderer';
 import { FSMState, MarqueeBox } from './ToolFSM';
 
 export class PointerRouter {
@@ -13,7 +13,7 @@ export class PointerRouter {
   private scratchRenderer: ScratchRenderer;
   private isPenTouching: boolean = false;
   private activePointerId: number | null = null;
-  private lastDragWorld: { x: number; y: number } = { x: 0, y: 0 };
+  private lastDragWorld: { x: number; y: number; } = { x: 0, y: 0 };
   public marqueeBox: MarqueeBox | null = null;
   public onMarqueeUpdate?: (box: MarqueeBox | null) => void;
 
@@ -178,7 +178,7 @@ export class PointerRouter {
     this.state = 'IDLE';
   }
 
-  private performEraseAt(worldPoint: { x: number; y: number }) {
+  private performEraseAt(worldPoint: { x: number; y: number; }) {
     const doc = useDocumentStore.getState();
     const hitId = hitTestPoint(doc.elements, doc.elementIds, worldPoint, 12);
     if (hitId) {

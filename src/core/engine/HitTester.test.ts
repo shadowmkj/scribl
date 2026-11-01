@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { hitTestPoint, hitTestMarquee } from './HitTester';
+import { describe, expect, it } from 'vitest';
 import { StrokeElement } from '../../types/canvas';
+import { hitTestMarquee, hitTestPoint } from './HitTester';
 
 describe('HitTester', () => {
   const stroke: StrokeElement = {
