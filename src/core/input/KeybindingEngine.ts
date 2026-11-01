@@ -72,6 +72,74 @@ export function parseVimKeyNotation(notation: string, leaderKey = ' '): KeyStrok
   return strokes;
 }
 
+export function formatKeybindForDisplay(lhs: string): string {
+  if (!lhs) return '';
+
+  const isMac = typeof navigator !== 'undefined'
+    && navigator.platform?.toUpperCase().indexOf('MAC') >= 0;
+
+  // Single character: uppercase it (e.g. 'p' -> 'P', '1' -> '1')
+  if (lhs.length === 1) {
+    return lhs.toUpperCase();
+  }
+
+  // <leader>x e.g. <leader>c -> Space C
+  if (lhs.startsWith('<leader>')) {
+    const after = lhs.slice(8).trim();
+    return `Space ${after.toUpperCase()}`;
+  }
+
+  // Bracketed notation like <D-z>, <D-S-z>, <C-z>, <S-0>, <Space>, <BS>, <Del>
+  if (lhs.startsWith('<') && lhs.endsWith('>')) {
+    const inner = lhs.slice(1, -1);
+    const parts = inner.split('-');
+    const baseKey = parts[parts.length - 1];
+
+    let hasCtrl = false;
+    let hasMeta = false;
+    let hasAlt = false;
+    let hasShift = false;
+
+    for (let i = 0; i < parts.length - 1; i++) {
+      const mod = parts[i].toUpperCase();
+      if (mod === 'C') hasCtrl = true;
+      if (mod === 'D') hasMeta = true;
+      if (mod === 'M' || mod === 'A') hasAlt = true;
+      if (mod === 'S') hasShift = true;
+    }
+
+    let keyLabel = baseKey.toUpperCase();
+    if (baseKey.toLowerCase() === 'space') keyLabel = 'Space';
+    else if (baseKey.toLowerCase() === 'bs' || baseKey.toLowerCase() === 'backspace') {
+      keyLabel = isMac ? '⌫' : 'Backspace';
+    } else if (baseKey.toLowerCase() === 'del' || baseKey.toLowerCase() === 'delete') {
+      keyLabel = isMac ? '⌦' : 'Del';
+    } else if (baseKey.toLowerCase() === 'cr' || baseKey.toLowerCase() === 'enter') {
+      keyLabel = isMac ? '↵' : 'Enter';
+    } else if (baseKey.toLowerCase() === 'esc' || baseKey.toLowerCase() === 'escape') {
+      keyLabel = 'Esc';
+    }
+
+    if (isMac) {
+      let str = '';
+      if (hasCtrl) str += '⌃';
+      if (hasAlt) str += '⌥';
+      if (hasShift) str += '⇧';
+      if (hasMeta) str += '⌘';
+      return str + keyLabel;
+    } else {
+      const tokens: string[] = [];
+      if (hasCtrl || hasMeta) tokens.push('Ctrl');
+      if (hasAlt) tokens.push('Alt');
+      if (hasShift) tokens.push('Shift');
+      tokens.push(keyLabel);
+      return tokens.join('+');
+    }
+  }
+
+  return lhs.toUpperCase();
+}
+
 function matchesStroke(e: KeyboardEvent, s: KeyStroke): boolean {
   const isMac = typeof navigator !== 'undefined'
     && navigator.platform?.toUpperCase().indexOf('MAC') >= 0;

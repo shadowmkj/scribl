@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { KeybindingEngine, parseVimKeyNotation } from './KeybindingEngine';
+import { formatKeybindForDisplay, KeybindingEngine, parseVimKeyNotation } from './KeybindingEngine';
 
 describe('KeybindingEngine', () => {
   let engine: KeybindingEngine;
@@ -37,6 +37,32 @@ describe('KeybindingEngine', () => {
     it('parses leader sequences like <leader>c', () => {
       const parsed = parseVimKeyNotation('<leader>c', ' ');
       expect(parsed).toEqual([{ key: ' ' }, { key: 'c' }]);
+    });
+  });
+
+  describe('formatKeybindForDisplay', () => {
+    it('formats single characters in uppercase', () => {
+      expect(formatKeybindForDisplay('p')).toBe('P');
+      expect(formatKeybindForDisplay('v')).toBe('V');
+      expect(formatKeybindForDisplay('e')).toBe('E');
+      expect(formatKeybindForDisplay('z')).toBe('Z');
+      expect(formatKeybindForDisplay('1')).toBe('1');
+    });
+
+    it('formats leader shortcuts', () => {
+      expect(formatKeybindForDisplay('<leader>c')).toBe('Space C');
+      expect(formatKeybindForDisplay('<leader>f')).toBe('Space F');
+    });
+
+    it('formats modifier brackets into platform symbols', () => {
+      const formattedUndo = formatKeybindForDisplay('<D-z>');
+      expect(formattedUndo === '⌘Z' || formattedUndo === 'Ctrl+Z').toBe(true);
+
+      const formattedRedo = formatKeybindForDisplay('<D-S-z>');
+      expect(formattedRedo === '⇧⌘Z' || formattedRedo === 'Ctrl+Shift+Z').toBe(true);
+
+      const formattedShiftZero = formatKeybindForDisplay('<S-0>');
+      expect(formattedShiftZero === '⇧0' || formattedShiftZero === 'Shift+0').toBe(true);
     });
   });
 
@@ -130,6 +156,25 @@ describe('KeybindingEngine', () => {
       const handled = engine.handleKeyDown(event);
       expect(handled).toBe(false);
       expect(executedCommands).toEqual([]);
+    });
+
+    it('dispatches remapped pen shortcut "d" and secondary shortcut "2", but not "p"', () => {
+      engine.registerKeymaps([
+        { mode: 'n', lhs: 'd', rhs: 'tool.pen' },
+        { mode: 'n', lhs: '2', rhs: 'tool.pen' },
+      ]);
+
+      const eventD = new KeyboardEvent('keydown', { key: 'd', cancelable: true });
+      expect(engine.handleKeyDown(eventD)).toBe(true);
+      expect(executedCommands).toEqual(['tool.pen']);
+
+      const event2 = new KeyboardEvent('keydown', { key: '2', cancelable: true });
+      expect(engine.handleKeyDown(event2)).toBe(true);
+      expect(executedCommands).toEqual(['tool.pen', 'tool.pen']);
+
+      const eventP = new KeyboardEvent('keydown', { key: 'p', cancelable: true });
+      expect(engine.handleKeyDown(eventP)).toBe(false);
+      expect(executedCommands).toEqual(['tool.pen', 'tool.pen']);
     });
   });
 });

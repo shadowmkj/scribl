@@ -1,5 +1,7 @@
 use mlua::{Lua, Table};
+use std::collections::HashSet;
 use std::path::Path;
+use std::sync::{Arc, Mutex};
 
 use crate::config::{AppOptions, KeymapEntry, ScriblConfig, ToolbarConfig};
 
@@ -55,45 +57,60 @@ pub fn eval_lua_config_string(
         .set("opt", opt_table)
         .map_err(|e| e.to_string())?;
 
-    // Pre-populate keymaps registry in lua
-    let keymaps_list = lua.create_table().map_err(|e| e.to_string())?;
-    for (i, km) in default.keymaps.iter().enumerate() {
-        let entry = lua.create_table().map_err(|e| e.to_string())?;
-        entry
-            .set("mode", km.mode.clone())
-            .map_err(|e| e.to_string())?;
-        entry
-            .set("lhs", km.lhs.clone())
-            .map_err(|e| e.to_string())?;
-        entry
-            .set("rhs", km.rhs.clone())
-            .map_err(|e| e.to_string())?;
-        if let Some(desc) = &km.desc {
-            entry.set("desc", desc.clone()).map_err(|e| e.to_string())?;
-        }
-        keymaps_list.set(i + 1, entry).map_err(|e| e.to_string())?;
-    }
+    // User-registered keymaps and explicitly deleted keymaps
+    let user_keymaps: Arc<Mutex<Vec<KeymapEntry>>> = Arc::new(Mutex::new(Vec::new()));
+    let deleted_keymaps: Arc<Mutex<HashSet<(String, String)>>> =
+        Arc::new(Mutex::new(HashSet::new()));
 
     // scribl.keymap.set(mode, lhs, rhs, opts)
     let keymap_table = lua.create_table().map_err(|e| e.to_string())?;
-    let keymaps_ref = keymaps_list.clone();
+    let km_ref = Arc::clone(&user_keymaps);
+    let del_ref = Arc::clone(&deleted_keymaps);
     let set_fn = lua
         .create_function(
-            move |lua, (mode, lhs, rhs, opts): (String, String, String, Option<Table>)| {
-                let entry = lua.create_table()?;
-                entry.set("mode", mode)?;
-                entry.set("lhs", lhs)?;
-                entry.set("rhs", rhs)?;
-                if let Some(desc) = opts.and_then(|o| o.get::<String>("desc").ok()) {
-                    entry.set("desc", desc)?;
+            move |_lua, (mode, lhs, rhs, opts): (String, String, String, Option<Table>)| {
+                let desc = opts.and_then(|o| o.get::<String>("desc").ok());
+                let mut km = km_ref.lock().unwrap();
+                let mut del = del_ref.lock().unwrap();
+
+                del.remove(&(mode.clone(), lhs.clone()));
+
+                if let Some(pos) = km.iter().position(|k| k.mode == mode && k.lhs == lhs) {
+                    km[pos] = KeymapEntry {
+                        mode,
+                        lhs,
+                        rhs,
+                        desc,
+                    };
+                } else {
+                    km.push(KeymapEntry {
+                        mode,
+                        lhs,
+                        rhs,
+                        desc,
+                    });
                 }
-                let len = keymaps_ref.raw_len();
-                keymaps_ref.set(len + 1, entry)?;
                 Ok(())
             },
         )
         .map_err(|e| e.to_string())?;
     keymap_table.set("set", set_fn).map_err(|e| e.to_string())?;
+
+    // scribl.keymap.del(mode, lhs)
+    let km_ref2 = Arc::clone(&user_keymaps);
+    let del_ref2 = Arc::clone(&deleted_keymaps);
+    let del_fn = lua
+        .create_function(move |_lua, (mode, lhs): (String, String)| {
+            let mut km = km_ref2.lock().unwrap();
+            let mut del = del_ref2.lock().unwrap();
+
+            km.retain(|k| !(k.mode == mode && k.lhs == lhs));
+            del.insert((mode, lhs));
+            Ok(())
+        })
+        .map_err(|e| e.to_string())?;
+    keymap_table.set("del", del_fn).map_err(|e| e.to_string())?;
+
     scribl_table
         .set("keymap", keymap_table)
         .map_err(|e| e.to_string())?;
@@ -154,38 +171,32 @@ pub fn eval_lua_config_string(
         auto_save: opt.get("auto_save").unwrap_or(default.options.auto_save),
     };
 
-    // Extract keymaps
-    let mut keymaps = Vec::new();
-    let raw_len = keymaps_list.raw_len();
-    for i in 1..=raw_len {
-        if let Ok(entry) = keymaps_list.get::<Table>(i) {
-            let mode: String = entry.get("mode").unwrap_or_else(|_| "n".into());
-            let lhs: String = entry.get("lhs").unwrap_or_default();
-            let rhs: String = entry.get("rhs").unwrap_or_default();
-            let desc: Option<String> = entry.get("desc").ok();
+    // Extract keymaps and merge with defaults
+    let mut keymaps = Arc::try_unwrap(user_keymaps)
+        .map(|m| m.into_inner().unwrap())
+        .unwrap_or_else(|arc| arc.lock().unwrap().clone());
+    let deleted_keys = Arc::try_unwrap(deleted_keymaps)
+        .map(|m| m.into_inner().unwrap())
+        .unwrap_or_else(|arc| arc.lock().unwrap().clone());
 
-            if !lhs.is_empty() && !rhs.is_empty() {
-                // If user registered an existing lhs, override it
-                if let Some(pos) = keymaps
-                    .iter()
-                    .position(|k: &KeymapEntry| k.mode == mode && k.lhs == lhs)
-                {
-                    keymaps[pos] = KeymapEntry {
-                        mode,
-                        lhs,
-                        rhs,
-                        desc,
-                    };
-                } else {
-                    keymaps.push(KeymapEntry {
-                        mode,
-                        lhs,
-                        rhs,
-                        desc,
-                    });
-                }
-            }
+    let configured_actions: HashSet<String> = keymaps.iter().map(|k| k.rhs.clone()).collect();
+    let configured_keys: HashSet<(String, String)> = keymaps
+        .iter()
+        .map(|k| (k.mode.clone(), k.lhs.clone()))
+        .collect();
+
+    for default_km in default.keymaps {
+        let key_pair = (default_km.mode.clone(), default_km.lhs.clone());
+        if deleted_keys.contains(&key_pair) {
+            continue;
         }
+        if configured_keys.contains(&key_pair) {
+            continue;
+        }
+        if configured_actions.contains(&default_km.rhs) {
+            continue;
+        }
+        keymaps.push(default_km);
     }
 
     // Extract toolbar
@@ -281,6 +292,83 @@ mod tests {
             .find(|k| k.lhs == "p")
             .expect("p should exist");
         assert_eq!(override_p.rhs, "custom.override");
+    }
+
+    #[test]
+    fn test_change_pen_keybind_from_p_to_d() {
+        let script = r#"
+            local scribl = require("scribl")
+            scribl.keymap.set("n", "d", "tool.pen", { desc = "Activate Pen" })
+            scribl.keymap.set("n", "2", "tool.pen", { desc = "Activate Pen" })
+        "#;
+        let config = eval_lua_config_string(script, None).expect("should evaluate");
+
+        // The first keymap matching tool.pen must be "d"
+        let pen_km = config
+            .keymaps
+            .iter()
+            .find(|k| k.rhs == "tool.pen")
+            .expect("tool.pen should exist");
+        assert_eq!(pen_km.lhs, "d");
+
+        // All mappings for tool.pen should only be "d" and "2"
+        let pen_mappings: Vec<&str> = config
+            .keymaps
+            .iter()
+            .filter(|k| k.rhs == "tool.pen")
+            .map(|k| k.lhs.as_str())
+            .collect();
+        assert_eq!(pen_mappings, vec!["d", "2"]);
+
+        // Default "p" should not be retained for tool.pen when user configured "d"
+        assert!(
+            !config
+                .keymaps
+                .iter()
+                .any(|k| k.lhs == "p" && k.rhs == "tool.pen"),
+            "Default 'p' should not remain mapped to tool.pen"
+        );
+    }
+
+    #[test]
+    fn test_keymap_del() {
+        let script = r#"
+            local scribl = require("scribl")
+            scribl.keymap.del("n", "p")
+        "#;
+        let config = eval_lua_config_string(script, None).expect("should evaluate");
+        assert!(
+            !config.keymaps.iter().any(|k| k.lhs == "p"),
+            "Deleted 'p' keymap should not be present"
+        );
+        // Default "2" for tool.pen should still exist
+        assert!(
+            config
+                .keymaps
+                .iter()
+                .any(|k| k.lhs == "2" && k.rhs == "tool.pen")
+        );
+    }
+
+    #[test]
+    fn test_eval_user_init_lua_if_exists() {
+        let user_path = crate::watcher::get_init_lua_path();
+        if user_path.exists() {
+            let config = eval_lua_config_file(&user_path).expect("user config should evaluate");
+            let pen_km = config
+                .keymaps
+                .iter()
+                .find(|k| k.rhs == "tool.pen")
+                .expect("tool.pen should exist");
+            assert_eq!(pen_km.lhs, "d");
+            assert!(
+                !config
+                    .keymaps
+                    .iter()
+                    .any(|k| k.lhs == "p" && k.rhs == "tool.pen"),
+                "User replaced 'p' with 'd', so 'p' must not remain"
+            );
+        }
     }
 
     #[test]

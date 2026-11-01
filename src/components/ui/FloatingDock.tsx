@@ -1,5 +1,6 @@
 import React from 'react';
 import { commandRegistry } from '../../core/commands/CommandRegistry';
+import { formatKeybindForDisplay } from '../../core/input/KeybindingEngine';
 import { useConfigStore } from '../../stores/useConfigStore';
 import { useToolStore } from '../../stores/useToolStore';
 import { ToolType } from '../../types/canvas';
@@ -198,8 +199,9 @@ export const FloatingDock: React.FC = () => {
 
   const getShortcut = (actionId?: string): string | undefined => {
     if (!actionId) return undefined;
-    const entry = keymaps.find((k) => k.rhs === actionId);
-    return entry?.lhs;
+    const matching = keymaps.filter((k) => k.rhs === actionId);
+    if (matching.length === 0) return undefined;
+    return formatKeybindForDisplay(matching[0].lhs);
   };
 
   return (
