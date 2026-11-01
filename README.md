@@ -186,6 +186,12 @@ src/
 
 ---
 
+## 🤝 Contributing
+
+Contributions are welcome! Please check out our [Contributing Guidelines](CONTRIBUTING.md) to learn how to get started, run tests, and adhere to our code style.
+
+---
+
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).
