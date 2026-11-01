@@ -59,6 +59,7 @@ export class PointerRouter {
       this.scratchRenderer.render(camera, width, height);
     } else if (activeTool === 'eraser') {
       this.state = 'ERASING';
+      this.scratchRenderer.startEraserTrail(worldPoint);
       this.performEraseAt(worldPoint);
     } else if (activeTool === 'select') {
       const doc = useDocumentStore.getState();
@@ -111,6 +112,7 @@ export class PointerRouter {
         const pressure = ev.pointerType === 'pen' ? ev.pressure : 0.5;
         this.scratchRenderer.addPoint({ ...worldPoint, pressure });
       } else if (this.state === 'ERASING') {
+        this.scratchRenderer.addEraserTrailPoint(worldPoint);
         this.performEraseAt(worldPoint);
       } else if (this.state === 'DRAGGING_SELECTION') {
         const dx = worldPoint.x - this.lastDragWorld.x;
@@ -162,6 +164,8 @@ export class PointerRouter {
         const element = createStrokeElement(points, color, size, zIndex);
         useDocumentStore.getState().addElement(element);
       }
+    } else if (this.state === 'ERASING') {
+      this.scratchRenderer.stopEraserTrail();
     } else if (this.state === 'SELECTING_MARQUEE') {
       this.marqueeBox = null;
       this.onMarqueeUpdate?.(null);

@@ -1,5 +1,12 @@
 import { Camera, StrokePoint } from '../../types/canvas';
 import { getStrokeOutline, getSvgPathFromStroke } from './InkingEngine';
+import { useCameraStore } from '../../stores/useCameraStore';
+
+export interface TrailPoint {
+  x: number;
+  y: number;
+  timestamp: number;
+}
 
 export class ScratchRenderer {
   private ctx: CanvasRenderingContext2D | null = null;
@@ -8,6 +15,12 @@ export class ScratchRenderer {
   private color: string = '#0284c7';
   private strokeSize: number = 4;
   private isDrawing: boolean = false;
+
+  // Eraser trail animation state
+  private eraserTrail: TrailPoint[] = [];
+  private isErasing: boolean = false;
+  private animFrameId: number | null = null;
+  private readonly TRAIL_DURATION = 180; // ms
 
   init(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -36,6 +49,45 @@ export class ScratchRenderer {
     this.activePoints.push(point);
   }
 
+  startEraserTrail(initialPoint: { x: number; y: number }) {
+    this.isErasing = true;
+    this.eraserTrail = [{ ...initialPoint, timestamp: performance.now() }];
+    this.startAnimLoop();
+  }
+
+  addEraserTrailPoint(point: { x: number; y: number }) {
+    if (!this.isErasing) return;
+    const last = this.eraserTrail[this.eraserTrail.length - 1];
+    if (last) {
+      const dx = point.x - last.x;
+      const dy = point.y - last.y;
+      if (dx * dx + dy * dy < 1.0) return;
+    }
+    this.eraserTrail.push({ ...point, timestamp: performance.now() });
+  }
+
+  stopEraserTrail() {
+    this.isErasing = false;
+  }
+
+  private startAnimLoop() {
+    if (this.animFrameId !== null) return;
+
+    const tick = () => {
+      const { camera, viewportWidth, viewportHeight } = useCameraStore.getState();
+      this.render(camera, viewportWidth, viewportHeight);
+
+      if (this.isErasing || this.eraserTrail.length > 0) {
+        this.animFrameId = requestAnimationFrame(tick);
+      } else {
+        this.animFrameId = null;
+        this.clear(viewportWidth, viewportHeight);
+      }
+    };
+
+    this.animFrameId = requestAnimationFrame(tick);
+  }
+
   render(camera: Camera, width: number, height: number, dpr: number = window.devicePixelRatio || 1) {
     if (!this.ctx || !this.canvas) return;
 
@@ -44,26 +96,66 @@ export class ScratchRenderer {
     this.ctx.clearRect(0, 0, width * dpr, height * dpr);
     this.ctx.restore();
 
-    if (this.activePoints.length === 0) return;
+    // 1. Render in-progress drawing stroke
+    if (this.activePoints.length > 0) {
+      this.ctx.save();
+      this.ctx.setTransform(
+        camera.zoom * dpr,
+        0,
+        0,
+        camera.zoom * dpr,
+        (width / 2 - camera.x * camera.zoom) * dpr,
+        (height / 2 - camera.y * camera.zoom) * dpr
+      );
 
-    this.ctx.save();
-    this.ctx.setTransform(
-      camera.zoom * dpr,
-      0,
-      0,
-      camera.zoom * dpr,
-      (width / 2 - camera.x * camera.zoom) * dpr,
-      (height / 2 - camera.y * camera.zoom) * dpr
-    );
+      const outline = getStrokeOutline(this.activePoints, this.strokeSize);
+      const pathString = getSvgPathFromStroke(outline);
+      if (pathString && typeof Path2D !== 'undefined') {
+        this.ctx.fillStyle = this.color;
+        this.ctx.fill(new Path2D(pathString));
+      }
 
-    const outline = getStrokeOutline(this.activePoints, this.strokeSize);
-    const pathString = getSvgPathFromStroke(outline);
-    if (pathString && typeof Path2D !== 'undefined') {
-      this.ctx.fillStyle = this.color;
-      this.ctx.fill(new Path2D(pathString));
+      this.ctx.restore();
     }
 
-    this.ctx.restore();
+    // 2. Render animated eraser trail
+    const now = performance.now();
+    this.eraserTrail = this.eraserTrail.filter((p) => now - p.timestamp < this.TRAIL_DURATION);
+
+    if (this.eraserTrail.length >= 2) {
+      this.ctx.save();
+      this.ctx.setTransform(
+        camera.zoom * dpr,
+        0,
+        0,
+        camera.zoom * dpr,
+        (width / 2 - camera.x * camera.zoom) * dpr,
+        (height / 2 - camera.y * camera.zoom) * dpr
+      );
+
+      this.ctx.lineCap = 'round';
+      this.ctx.lineJoin = 'round';
+
+      for (let i = 0; i < this.eraserTrail.length - 1; i++) {
+        const p1 = this.eraserTrail[i];
+        const p2 = this.eraserTrail[i + 1];
+        const age = now - p2.timestamp;
+        const progress = Math.min(1, Math.max(0, age / this.TRAIL_DURATION));
+        const alpha = 1 - progress;
+
+        if (alpha <= 0.02) continue;
+
+        // Clean, simple grayish stroke that gently fades out
+        this.ctx.beginPath();
+        this.ctx.moveTo(p1.x, p1.y);
+        this.ctx.lineTo(p2.x, p2.y);
+        this.ctx.strokeStyle = `rgba(148, 163, 184, ${(alpha * 0.45).toFixed(3)})`;
+        this.ctx.lineWidth = 12 * (0.3 + 0.7 * alpha);
+        this.ctx.stroke();
+      }
+
+      this.ctx.restore();
+    }
   }
 
   finishStroke(): StrokePoint[] {

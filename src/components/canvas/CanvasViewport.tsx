@@ -1,12 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useCameraStore } from '../../stores/useCameraStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
+import { useToolStore } from '../../stores/useToolStore';
 import { ScratchRenderer } from '../../core/engine/ScratchRenderer';
 import { renderCommittedCanvas } from '../../core/engine/CanvasRenderer';
 import { PointerRouter } from '../../core/input/PointerRouter';
 import { MarqueeBox } from '../../core/input/ToolFSM';
 import { InfiniteGrid } from './InfiniteGrid';
 import { SelectionOverlay } from './SelectionOverlay';
+
+const ERASER_CURSOR = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='7' fill='rgba(255,255,255,0.06)' stroke='%2394a3b8' stroke-width='1.2'/%3E%3Ccircle cx='10' cy='10' r='1' fill='%2394a3b8'/%3E%3C/svg%3E") 10 10, crosshair`;
 
 export const CanvasViewport: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -22,6 +25,7 @@ export const CanvasViewport: React.FC = () => {
   const elements = useDocumentStore((s) => s.elements);
   const elementIds = useDocumentStore((s) => s.elementIds);
   const selectedIds = useDocumentStore((s) => s.selectedIds);
+  const currentTool = useToolStore((s) => s.currentTool);
 
   const [marqueeBox, setMarqueeBox] = useState<MarqueeBox | null>(null);
   const scratchRendererRef = useRef<ScratchRenderer>(new ScratchRenderer());
@@ -80,6 +84,7 @@ export const CanvasViewport: React.FC = () => {
         background: '#090d16',
         touchAction: 'none',
         userSelect: 'none',
+        cursor: currentTool === 'eraser' ? ERASER_CURSOR : currentTool === 'pen' ? 'crosshair' : 'default',
       }}
       onWheel={handleWheel}
       onPointerDown={(e) => pointerRouterRef.current?.handlePointerDown(e.nativeEvent, containerRef.current!)}
