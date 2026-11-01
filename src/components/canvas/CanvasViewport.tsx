@@ -4,6 +4,7 @@ import { ScratchRenderer } from '../../core/engine/ScratchRenderer';
 import { PointerRouter } from '../../core/input/PointerRouter';
 import { MarqueeBox } from '../../core/input/ToolFSM';
 import { useCameraStore } from '../../stores/useCameraStore';
+import { useConfigStore } from '../../stores/useConfigStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
 import { InfiniteGrid } from './InfiniteGrid';
@@ -29,6 +30,7 @@ export const CanvasViewport: React.FC = () => {
   const currentTool = useToolStore((s) => s.currentTool);
   const isSpacePressed = useCameraStore((s) => s.isSpacePressed);
   const isPanning = useCameraStore((s) => s.isPanning);
+  const dotGrid = useConfigStore((s) => s.config.options.dot_grid);
 
   const [marqueeBox, setMarqueeBox] = useState<MarqueeBox | null>(null);
   const [isAltPressed, setIsAltPressed] = useState(false);
@@ -133,7 +135,7 @@ export const CanvasViewport: React.FC = () => {
       onPointerUp={(e) =>
         pointerRouterRef.current?.handlePointerUp(e.nativeEvent, containerRef.current!)}
     >
-      <InfiniteGrid camera={camera} width={width} height={height} />
+      {dotGrid && <InfiniteGrid camera={camera} width={width} height={height} />}
 
       {/* Committed Canvas Layer */}
       <canvas
