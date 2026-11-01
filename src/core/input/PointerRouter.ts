@@ -19,6 +19,7 @@ export class PointerRouter {
   private isPenTouching: boolean = false;
   private activePointerId: number | null = null;
   private lastDragWorld: { x: number; y: number; } = { x: 0, y: 0 };
+  private dragTotalDelta: { x: number; y: number; } = { x: 0, y: 0 };
   private zoomStartScreen: { x: number; y: number; } = { x: 0, y: 0 };
   private zoomInitialCamera: Camera = { x: 0, y: 0, zoom: 1 };
   private zoomHasDragged: boolean = false;
@@ -81,6 +82,7 @@ export class PointerRouter {
         }
         this.state = 'DRAGGING_SELECTION';
         this.lastDragWorld = worldPoint;
+        this.dragTotalDelta = { x: 0, y: 0 };
       } else {
         if (!e.shiftKey) {
           doc.setSelected([]);
@@ -171,7 +173,8 @@ export class PointerRouter {
     }
 
     // Coalesced events for high-rate inking
-    const events = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : [e];
+    const coalesced = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : [];
+    const events = coalesced.length > 0 ? coalesced : [e];
 
     for (const ev of events) {
       const worldPoint = screenToWorld(ev.clientX, ev.clientY, camera, width, height);
@@ -185,7 +188,9 @@ export class PointerRouter {
       } else if (this.state === 'DRAGGING_SELECTION') {
         const dx = worldPoint.x - this.lastDragWorld.x;
         const dy = worldPoint.y - this.lastDragWorld.y;
-        useDocumentStore.getState().moveSelected(dx, dy);
+        this.dragTotalDelta.x += dx;
+        this.dragTotalDelta.y += dy;
+        useDocumentStore.getState().translateSelected(dx, dy);
         this.lastDragWorld = worldPoint;
       } else if (this.state === 'SELECTING_MARQUEE' && this.marqueeBox) {
         this.marqueeBox.currentX = worldPoint.x;
@@ -234,6 +239,14 @@ export class PointerRouter {
         const element = createStrokeElement(points, color, size, zIndex);
         useDocumentStore.getState().addElement(element);
       }
+    } else if (this.state === 'DRAGGING_SELECTION') {
+      if (this.dragTotalDelta.x !== 0 || this.dragTotalDelta.y !== 0) {
+        useDocumentStore.getState().commitMoveSelected(
+          this.dragTotalDelta.x,
+          this.dragTotalDelta.y,
+        );
+      }
+      this.dragTotalDelta = { x: 0, y: 0 };
     } else if (this.state === 'ERASING') {
       this.scratchRenderer.stopEraserTrail();
     } else if (this.state === 'SELECTING_MARQUEE') {

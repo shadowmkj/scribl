@@ -7,12 +7,16 @@ export class HistoryStack {
 
   execute(command: Command, data: DocumentData): DocumentData {
     const nextData = command.execute(data);
+    this.pushExecuted(command);
+    return nextData;
+  }
+
+  pushExecuted(command: Command): void {
     this.undoStack.push(command);
     if (this.undoStack.length > this.maxDepth) {
       this.undoStack.shift();
     }
     this.redoStack = []; // Clear redo on new action
-    return nextData;
   }
 
   undo(data: DocumentData): DocumentData {

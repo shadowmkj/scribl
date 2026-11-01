@@ -68,4 +68,27 @@ describe('HistoryStack and Commands', () => {
     expect(data.elements['s1'].x).toBe(0);
     expect(data.elements['s1'].points[0].x).toBe(0);
   });
+
+  it('records already-executed commands with pushExecuted without re-executing', () => {
+    const history = new HistoryStack();
+    let data: DocumentData = {
+      elements: { s1: { ...dummyStroke, x: 50, y: 50 } },
+      elementIds: ['s1'],
+      selectedIds: ['s1'],
+    };
+
+    // Element was already moved by (+50, +50) live during pointer drag
+    history.pushExecuted(new MoveElementsCommand(['s1'], 50, 50));
+    expect(history.canUndo()).toBe(true);
+    expect(history.canRedo()).toBe(false);
+
+    // One undo snaps back to original place (0, 0)
+    data = history.undo(data);
+    expect(data.elements['s1'].x).toBe(0);
+    expect(history.canRedo()).toBe(true);
+
+    // One redo snaps back to dragged place (50, 50)
+    data = history.redo(data);
+    expect(data.elements['s1'].x).toBe(50);
+  });
 });

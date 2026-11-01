@@ -81,6 +81,24 @@ export class DeleteElementsCommand implements Command {
   }
 }
 
+export function applyElementDelta<T extends CanvasElement>(el: T, dx: number, dy: number): T {
+  if (el.type === 'stroke') {
+    const shiftedPoints = el.points.map((p) => ({ ...p, x: p.x + dx, y: p.y + dy }));
+    return {
+      ...el,
+      x: el.x + dx,
+      y: el.y + dy,
+      points: shiftedPoints,
+      cachedPath2D: undefined, // Will be recomputed on render
+    };
+  }
+  return {
+    ...el,
+    x: el.x + dx,
+    y: el.y + dy,
+  };
+}
+
 export class MoveElementsCommand implements Command {
   id = `move_${Date.now()}`;
   name = 'Move Elements';
@@ -104,15 +122,8 @@ export class MoveElementsCommand implements Command {
 
     for (const id of this.elementIds) {
       const el = nextElements[id];
-      if (el && el.type === 'stroke') {
-        const shiftedPoints = el.points.map((p) => ({ ...p, x: p.x + dx, y: p.y + dy }));
-        nextElements[id] = {
-          ...el,
-          x: el.x + dx,
-          y: el.y + dy,
-          points: shiftedPoints,
-          cachedPath2D: undefined, // Will be recomputed on render
-        };
+      if (el) {
+        nextElements[id] = applyElementDelta(el, dx, dy);
       }
     }
 

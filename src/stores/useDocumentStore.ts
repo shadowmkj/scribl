@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import {
   AddElementCommand,
+  applyElementDelta,
   DeleteElementsCommand,
   MoveElementsCommand,
 } from '../core/history/commands';
@@ -15,6 +16,8 @@ interface DocumentState extends DocumentData {
   addElement: (element: CanvasElement) => void;
   deleteSelected: () => void;
   moveSelected: (dx: number, dy: number) => void;
+  translateSelected: (dx: number, dy: number) => void;
+  commitMoveSelected: (totalDx: number, totalDy: number) => void;
   setSelected: (ids: string[]) => void;
   undo: () => void;
   redo: () => void;
@@ -65,6 +68,29 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     const nextData = history.execute(new MoveElementsCommand(selectedIds, dx, dy), currentData);
     set({
       ...nextData,
+      canUndo: history.canUndo(),
+      canRedo: history.canRedo(),
+    });
+  },
+
+  translateSelected: (dx: number, dy: number) => {
+    const { elements, selectedIds } = get();
+    if (selectedIds.length === 0 || (dx === 0 && dy === 0)) return;
+    const nextElements = { ...elements };
+    for (const id of selectedIds) {
+      const el = nextElements[id];
+      if (el) {
+        nextElements[id] = applyElementDelta(el, dx, dy);
+      }
+    }
+    set({ elements: nextElements });
+  },
+
+  commitMoveSelected: (totalDx: number, totalDy: number) => {
+    const { selectedIds, history } = get();
+    if (selectedIds.length === 0 || (totalDx === 0 && totalDy === 0)) return;
+    history.pushExecuted(new MoveElementsCommand([...selectedIds], totalDx, totalDy));
+    set({
       canUndo: history.canUndo(),
       canRedo: history.canRedo(),
     });

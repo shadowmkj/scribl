@@ -178,4 +178,103 @@ describe('PointerRouter - Zoom Tool', () => {
     // Camera should have zoomed in to frame the selection
     expect(useCameraStore.getState().camera.zoom).toBeGreaterThan(1.0);
   });
+
+  it('moves selected elements on drag and creates a single undo step on pointer up', async () => {
+    const { useDocumentStore } = await import('../../stores/useDocumentStore');
+    const docStore = useDocumentStore.getState();
+    docStore.clearDocument();
+
+    const testStroke = {
+      id: 'drag-stroke-1',
+      type: 'stroke' as const,
+      x: 0,
+      y: 0,
+      width: 50,
+      height: 50,
+      zIndex: 1,
+      color: '#000',
+      size: 4,
+      thinning: 0.6,
+      smoothing: 0.5,
+      points: [
+        { x: 0, y: 0, pressure: 0.5 },
+        { x: 50, y: 50, pressure: 0.5 },
+      ],
+    };
+
+    docStore.addElement(testStroke);
+    docStore.setSelected(['drag-stroke-1']);
+
+    useToolStore.setState({ currentTool: 'select' });
+
+    // Pointer down at (525, 425), which corresponds to world (25, 25) - directly on the stroke
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 525,
+        clientY: 425,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+      container,
+    );
+
+    // Multiple drag moves (simulating 60Hz/240Hz pointer events)
+    router.handlePointerMove(
+      new PointerEvent('pointermove', {
+        clientX: 545,
+        clientY: 435,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+    );
+
+    router.handlePointerMove(
+      new PointerEvent('pointermove', {
+        clientX: 565,
+        clientY: 450,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+    );
+
+    router.handlePointerMove(
+      new PointerEvent('pointermove', {
+        clientX: 585,
+        clientY: 465,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+    );
+
+    // Pointer up at final position (+60 in x, +40 in y)
+    router.handlePointerUp(
+      new PointerEvent('pointerup', {
+        clientX: 585,
+        clientY: 465,
+        pointerId: 1,
+        pointerType: 'mouse',
+      }),
+      container,
+    );
+
+    const moved = useDocumentStore.getState();
+    expect(moved.elements['drag-stroke-1'].x).toBe(60);
+    expect(moved.elements['drag-stroke-1'].y).toBe(40);
+
+    // ONE undo must snap the element completely back to place A (0, 0)
+    moved.undo();
+    const undone = useDocumentStore.getState();
+    expect(undone.elements['drag-stroke-1'].x).toBe(0);
+    expect(undone.elements['drag-stroke-1'].y).toBe(0);
+
+    // ONE redo must snap the element back to place B (60, 40)
+    undone.redo();
+    const redone = useDocumentStore.getState();
+    expect(redone.elements['drag-stroke-1'].x).toBe(60);
+    expect(redone.elements['drag-stroke-1'].y).toBe(40);
+  });
 });

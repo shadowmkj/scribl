@@ -1,0 +1,88 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { StrokeElement } from '../types/canvas';
+import { useDocumentStore } from './useDocumentStore';
+
+describe('useDocumentStore - movement and atomic undo/redo', () => {
+  const dummyStroke: StrokeElement = {
+    id: 's1',
+    type: 'stroke',
+    x: 10,
+    y: 20,
+    width: 30,
+    height: 40,
+    zIndex: 1,
+    color: '#000',
+    size: 2,
+    thinning: 0.6,
+    smoothing: 0.5,
+    points: [
+      { x: 10, y: 20, pressure: 0.5 },
+      { x: 40, y: 60, pressure: 0.5 },
+    ],
+  };
+
+  beforeEach(() => {
+    useDocumentStore.getState().clearDocument();
+    useDocumentStore.getState().addElement(dummyStroke);
+    useDocumentStore.getState().setSelected(['s1']);
+  });
+
+  it('translates selected elements live without creating undo steps', () => {
+    const store = useDocumentStore.getState();
+    const initialUndoDepth = store.history.canUndo();
+
+    // Simulate 5 micro-deltas during drag
+    store.translateSelected(2, 3);
+    store.translateSelected(2, 3);
+    store.translateSelected(2, 3);
+    store.translateSelected(2, 3);
+    store.translateSelected(2, 3);
+
+    const current = useDocumentStore.getState();
+    expect(current.elements['s1'].x).toBe(20);
+    expect(current.elements['s1'].y).toBe(35);
+
+    // Should NOT have created additional undo steps for intermediate deltas
+    // (Only the initial addElement is in undo stack)
+    expect(current.history.canUndo()).toBe(initialUndoDepth);
+  });
+
+  it('commits a complete movement gesture as one single undo step', () => {
+    const store = useDocumentStore.getState();
+
+    // Move by total +50, +30 over several frames
+    store.translateSelected(25, 15);
+    store.translateSelected(25, 15);
+
+    // Pointer up commits the gesture
+    store.commitMoveSelected(50, 30);
+
+    const afterMove = useDocumentStore.getState();
+    expect(afterMove.elements['s1'].x).toBe(60); // 10 + 50
+    expect(afterMove.elements['s1'].y).toBe(50); // 20 + 30
+
+    // Exactly ONE undo restores the element all the way back to place A (10, 20)
+    afterMove.undo();
+    const afterUndo = useDocumentStore.getState();
+    expect(afterUndo.elements['s1'].x).toBe(10);
+    expect(afterUndo.elements['s1'].y).toBe(20);
+    expect(afterUndo.elements['s1'].points[0].x).toBe(10);
+    expect(afterUndo.elements['s1'].points[0].y).toBe(20);
+
+    // Exactly ONE redo moves it forward to place B (60, 50)
+    afterUndo.redo();
+    const afterRedo = useDocumentStore.getState();
+    expect(afterRedo.elements['s1'].x).toBe(60);
+    expect(afterRedo.elements['s1'].y).toBe(50);
+  });
+
+  it('does not commit if total delta is zero', () => {
+    const store = useDocumentStore.getState();
+    // Simulate user clicking on item without moving it
+    store.commitMoveSelected(0, 0);
+
+    // Undo should undo the addElement, not a blank move
+    store.undo();
+    expect(useDocumentStore.getState().elementIds.length).toBe(0);
+  });
+});
