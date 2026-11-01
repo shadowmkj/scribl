@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { CanvasViewport } from './components/canvas/CanvasViewport';
+import { SettingsModal } from './components/settings/SettingsModal';
 import { ConfigErrorToast } from './components/ui/ConfigErrorToast';
 import { FloatingDock } from './components/ui/FloatingDock';
 import { StyleInspector } from './components/ui/StyleInspector';
@@ -49,6 +50,7 @@ export function App() {
 
     let unlistenReload: (() => void) | undefined;
     let unlistenError: (() => void) | undefined;
+    let unlistenOpenSettings: (() => void) | undefined;
 
     import('@tauri-apps/api/event').then(({ listen }) => {
       listen<ScriblConfig>('scribl:config-reloaded', (event) => {
@@ -67,11 +69,18 @@ export function App() {
       }).then((unsub) => {
         unlistenError = unsub;
       }).catch(() => {});
+
+      listen('scribl:open-settings', () => {
+        useConfigStore.getState().openSettings();
+      }).then((unsub) => {
+        unlistenOpenSettings = unsub;
+      }).catch(() => {});
     }).catch(() => {});
 
     return () => {
       unlistenReload?.();
       unlistenError?.();
+      unlistenOpenSettings?.();
     };
   }, []);
 
@@ -160,6 +169,7 @@ export function App() {
       <CanvasViewport />
       <FloatingDock />
       <ZoomHUD />
+      <SettingsModal />
     </div>
   );
 }

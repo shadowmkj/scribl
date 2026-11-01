@@ -1,4 +1,5 @@
 import { useCameraStore } from '../../stores/useCameraStore';
+import { useConfigStore } from '../../stores/useConfigStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
 import { calculateBoxFitCamera } from '../camera/cameraMath';
@@ -6,7 +7,7 @@ import { calculateBoxFitCamera } from '../camera/cameraMath';
 export interface Command {
   id: string;
   label: string;
-  category: 'tool' | 'zoom' | 'history' | 'selection' | 'file' | 'canvas';
+  category: 'tool' | 'zoom' | 'history' | 'selection' | 'file' | 'canvas' | 'app';
   description?: string;
   icon?: string;
   shortcut?: string;
@@ -230,6 +231,17 @@ export function registerDefaultCommands(handlers?: {
       } else {
         useDocumentStore.getState().clearDocument();
       }
+    },
+  });
+
+  // App Settings
+  commandRegistry.register({
+    id: 'app.settings',
+    label: 'Open Settings',
+    category: 'app',
+    description: 'Open application settings preferences modal',
+    execute: () => {
+      useConfigStore.getState().openSettings();
     },
   });
 }

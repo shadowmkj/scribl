@@ -60,6 +60,7 @@ export const DEFAULT_CONFIG: ScriblConfig = {
     { mode: 'n', lhs: '<D-o>', rhs: 'file.open', desc: 'Open Drawing' },
     { mode: 'n', lhs: 'c', rhs: 'canvas.clear', desc: 'Clear Canvas' },
     { mode: 'n', lhs: 'f', rhs: 'zoom.fit_all', desc: 'Fit Drawing' },
+    { mode: 'n', lhs: '<D-,>', rhs: 'app.settings', desc: 'Open Settings' },
   ],
   toolbar: {
     position: 'bottom',
@@ -77,14 +78,21 @@ export const DEFAULT_CONFIG: ScriblConfig = {
   },
 };
 
+export type SettingsTab = 'general' | 'inking' | 'keybindings' | 'toolbar' | 'lua';
+
 interface ConfigState {
   config: ScriblConfig;
   configPath: string | null;
   configError: string | null;
   isLoaded: boolean;
+  isSettingsOpen: boolean;
+  activeSettingsTab: SettingsTab;
   loadConfig: () => Promise<void>;
   setConfig: (config: ScriblConfig) => void;
   setError: (error: string | null) => void;
+  openSettings: (tab?: SettingsTab) => void;
+  closeSettings: () => void;
+  saveConfigToDisk: (config: ScriblConfig) => Promise<void>;
 }
 
 export const useConfigStore = create<ConfigState>((set) => ({
@@ -92,6 +100,8 @@ export const useConfigStore = create<ConfigState>((set) => ({
   configPath: null,
   configError: null,
   isLoaded: false,
+  isSettingsOpen: false,
+  activeSettingsTab: 'general',
 
   loadConfig: async () => {
     try {
@@ -108,4 +118,18 @@ export const useConfigStore = create<ConfigState>((set) => ({
 
   setConfig: (config) => set({ config, configError: null }),
   setError: (configError) => set({ configError }),
+
+  openSettings: (tab = 'general') => set({ isSettingsOpen: true, activeSettingsTab: tab }),
+  closeSettings: () => set({ isSettingsOpen: false }),
+
+  saveConfigToDisk: async (updatedConfig: ScriblConfig) => {
+    set({ config: updatedConfig, configError: null });
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      await invoke('save_config', { config: updatedConfig });
+    } catch (e) {
+      // In browser/mock mode, changes persist in Zustand state
+      console.warn('save_config IPC skipped in web mode:', e);
+    }
+  },
 }));
