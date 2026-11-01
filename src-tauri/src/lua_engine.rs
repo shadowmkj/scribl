@@ -173,7 +173,10 @@ pub fn eval_lua_config_string(
         .map(|m| m.into_inner().unwrap())
         .unwrap_or_else(|arc| arc.lock().unwrap().clone());
 
-    let configured_actions: HashSet<String> = keymaps.iter().map(|k| k.rhs.clone()).collect();
+    let configured_actions: HashSet<(String, String)> = keymaps
+        .iter()
+        .map(|k| (k.mode.clone(), k.rhs.clone()))
+        .collect();
     let configured_keys: HashSet<(String, String)> = keymaps
         .iter()
         .map(|k| (k.mode.clone(), k.lhs.clone()))
@@ -187,7 +190,8 @@ pub fn eval_lua_config_string(
         if configured_keys.contains(&key_pair) {
             continue;
         }
-        if configured_actions.contains(&default_km.rhs) {
+        let action_pair = (default_km.mode.clone(), default_km.rhs.clone());
+        if configured_actions.contains(&action_pair) {
             continue;
         }
         keymaps.push(default_km);
@@ -366,5 +370,37 @@ mod tests {
         let bad_script = "local scribl = require('scribl' -- syntax error";
         let res = eval_lua_config_string(bad_script, None);
         assert!(res.is_err());
+    }
+
+    #[test]
+    fn test_eval_merges_visual_mode_keymaps_when_normal_mode_action_configured() {
+        let script = r#"
+local scribl = require("scribl")
+scribl.keymap.set("n", "<BS>", "selection.delete")
+"#;
+        let config = eval_lua_config_string(script, None).expect("should evaluate");
+        let rotate = config
+            .keymaps
+            .iter()
+            .find(|k| k.mode == "v" && k.rhs == "selection.rotate");
+        assert!(rotate.is_some(), "Visual mode rotate should be merged");
+        assert_eq!(rotate.unwrap().lhs, "r");
+
+        let deselect = config
+            .keymaps
+            .iter()
+            .find(|k| k.mode == "v" && k.rhs == "selection.deselect");
+        assert!(deselect.is_some(), "Visual mode deselect should be merged");
+        assert_eq!(deselect.unwrap().lhs, "<Esc>");
+
+        let delete_v = config
+            .keymaps
+            .iter()
+            .find(|k| k.mode == "v" && k.rhs == "selection.delete");
+        assert!(
+            delete_v.is_some(),
+            "Visual mode delete ('d') should not be blocked by normal mode delete ('<BS>')"
+        );
+        assert_eq!(delete_v.unwrap().lhs, "d");
     }
 }

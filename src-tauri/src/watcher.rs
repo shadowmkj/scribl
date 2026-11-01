@@ -107,7 +107,15 @@ pub fn ensure_default_config_exists() -> Result<PathBuf, String> {
             .map_err(|e| format!("Failed to create config directory {}: {}", dir.display(), e))?;
     }
     let init_path = dir.join("init.lua");
-    if !init_path.exists() {
+    if init_path.exists() {
+        let content = std::fs::read_to_string(&init_path).unwrap_or_default();
+        if !content.is_empty() && !content.contains("scribl.keymap.set(\"v\"") {
+            let visual_block = "\n-- Visual Mode (When selection is active)\nscribl.keymap.set(\"v\", \"r\", \"selection.rotate\", { desc = \"Rotate Selection\" })\nscribl.keymap.set(\"v\", \"<Esc>\", \"selection.deselect\", { desc = \"Deselect\" })\nscribl.keymap.set(\"v\", \"d\", \"selection.delete\", { desc = \"Delete Selected\" })\n";
+            let mut updated = content;
+            updated.push_str(visual_block);
+            let _ = std::fs::write(&init_path, updated);
+        }
+    } else {
         std::fs::write(&init_path, DEFAULT_INIT_LUA_TEMPLATE)
             .map_err(|e| format!("Failed to write default init.lua template: {}", e))?;
     }

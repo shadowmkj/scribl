@@ -5,10 +5,7 @@ pub mod watcher;
 
 #[tauri::command]
 fn get_config() -> Result<config::ScriblConfig, String> {
-    let init_path = watcher::get_init_lua_path();
-    if !init_path.exists() {
-        let _ = watcher::ensure_default_config_exists();
-    }
+    let init_path = watcher::ensure_default_config_exists()?;
     lua_engine::eval_lua_config_file(&init_path)
 }
 

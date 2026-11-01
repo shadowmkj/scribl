@@ -4,17 +4,24 @@ import { DEFAULT_CONFIG, KeymapEntry, useConfigStore } from '../../stores/useCon
 
 interface ActionDefinition {
   id: string;
+  targetId?: string;
   label: string;
-  category: 'Tools' | 'Zoom & Navigation' | 'History' | 'Canvas & File';
+  category:
+    | 'Tools'
+    | 'Zoom & Navigation'
+    | 'History'
+    | 'Canvas & File'
+    | 'Visual Mode (Selection)';
   defaultLhs: string;
+  mode?: string;
 }
 
 const ALL_ACTIONS: ActionDefinition[] = [
   // Tools
-  { id: 'tool.pen', label: 'Pen Tool', category: 'Tools', defaultLhs: 'p' },
-  { id: 'tool.eraser', label: 'Eraser Tool', category: 'Tools', defaultLhs: 'e' },
-  { id: 'tool.select', label: 'Select Tool', category: 'Tools', defaultLhs: 'v' },
-  { id: 'tool.zoom', label: 'Zoom Tool', category: 'Tools', defaultLhs: 'z' },
+  { id: 'tool.pen', label: 'Pen Tool', category: 'Tools', defaultLhs: 'p', mode: 'n' },
+  { id: 'tool.eraser', label: 'Eraser Tool', category: 'Tools', defaultLhs: 'e', mode: 'n' },
+  { id: 'tool.select', label: 'Select Tool', category: 'Tools', defaultLhs: 'v', mode: 'n' },
+  { id: 'tool.zoom', label: 'Zoom Tool', category: 'Tools', defaultLhs: 'z', mode: 'n' },
 
   // Zoom & Navigation
   {
@@ -22,20 +29,28 @@ const ALL_ACTIONS: ActionDefinition[] = [
     label: 'Reset Zoom (100%)',
     category: 'Zoom & Navigation',
     defaultLhs: '<S-0>',
+    mode: 'n',
   },
-  { id: 'zoom.in', label: 'Zoom In', category: 'Zoom & Navigation', defaultLhs: '=' },
-  { id: 'zoom.out', label: 'Zoom Out', category: 'Zoom & Navigation', defaultLhs: '-' },
-  { id: 'canvas.pan', label: 'Pan Canvas', category: 'Zoom & Navigation', defaultLhs: '<Space>' },
+  { id: 'zoom.in', label: 'Zoom In', category: 'Zoom & Navigation', defaultLhs: '=', mode: 'n' },
+  { id: 'zoom.out', label: 'Zoom Out', category: 'Zoom & Navigation', defaultLhs: '-', mode: 'n' },
+  {
+    id: 'canvas.pan',
+    label: 'Pan Canvas',
+    category: 'Zoom & Navigation',
+    defaultLhs: '<Space>',
+    mode: 'n',
+  },
   {
     id: 'zoom.fit_all',
     label: 'Fit All Strokes in View',
     category: 'Zoom & Navigation',
     defaultLhs: 'f',
+    mode: 'n',
   },
 
   // History
-  { id: 'history.undo', label: 'Undo', category: 'History', defaultLhs: '<D-z>' },
-  { id: 'history.redo', label: 'Redo', category: 'History', defaultLhs: '<D-S-z>' },
+  { id: 'history.undo', label: 'Undo', category: 'History', defaultLhs: '<D-z>', mode: 'n' },
+  { id: 'history.redo', label: 'Redo', category: 'History', defaultLhs: '<D-S-z>', mode: 'n' },
 
   // Canvas & File
   {
@@ -43,16 +58,60 @@ const ALL_ACTIONS: ActionDefinition[] = [
     label: 'Save Drawing (.scribl)',
     category: 'Canvas & File',
     defaultLhs: '<D-s>',
+    mode: 'n',
   },
-  { id: 'file.open', label: 'Open Drawing', category: 'Canvas & File', defaultLhs: '<D-o>' },
-  { id: 'canvas.clear', label: 'Clear Entire Canvas', category: 'Canvas & File', defaultLhs: 'c' },
+  {
+    id: 'file.open',
+    label: 'Open Drawing',
+    category: 'Canvas & File',
+    defaultLhs: '<D-o>',
+    mode: 'n',
+  },
+  {
+    id: 'canvas.clear',
+    label: 'Clear Entire Canvas',
+    category: 'Canvas & File',
+    defaultLhs: 'c',
+    mode: 'n',
+  },
   {
     id: 'selection.delete',
     label: 'Delete Selected Strokes',
     category: 'Canvas & File',
     defaultLhs: '<BS>',
+    mode: 'n',
   },
-  { id: 'app.settings', label: 'Open Preferences', category: 'Canvas & File', defaultLhs: '<D-,>' },
+  {
+    id: 'app.settings',
+    label: 'Open Preferences',
+    category: 'Canvas & File',
+    defaultLhs: '<D-,>',
+    mode: 'n',
+  },
+
+  // Visual Mode (Selection)
+  {
+    id: 'selection.rotate',
+    label: 'Rotate Selection (Hold key to rotate)',
+    category: 'Visual Mode (Selection)',
+    defaultLhs: 'r',
+    mode: 'v',
+  },
+  {
+    id: 'selection.deselect',
+    label: 'Deselect Elements',
+    category: 'Visual Mode (Selection)',
+    defaultLhs: '<Esc>',
+    mode: 'v',
+  },
+  {
+    id: 'selection.delete_visual',
+    targetId: 'selection.delete',
+    label: 'Delete Selected (Visual Mode)',
+    category: 'Visual Mode (Selection)',
+    defaultLhs: 'd',
+    mode: 'v',
+  },
 ];
 
 export const KeybindingsTab: React.FC = () => {
@@ -107,13 +166,19 @@ export const KeybindingsTab: React.FC = () => {
         notation = baseKey.toLowerCase();
       }
 
-      // Conflict check: is this key already used by another action?
+      const actionDef = ALL_ACTIONS.find((a) => a.id === recordingActionId);
+      const targetRhs = actionDef?.targetId || recordingActionId;
+      const targetMode = actionDef?.mode || 'n';
+
+      // Conflict check: is this key already used by another action in the same mode?
       const existing = config.keymaps.find((k) =>
-        k.lhs === notation && k.rhs !== recordingActionId
+        (k.mode || 'n') === targetMode && k.lhs === notation && k.rhs !== targetRhs
       );
       if (existing) {
-        const conflictingAction = ALL_ACTIONS.find((a) => a.id === existing.rhs)?.label
-          || existing.rhs;
+        const conflictingAction = ALL_ACTIONS.find((a) =>
+          (a.targetId || a.id) === existing.rhs
+          && (a.mode || 'n') === (existing.mode || 'n')
+        )?.label || existing.rhs;
         setConflictWarning(
           `"${notation}" is already assigned to ${conflictingAction}. Click again to overwrite.`,
         );
@@ -121,21 +186,30 @@ export const KeybindingsTab: React.FC = () => {
 
       // Update keymap list
       let updatedKeymaps = config.keymaps.filter(
-        (k) => !(k.rhs === recordingActionId && k.lhs === notation) && k.lhs !== notation,
+        (k) =>
+          !(
+            (k.mode || 'n') === targetMode
+            && k.rhs === targetRhs
+            && k.lhs === notation
+          )
+          && !((k.mode || 'n') === targetMode && k.lhs === notation),
       );
 
       // Add new keymap at the top for this action so it becomes primary
-      const actionDef = ALL_ACTIONS.find((a) => a.id === recordingActionId);
       const newEntry: KeymapEntry = {
-        mode: 'n',
+        mode: targetMode,
         lhs: notation,
-        rhs: recordingActionId,
+        rhs: targetRhs,
         desc: actionDef?.label,
       };
 
       // Filter out any other keymap for this action to cleanly replace it, or put new key first
-      const otherKeymapsForAction = updatedKeymaps.filter((k) => k.rhs === recordingActionId);
-      const remainingKeymaps = updatedKeymaps.filter((k) => k.rhs !== recordingActionId);
+      const otherKeymapsForAction = updatedKeymaps.filter(
+        (k) => (k.mode || 'n') === targetMode && k.rhs === targetRhs,
+      );
+      const remainingKeymaps = updatedKeymaps.filter(
+        (k) => !((k.mode || 'n') === targetMode && k.rhs === targetRhs),
+      );
 
       updatedKeymaps = [newEntry, ...otherKeymapsForAction, ...remainingKeymaps];
 
@@ -161,9 +235,22 @@ export const KeybindingsTab: React.FC = () => {
     setConflictWarning(null);
   };
 
-  const handleRemoveKeybind = (actionId: string, lhs: string, e: React.MouseEvent) => {
+  const handleRemoveKeybind = (
+    action: ActionDefinition,
+    lhs: string,
+    e: React.MouseEvent,
+  ) => {
     e.stopPropagation();
-    const updatedKeymaps = config.keymaps.filter((k) => !(k.rhs === actionId && k.lhs === lhs));
+    const targetRhs = action.targetId || action.id;
+    const targetMode = action.mode || 'n';
+    const updatedKeymaps = config.keymaps.filter(
+      (k) =>
+        !(
+          (k.mode || 'n') === targetMode
+          && k.rhs === targetRhs
+          && k.lhs === lhs
+        ),
+    );
     saveConfigToDisk({
       ...config,
       keymaps: updatedKeymaps,
@@ -171,18 +258,29 @@ export const KeybindingsTab: React.FC = () => {
   };
 
   // Group actions by category
-  const categories: Array<'Tools' | 'Zoom & Navigation' | 'History' | 'Canvas & File'> = [
+  const categories: Array<
+    | 'Tools'
+    | 'Zoom & Navigation'
+    | 'History'
+    | 'Canvas & File'
+    | 'Visual Mode (Selection)'
+  > = [
     'Tools',
     'Zoom & Navigation',
     'History',
     'Canvas & File',
+    'Visual Mode (Selection)',
   ];
 
   const filteredActions = ALL_ACTIONS.filter((action) => {
     const q = search.toLowerCase();
     const matchesName = action.label.toLowerCase().includes(q)
       || action.id.toLowerCase().includes(q);
-    const assignedKeymaps = config.keymaps.filter((k) => k.rhs === action.id);
+    const assignedKeymaps = config.keymaps.filter(
+      (k) =>
+        k.rhs === (action.targetId || action.id)
+        && (k.mode || 'n') === (action.mode || 'n'),
+    );
     const matchesKey = assignedKeymaps.some((k) => k.lhs.toLowerCase().includes(q));
     return matchesName || matchesKey;
   });
@@ -287,7 +385,11 @@ export const KeybindingsTab: React.FC = () => {
                 }}
               >
                 {items.map((action, idx) => {
-                  const assignedKeymaps = config.keymaps.filter((k) => k.rhs === action.id);
+                  const assignedKeymaps = config.keymaps.filter(
+                    (k) =>
+                      k.rhs === (action.targetId || action.id)
+                      && (k.mode || 'n') === (action.mode || 'n'),
+                  );
                   const isRecording = recordingActionId === action.id;
 
                   return (
@@ -352,7 +454,7 @@ export const KeybindingsTab: React.FC = () => {
                               >
                                 <span>{formatKeybindForDisplay(km.lhs)}</span>
                                 <span
-                                  onClick={(e) => handleRemoveKeybind(action.id, km.lhs, e)}
+                                  onClick={(e) => handleRemoveKeybind(action, km.lhs, e)}
                                   title='Remove shortcut'
                                   style={{
                                     fontSize: 10,
