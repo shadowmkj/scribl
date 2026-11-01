@@ -31,8 +31,35 @@ export const CanvasViewport: React.FC = () => {
   const isPanning = useCameraStore((s) => s.isPanning);
 
   const [marqueeBox, setMarqueeBox] = useState<MarqueeBox | null>(null);
+  const [isAltPressed, setIsAltPressed] = useState(false);
   const scratchRendererRef = useRef<ScratchRenderer>(new ScratchRenderer());
   const pointerRouterRef = useRef<PointerRouter | null>(null);
+
+  // Track Alt key for zoom-out cursor
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Alt' || e.altKey) {
+        setIsAltPressed(true);
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Alt' || !e.altKey) {
+        setIsAltPressed(false);
+      }
+    };
+    const handleBlur = () => {
+      setIsAltPressed(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, []);
 
   // Resize handler
   useEffect(() => {
@@ -95,6 +122,8 @@ export const CanvasViewport: React.FC = () => {
           ? ERASER_CURSOR
           : currentTool === 'pen'
           ? 'crosshair'
+          : currentTool === 'zoom'
+          ? (isAltPressed ? 'zoom-out' : 'zoom-in')
           : 'default',
       }}
       onWheel={handleWheel}

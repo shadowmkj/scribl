@@ -1,8 +1,13 @@
 import { useCameraStore } from '../../stores/useCameraStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
-import { ToolType } from '../../types/canvas';
-import { screenToWorld } from '../camera/cameraMath';
+import { Camera, ToolType } from '../../types/canvas';
+import {
+  calculateBoxFitCamera,
+  calculateScrubbyZoom,
+  screenToWorld,
+  worldToScreen,
+} from '../camera/cameraMath';
 import { hitTestMarquee, hitTestPoint } from '../engine/HitTester';
 import { createStrokeElement } from '../engine/InkingEngine';
 import { ScratchRenderer } from '../engine/ScratchRenderer';
@@ -14,6 +19,9 @@ export class PointerRouter {
   private isPenTouching: boolean = false;
   private activePointerId: number | null = null;
   private lastDragWorld: { x: number; y: number; } = { x: 0, y: 0 };
+  private zoomStartScreen: { x: number; y: number; } = { x: 0, y: 0 };
+  private zoomInitialCamera: Camera = { x: 0, y: 0, zoom: 1 };
+  private zoomHasDragged: boolean = false;
   public marqueeBox: MarqueeBox | null = null;
   public onMarqueeUpdate?: (box: MarqueeBox | null) => void;
 
@@ -86,6 +94,29 @@ export class PointerRouter {
         };
         this.onMarqueeUpdate?.(this.marqueeBox);
       }
+    } else if (activeTool === 'zoom') {
+      const zoomMode = useToolStore.getState().zoomMode;
+      const effectiveMode = e.shiftKey
+        ? (zoomMode === 'scrubby' ? 'selection' : 'scrubby')
+        : zoomMode;
+
+      this.zoomStartScreen = { x: e.clientX, y: e.clientY };
+      this.zoomInitialCamera = { ...camera };
+      this.zoomHasDragged = false;
+
+      if (effectiveMode === 'scrubby') {
+        this.state = 'ZOOMING_SCRUB';
+      } else {
+        this.state = 'ZOOMING_SELECTION';
+        this.marqueeBox = {
+          startX: worldPoint.x,
+          startY: worldPoint.y,
+          currentX: worldPoint.x,
+          currentY: worldPoint.y,
+          type: 'zoom',
+        };
+        this.onMarqueeUpdate?.(this.marqueeBox);
+      }
     }
   }
 
@@ -101,6 +132,41 @@ export class PointerRouter {
       const dy = e.clientY - this.lastDragWorld.y;
       useCameraStore.getState().panBy(-dx, -dy);
       this.lastDragWorld = { x: e.clientX, y: e.clientY };
+      return;
+    }
+
+    if (this.state === 'ZOOMING_SCRUB') {
+      const dist = Math.hypot(
+        e.clientX - this.zoomStartScreen.x,
+        e.clientY - this.zoomStartScreen.y,
+      );
+      if (dist > 3) {
+        this.zoomHasDragged = true;
+      }
+      const updatedCamera = calculateScrubbyZoom(
+        this.zoomStartScreen.x,
+        this.zoomStartScreen.y,
+        e.clientX,
+        this.zoomInitialCamera,
+        width,
+        height,
+      );
+      useCameraStore.setState({ camera: updatedCamera });
+      return;
+    }
+
+    if (this.state === 'ZOOMING_SELECTION' && this.marqueeBox) {
+      const dist = Math.hypot(
+        e.clientX - this.zoomStartScreen.x,
+        e.clientY - this.zoomStartScreen.y,
+      );
+      if (dist > 3) {
+        this.zoomHasDragged = true;
+      }
+      const worldPoint = screenToWorld(e.clientX, e.clientY, camera, width, height);
+      this.marqueeBox.currentX = worldPoint.x;
+      this.marqueeBox.currentY = worldPoint.y;
+      this.onMarqueeUpdate?.({ ...this.marqueeBox });
       return;
     }
 
@@ -173,6 +239,51 @@ export class PointerRouter {
     } else if (this.state === 'SELECTING_MARQUEE') {
       this.marqueeBox = null;
       this.onMarqueeUpdate?.(null);
+    } else if (this.state === 'ZOOMING_SCRUB') {
+      if (!this.zoomHasDragged) {
+        const factor = e.altKey ? 1 / 1.25 : 1.25;
+        useCameraStore.getState().zoomAt(
+          this.zoomStartScreen.x,
+          this.zoomStartScreen.y,
+          this.zoomInitialCamera.zoom * factor,
+        );
+      }
+    } else if (this.state === 'ZOOMING_SELECTION') {
+      if (this.marqueeBox) {
+        const screenStart = worldToScreen(
+          this.marqueeBox.startX,
+          this.marqueeBox.startY,
+          useCameraStore.getState().camera,
+          width,
+          height,
+        );
+        const dist = Math.hypot(e.clientX - screenStart.x, e.clientY - screenStart.y);
+
+        if (dist > 10) {
+          const minX = Math.min(this.marqueeBox.startX, this.marqueeBox.currentX);
+          const minY = Math.min(this.marqueeBox.startY, this.marqueeBox.currentY);
+          const maxX = Math.max(this.marqueeBox.startX, this.marqueeBox.currentX);
+          const maxY = Math.max(this.marqueeBox.startY, this.marqueeBox.currentY);
+
+          const fitCam = calculateBoxFitCamera(
+            { minX, minY, maxX, maxY },
+            width,
+            height,
+            0.9,
+          );
+          useCameraStore.setState({ camera: fitCam });
+        } else {
+          const factor = e.altKey ? 1 / 1.25 : 1.25;
+          useCameraStore.getState().zoomAt(
+            this.zoomStartScreen.x,
+            this.zoomStartScreen.y,
+            useCameraStore.getState().camera.zoom * factor,
+          );
+        }
+
+        this.marqueeBox = null;
+        this.onMarqueeUpdate?.(null);
+      }
     }
 
     this.state = 'IDLE';

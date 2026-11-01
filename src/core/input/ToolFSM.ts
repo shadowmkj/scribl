@@ -4,11 +4,14 @@ export type FSMState =
   | 'ERASING'
   | 'SELECTING_MARQUEE'
   | 'DRAGGING_SELECTION'
-  | 'PANNING';
+  | 'PANNING'
+  | 'ZOOMING_SCRUB'
+  | 'ZOOMING_SELECTION';
 
 export interface MarqueeBox {
   startX: number;
   startY: number;
   currentX: number;
   currentY: number;
+  type?: 'selection' | 'zoom';
 }

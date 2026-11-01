@@ -87,6 +87,11 @@ export function handleGlobalKeyDown(e: KeyboardEvent): void {
     return;
   }
 
+  if ((!cmdKey && e.key.toLowerCase() === 'z') || e.key === '4') {
+    useToolStore.getState().setTool('zoom');
+    return;
+  }
+
   // Delete Selection
   if (e.key === 'Backspace' || e.key === 'Delete') {
     useDocumentStore.getState().deleteSelected();

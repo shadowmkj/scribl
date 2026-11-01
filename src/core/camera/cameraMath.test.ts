@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { Camera } from '../../types/canvas';
-import { calculateZoomAtCursor, screenToWorld, worldToScreen } from './cameraMath';
+import {
+  calculateBoxFitCamera,
+  calculateScrubbyZoom,
+  calculateZoomAtCursor,
+  screenToWorld,
+  worldToScreen,
+} from './cameraMath';
 
 describe('cameraMath', () => {
   const camera: Camera = { x: 0, y: 0, zoom: 1 };
@@ -48,5 +54,36 @@ describe('cameraMath', () => {
     const postZoomWorld = screenToWorld(cursorScreenX, cursorScreenY, updatedCamera, width, height);
     expect(postZoomWorld.x).toBeCloseTo(initialWorld.x);
     expect(postZoomWorld.y).toBeCloseTo(initialWorld.y);
+  });
+
+  it('calculates scrubby zoom: dragging right increases zoom, left decreases zoom', () => {
+    const startX = 400;
+    const startY = 300;
+    const initialCam: Camera = { x: 50, y: 50, zoom: 1.0 };
+
+    // Drag right by 120px -> 2.0x zoom
+    const zoomIn = calculateScrubbyZoom(startX, startY, startX + 120, initialCam, width, height);
+    expect(zoomIn.zoom).toBeCloseTo(2.0, 1);
+
+    // Anchor point in world space must be preserved
+    const worldBefore = screenToWorld(startX, startY, initialCam, width, height);
+    const worldAfter = screenToWorld(startX, startY, zoomIn, width, height);
+    expect(worldAfter.x).toBeCloseTo(worldBefore.x);
+    expect(worldAfter.y).toBeCloseTo(worldBefore.y);
+
+    // Drag left by 120px -> 0.5x zoom
+    const zoomOut = calculateScrubbyZoom(startX, startY, startX - 120, initialCam, width, height);
+    expect(zoomOut.zoom).toBeCloseTo(0.5, 1);
+  });
+
+  it('calculates box fit camera: frames bounding box in viewport with padding', () => {
+    const box = { minX: 100, minY: 200, maxX: 500, maxY: 400 };
+    // box width = 400, box height = 200, center = (300, 300)
+    const fit = calculateBoxFitCamera(box, width, height, 1.0);
+
+    expect(fit.x).toBe(300);
+    expect(fit.y).toBe(300);
+    // width=1000/400=2.5, height=800/200=4.0 -> min is 2.5
+    expect(fit.zoom).toBeCloseTo(2.5, 1);
   });
 });

@@ -144,5 +144,14 @@ describe('keyboardShortcuts', () => {
 
     handleGlobalKeyDown(new KeyboardEvent('keydown', { key: 'p' }));
     expect(useToolStore.getState().currentTool).toBe('pen');
+
+    handleGlobalKeyDown(new KeyboardEvent('keydown', { key: 'z' }));
+    expect(useToolStore.getState().currentTool).toBe('zoom');
+
+    handleGlobalKeyDown(new KeyboardEvent('keydown', { key: '1' }));
+    expect(useToolStore.getState().currentTool).toBe('select');
+
+    handleGlobalKeyDown(new KeyboardEvent('keydown', { key: '4' }));
+    expect(useToolStore.getState().currentTool).toBe('zoom');
   });
 });

@@ -56,3 +56,47 @@ export function calculateZoomAtCursor(
     zoom: clampedZoom,
   };
 }
+
+export function calculateScrubbyZoom(
+  startScreenX: number,
+  startScreenY: number,
+  currentScreenX: number,
+  initialCamera: Camera,
+  viewportWidth: number,
+  viewportHeight: number,
+): Camera {
+  const deltaX = currentScreenX - startScreenX;
+  const factor = Math.pow(2, deltaX / 120);
+  const targetZoom = initialCamera.zoom * factor;
+
+  return calculateZoomAtCursor(
+    startScreenX,
+    startScreenY,
+    initialCamera,
+    targetZoom,
+    viewportWidth,
+    viewportHeight,
+  );
+}
+
+export function calculateBoxFitCamera(
+  box: { minX: number; minY: number; maxX: number; maxY: number; },
+  viewportWidth: number,
+  viewportHeight: number,
+  paddingFactor = 0.9,
+): Camera {
+  const boxW = Math.max(1, Math.abs(box.maxX - box.minX));
+  const boxH = Math.max(1, Math.abs(box.maxY - box.minY));
+  const centerX = (box.minX + box.maxX) / 2;
+  const centerY = (box.minY + box.maxY) / 2;
+
+  const zoomX = (viewportWidth * paddingFactor) / boxW;
+  const zoomY = (viewportHeight * paddingFactor) / boxH;
+  const clampedZoom = Math.min(8.0, Math.max(0.1, Math.min(zoomX, zoomY)));
+
+  return {
+    x: centerX,
+    y: centerY,
+    zoom: clampedZoom,
+  };
+}

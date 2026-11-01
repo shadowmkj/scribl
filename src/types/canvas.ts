@@ -32,7 +32,9 @@ export interface StrokeElement extends BaseElement {
 
 export type CanvasElement = StrokeElement;
 
-export type ToolType = 'select' | 'pen' | 'eraser';
+export type ToolType = 'select' | 'pen' | 'eraser' | 'zoom';
+
+export type ZoomMode = 'scrubby' | 'selection';
 
 export interface BoundingBox {
   minX: number;

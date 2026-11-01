@@ -66,17 +66,35 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
           const screenTopLeft = worldToScreen(minX, minY, camera, width, height);
           const boxW = (maxX - minX) * camera.zoom;
           const boxH = (maxY - minY) * camera.zoom;
+          const isZoom = marqueeBox.type === 'zoom';
 
           return (
-            <rect
-              x={screenTopLeft.x}
-              y={screenTopLeft.y}
-              width={boxW}
-              height={boxH}
-              fill='rgba(2, 132, 199, 0.15)'
-              stroke='#0284c7'
-              strokeWidth={1}
-            />
+            <g>
+              <rect
+                x={screenTopLeft.x}
+                y={screenTopLeft.y}
+                width={boxW}
+                height={boxH}
+                fill={isZoom ? 'rgba(56, 189, 248, 0.12)' : 'rgba(2, 132, 199, 0.15)'}
+                stroke={isZoom ? '#38bdf8' : '#0284c7'}
+                strokeWidth={isZoom ? 1.5 : 1}
+                strokeDasharray={isZoom ? '5 3' : undefined}
+              />
+              {isZoom && boxW > 30 && boxH > 30 && (
+                <g transform={`translate(${screenTopLeft.x + 6}, ${screenTopLeft.y + 6})`}>
+                  <circle cx='6' cy='6' r='4.5' fill='none' stroke='#38bdf8' strokeWidth='1.3' />
+                  <line
+                    x1='9.5'
+                    y1='9.5'
+                    x2='13'
+                    y2='13'
+                    stroke='#38bdf8'
+                    strokeWidth='1.3'
+                    strokeLinecap='round'
+                  />
+                </g>
+              )}
+            </g>
           );
         })()}
     </svg>
