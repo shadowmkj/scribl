@@ -47,7 +47,6 @@ describe('KeybindingEngine', () => {
       expect(formatKeybindForDisplay('f')).toBe('F');
       expect(formatKeybindForDisplay('1')).toBe('1');
     });
-
     it('formats modifier brackets into platform symbols', () => {
       const formattedUndo = formatKeybindForDisplay('<D-z>');
       expect(formattedUndo === '⌘Z' || formattedUndo === 'Ctrl+Z').toBe(true);
