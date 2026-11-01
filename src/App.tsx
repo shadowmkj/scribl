@@ -38,7 +38,6 @@ export function App() {
     const configStore = useConfigStore.getState();
     configStore.loadConfig().then(() => {
       const current = useConfigStore.getState().config;
-      keybindingEngine.setLeaderKey(current.mapleader);
       keybindingEngine.registerKeymaps(current.keymaps);
       if (current.options.default_tool) {
         useToolStore.getState().setTool(current.options.default_tool as any);
@@ -55,7 +54,6 @@ export function App() {
       listen<ScriblConfig>('scribl:config-reloaded', (event) => {
         const config = event.payload;
         useConfigStore.getState().setConfig(config);
-        keybindingEngine.setLeaderKey(config.mapleader);
         keybindingEngine.registerKeymaps(config.keymaps);
         if (config.options.zoom_mode) {
           useToolStore.getState().setZoomMode(config.options.zoom_mode as any);

@@ -17,26 +17,23 @@ describe('KeybindingEngine', () => {
 
   describe('parseVimKeyNotation', () => {
     it('parses simple characters and numbers', () => {
-      expect(parseVimKeyNotation('p')).toEqual([{ key: 'p' }]);
-      expect(parseVimKeyNotation('2')).toEqual([{ key: '2' }]);
+      expect(parseVimKeyNotation('p')).toEqual({ key: 'p' });
+      expect(parseVimKeyNotation('2')).toEqual({ key: '2' });
+      expect(parseVimKeyNotation('c')).toEqual({ key: 'c' });
+      expect(parseVimKeyNotation('f')).toEqual({ key: 'f' });
     });
 
     it('parses special keys like <Space>, <BS>, <Del>', () => {
-      expect(parseVimKeyNotation('<Space>')).toEqual([{ key: ' ' }]);
-      expect(parseVimKeyNotation('<BS>')).toEqual([{ key: 'Backspace' }]);
-      expect(parseVimKeyNotation('<Del>')).toEqual([{ key: 'Delete' }]);
+      expect(parseVimKeyNotation('<Space>')).toEqual({ key: ' ' });
+      expect(parseVimKeyNotation('<BS>')).toEqual({ key: 'Backspace' });
+      expect(parseVimKeyNotation('<Del>')).toEqual({ key: 'Delete' });
     });
 
     it('parses modifier keys like <C-z>, <D-z>, <S-0>, <D-S-z>', () => {
-      expect(parseVimKeyNotation('<C-z>')).toEqual([{ key: 'z', ctrl: true }]);
-      expect(parseVimKeyNotation('<D-z>')).toEqual([{ key: 'z', meta: true }]);
-      expect(parseVimKeyNotation('<S-0>')).toEqual([{ key: '0', shift: true }]);
-      expect(parseVimKeyNotation('<D-S-z>')).toEqual([{ key: 'z', meta: true, shift: true }]);
-    });
-
-    it('parses leader sequences like <leader>c', () => {
-      const parsed = parseVimKeyNotation('<leader>c', ' ');
-      expect(parsed).toEqual([{ key: ' ' }, { key: 'c' }]);
+      expect(parseVimKeyNotation('<C-z>')).toEqual({ key: 'z', ctrl: true });
+      expect(parseVimKeyNotation('<D-z>')).toEqual({ key: 'z', meta: true });
+      expect(parseVimKeyNotation('<S-0>')).toEqual({ key: '0', shift: true });
+      expect(parseVimKeyNotation('<D-S-z>')).toEqual({ key: 'z', meta: true, shift: true });
     });
   });
 
@@ -46,12 +43,9 @@ describe('KeybindingEngine', () => {
       expect(formatKeybindForDisplay('v')).toBe('V');
       expect(formatKeybindForDisplay('e')).toBe('E');
       expect(formatKeybindForDisplay('z')).toBe('Z');
+      expect(formatKeybindForDisplay('c')).toBe('C');
+      expect(formatKeybindForDisplay('f')).toBe('F');
       expect(formatKeybindForDisplay('1')).toBe('1');
-    });
-
-    it('formats leader shortcuts', () => {
-      expect(formatKeybindForDisplay('<leader>c')).toBe('Space C');
-      expect(formatKeybindForDisplay('<leader>f')).toBe('Space F');
     });
 
     it('formats modifier brackets into platform symbols', () => {
@@ -118,23 +112,11 @@ describe('KeybindingEngine', () => {
       expect(executedCommands).toEqual(['history.undo']);
     });
 
-    it('dispatches two-key leader chord sequence: <leader> then c', () => {
-      engine.setLeaderKey(' ');
+    it('dispatches single-key canvas.clear with "c"', () => {
       engine.registerKeymaps([
-        { mode: 'n', lhs: '<leader>c', rhs: 'canvas.clear' },
+        { mode: 'n', lhs: 'c', rhs: 'canvas.clear' },
       ]);
 
-      // Step 1: Press Space (<leader>)
-      const spaceEvent = new KeyboardEvent('keydown', {
-        code: 'Space',
-        key: ' ',
-        cancelable: true,
-      });
-      const spaceHandled = engine.handleKeyDown(spaceEvent);
-      expect(spaceHandled).toBe(true);
-      expect(executedCommands).toEqual([]); // not executed yet, waiting for second key
-
-      // Step 2: Press c
       const cEvent = new KeyboardEvent('keydown', {
         key: 'c',
         cancelable: true,

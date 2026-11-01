@@ -26,11 +26,8 @@ pub fn eval_lua_config_string(
     // Create the scribl module table
     let scribl_table = lua.create_table().map_err(|e| e.to_string())?;
 
-    // scribl.g
+    // scribl.g (custom user globals)
     let g_table = lua.create_table().map_err(|e| e.to_string())?;
-    g_table
-        .set("mapleader", default.mapleader.clone())
-        .map_err(|e| e.to_string())?;
     scribl_table.set("g", g_table).map_err(|e| e.to_string())?;
 
     // scribl.opt
@@ -152,9 +149,6 @@ pub fn eval_lua_config_string(
     lua.load(script).exec().map_err(|e| e.to_string())?;
 
     // Extract updated config
-    let g: Table = scribl_table.get("g").map_err(|e| e.to_string())?;
-    let mapleader: String = g.get("mapleader").unwrap_or_else(|_| " ".to_string());
-
     let opt: Table = scribl_table.get("opt").map_err(|e| e.to_string())?;
     let options = AppOptions {
         dot_grid: opt.get("dot_grid").unwrap_or(default.options.dot_grid),
@@ -217,7 +211,6 @@ pub fn eval_lua_config_string(
     }
 
     Ok(ScriblConfig {
-        mapleader,
         options,
         keymaps,
         toolbar: ToolbarConfig { position, items },
@@ -241,7 +234,6 @@ mod tests {
     #[test]
     fn test_eval_empty_script_returns_defaults() {
         let config = eval_lua_config_string("", None).expect("should evaluate");
-        assert_eq!(config.mapleader, " ");
         assert_eq!(config.options.dot_grid, true);
         assert_eq!(config.options.default_tool, "pen");
         assert_eq!(config.toolbar.position, "bottom");
@@ -257,7 +249,6 @@ mod tests {
     fn test_eval_custom_options_and_keymaps() {
         let script = r#"
             local scribl = require("scribl")
-            scribl.g.mapleader = ","
             scribl.opt.dot_grid = false
             scribl.opt.default_tool = "eraser"
 
@@ -271,7 +262,6 @@ mod tests {
         "#;
 
         let config = eval_lua_config_string(script, None).expect("should evaluate");
-        assert_eq!(config.mapleader, ",");
         assert_eq!(config.options.dot_grid, false);
         assert_eq!(config.options.default_tool, "eraser");
         assert_eq!(config.toolbar.position, "top");

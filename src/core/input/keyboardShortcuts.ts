@@ -8,7 +8,6 @@ export const keybindingEngine = new KeybindingEngine({
 });
 
 // Initialize with default keymaps
-keybindingEngine.setLeaderKey(DEFAULT_CONFIG.mapleader);
 keybindingEngine.registerKeymaps(DEFAULT_CONFIG.keymaps);
 
 export function handleGlobalKeyDown(e: KeyboardEvent): void {

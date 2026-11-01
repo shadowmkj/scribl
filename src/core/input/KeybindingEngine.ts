@@ -13,63 +13,53 @@ export interface KeymapEntry {
   desc?: string;
 }
 
-export function parseVimKeyNotation(notation: string, leaderKey = ' '): KeyStroke[] {
-  let expanded = notation;
-  if (expanded.includes('<leader>')) {
-    const leaderToken = leaderKey === ' ' ? '<Space>' : leaderKey;
-    expanded = expanded.replace(/<leader>/g, leaderToken);
-  }
+export function parseVimKeyNotation(notation: string): KeyStroke {
+  const trimmed = notation.trim();
 
-  const strokes: KeyStroke[] = [];
-  const regex = /<([^>]+)>|([a-zA-Z0-9+\-=_/[\]\\;',.`~])/g;
-  let match: RegExpExecArray | null;
+  // Bracketed notation, e.g. "<D-z>", "<D-S-z>", "<Space>", "<BS>", "<Del>", "<S-0>"
+  if (trimmed.startsWith('<') && trimmed.endsWith('>')) {
+    const content = trimmed.slice(1, -1);
+    const parts = content.split('-');
+    const baseKey = parts[parts.length - 1];
 
-  while ((match = regex.exec(expanded)) !== null) {
-    if (match[1]) {
-      // Bracketed token, e.g. "C-z", "D-S-z", "Space", "BS", "Del", "S-0"
-      const content = match[1];
-      const parts = content.split('-');
-      const baseKey = parts[parts.length - 1];
+    let ctrl = false;
+    let meta = false;
+    let alt = false;
+    let shift = false;
 
-      let ctrl = false;
-      let meta = false;
-      let alt = false;
-      let shift = false;
-
-      for (let i = 0; i < parts.length - 1; i++) {
-        const mod = parts[i].toUpperCase();
-        if (mod === 'C') ctrl = true;
-        if (mod === 'D') meta = true;
-        if (mod === 'M' || mod === 'A') alt = true;
-        if (mod === 'S') shift = true;
-      }
-
-      let key = baseKey;
-      if (baseKey.toLowerCase() === 'space') key = ' ';
-      else if (baseKey.toLowerCase() === 'bs' || baseKey.toLowerCase() === 'backspace') {
-        key = 'Backspace';
-      } else if (baseKey.toLowerCase() === 'del' || baseKey.toLowerCase() === 'delete') {
-        key = 'Delete';
-      } else if (baseKey.toLowerCase() === 'cr' || baseKey.toLowerCase() === 'enter') key = 'Enter';
-      else if (baseKey.toLowerCase() === 'esc' || baseKey.toLowerCase() === 'escape') {
-        key = 'Escape';
-      }
-
-      strokes.push({
-        key: key.length === 1 ? key.toLowerCase() : key,
-        ctrl: ctrl || undefined,
-        meta: meta || undefined,
-        alt: alt || undefined,
-        shift: shift || undefined,
-      });
-    } else if (match[2]) {
-      // Single character
-      const char = match[2];
-      strokes.push({ key: char.toLowerCase() });
+    for (let i = 0; i < parts.length - 1; i++) {
+      const mod = parts[i].toUpperCase();
+      if (mod === 'C') ctrl = true;
+      if (mod === 'D') meta = true;
+      if (mod === 'M' || mod === 'A') alt = true;
+      if (mod === 'S') shift = true;
     }
+
+    let key = baseKey;
+    if (baseKey.toLowerCase() === 'space') key = ' ';
+    else if (baseKey.toLowerCase() === 'bs' || baseKey.toLowerCase() === 'backspace') {
+      key = 'Backspace';
+    } else if (baseKey.toLowerCase() === 'del' || baseKey.toLowerCase() === 'delete') {
+      key = 'Delete';
+    } else if (baseKey.toLowerCase() === 'cr' || baseKey.toLowerCase() === 'enter') {
+      key = 'Enter';
+    } else if (baseKey.toLowerCase() === 'esc' || baseKey.toLowerCase() === 'escape') {
+      key = 'Escape';
+    }
+
+    return {
+      key: key.length === 1 ? key.toLowerCase() : key,
+      ctrl: ctrl || undefined,
+      meta: meta || undefined,
+      alt: alt || undefined,
+      shift: shift || undefined,
+    };
   }
 
-  return strokes;
+  // Single character / plain key (e.g. 'p', 'c', '1', '+', '-')
+  return {
+    key: trimmed.toLowerCase(),
+  };
 }
 
 export function formatKeybindForDisplay(lhs: string): string {
@@ -78,15 +68,9 @@ export function formatKeybindForDisplay(lhs: string): string {
   const isMac = typeof navigator !== 'undefined'
     && navigator.platform?.toUpperCase().indexOf('MAC') >= 0;
 
-  // Single character: uppercase it (e.g. 'p' -> 'P', '1' -> '1')
+  // Single character: uppercase it (e.g. 'p' -> 'P', 'c' -> 'C', '1' -> '1')
   if (lhs.length === 1) {
     return lhs.toUpperCase();
-  }
-
-  // <leader>x e.g. <leader>c -> Space C
-  if (lhs.startsWith('<leader>')) {
-    const after = lhs.slice(8).trim();
-    return `Space ${after.toUpperCase()}`;
   }
 
   // Bracketed notation like <D-z>, <D-S-z>, <C-z>, <S-0>, <Space>, <BS>, <Del>
@@ -195,29 +179,22 @@ function matchesStroke(e: KeyboardEvent, s: KeyStroke): boolean {
 }
 
 interface CompiledKeymap {
-  sequence: KeyStroke[];
+  stroke: KeyStroke;
   commandId: string;
   desc?: string;
 }
 
 export class KeybindingEngine {
   private keymaps: CompiledKeymap[] = [];
-  private leaderKey: string = ' ';
-  private pendingSequence: KeyStroke[] = [];
-  private chordTimer: number | null = null;
   private executeCommand: (id: string) => boolean;
 
   constructor(options: { executeCommand: (id: string) => boolean; }) {
     this.executeCommand = options.executeCommand;
   }
 
-  setLeaderKey(leader: string) {
-    this.leaderKey = leader;
-  }
-
   registerKeymaps(entries: KeymapEntry[]) {
     this.keymaps = entries.map((entry) => ({
-      sequence: parseVimKeyNotation(entry.lhs, this.leaderKey),
+      stroke: parseVimKeyNotation(entry.lhs),
       commandId: entry.rhs,
       desc: entry.desc,
     }));
@@ -228,72 +205,14 @@ export class KeybindingEngine {
       return false;
     }
 
-    const currentStroke: KeyStroke = {
-      key: e.key,
-      ctrl: e.ctrlKey || undefined,
-      meta: e.metaKey || undefined,
-      alt: e.altKey || undefined,
-      shift: e.shiftKey || undefined,
-    };
-
-    // If pending chord timer active
-    const candidateSequence = [...this.pendingSequence, currentStroke];
-
-    // Check exact match
     for (const km of this.keymaps) {
-      if (km.sequence.length === candidateSequence.length) {
-        let match = true;
-        for (let i = 0; i < km.sequence.length; i++) {
-          // Compare each stroke
-          const strokeDef = km.sequence[i];
-          const isCurrent = i === km.sequence.length - 1;
-          if (isCurrent) {
-            if (!matchesStroke(e, strokeDef)) {
-              match = false;
-              break;
-            }
-          }
-        }
-        if (match) {
-          this.clearChord();
-          e.preventDefault();
-          this.executeCommand(km.commandId);
-          return true;
-        }
+      if (matchesStroke(e, km.stroke)) {
+        e.preventDefault();
+        this.executeCommand(km.commandId);
+        return true;
       }
-    }
-
-    // Check prefix match (multi-key chord continuation)
-    const hasPrefixMatch = this.keymaps.some((km) => {
-      if (km.sequence.length > candidateSequence.length) {
-        const strokeDef = km.sequence[candidateSequence.length - 1];
-        return matchesStroke(e, strokeDef);
-      }
-      return false;
-    });
-
-    if (hasPrefixMatch) {
-      this.pendingSequence.push(currentStroke);
-      e.preventDefault();
-      if (this.chordTimer) clearTimeout(this.chordTimer);
-      this.chordTimer = window.setTimeout(() => this.clearChord(), 1000);
-      return true;
-    }
-
-    // If candidate didn't match and we had a pending sequence, clear and re-try current key alone
-    if (this.pendingSequence.length > 0) {
-      this.clearChord();
-      return this.handleKeyDown(e);
     }
 
     return false;
-  }
-
-  private clearChord() {
-    this.pendingSequence = [];
-    if (this.chordTimer) {
-      clearTimeout(this.chordTimer);
-      this.chordTimer = null;
-    }
   }
 }

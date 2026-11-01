@@ -22,14 +22,12 @@ export interface ToolbarConfig {
 }
 
 export interface ScriblConfig {
-  mapleader: string;
   options: AppOptions;
   keymaps: KeymapEntry[];
   toolbar: ToolbarConfig;
 }
 
 export const DEFAULT_CONFIG: ScriblConfig = {
-  mapleader: ' ',
   options: {
     dot_grid: true,
     default_tool: 'pen',
@@ -60,8 +58,8 @@ export const DEFAULT_CONFIG: ScriblConfig = {
     { mode: 'n', lhs: '<Del>', rhs: 'selection.delete', desc: 'Delete Selected' },
     { mode: 'n', lhs: '<D-s>', rhs: 'file.save', desc: 'Save Drawing' },
     { mode: 'n', lhs: '<D-o>', rhs: 'file.open', desc: 'Open Drawing' },
-    { mode: 'n', lhs: '<leader>c', rhs: 'canvas.clear', desc: 'Clear Canvas' },
-    { mode: 'n', lhs: '<leader>f', rhs: 'zoom.fit_all', desc: 'Fit Drawing' },
+    { mode: 'n', lhs: 'c', rhs: 'canvas.clear', desc: 'Clear Canvas' },
+    { mode: 'n', lhs: 'f', rhs: 'zoom.fit_all', desc: 'Fit Drawing' },
   ],
   toolbar: {
     position: 'bottom',

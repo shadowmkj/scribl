@@ -59,7 +59,6 @@ impl Default for ToolbarConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ScriblConfig {
-    pub mapleader: String,
     pub options: AppOptions,
     pub keymaps: Vec<KeymapEntry>,
     pub toolbar: ToolbarConfig,
@@ -68,7 +67,6 @@ pub struct ScriblConfig {
 impl Default for ScriblConfig {
     fn default() -> Self {
         Self {
-            mapleader: " ".to_string(),
             options: AppOptions::default(),
             keymaps: vec![
                 KeymapEntry {
@@ -199,13 +197,13 @@ impl Default for ScriblConfig {
                 },
                 KeymapEntry {
                     mode: "n".into(),
-                    lhs: "<leader>c".into(),
+                    lhs: "c".into(),
                     rhs: "canvas.clear".into(),
                     desc: Some("Clear Canvas".into()),
                 },
                 KeymapEntry {
                     mode: "n".into(),
-                    lhs: "<leader>f".into(),
+                    lhs: "f".into(),
                     rhs: "zoom.fit_all".into(),
                     desc: Some("Fit Drawing".into()),
                 },

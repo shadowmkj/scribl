@@ -25,12 +25,7 @@ pub const DEFAULT_INIT_LUA_TEMPLATE: &str = r#"-- ~/.config/scribl/init.lua
 local scribl = require("scribl")
 
 --------------------------------------------------------------------------------
--- 1. Leader Key
---------------------------------------------------------------------------------
-scribl.g.mapleader = " " -- Space
-
---------------------------------------------------------------------------------
--- 2. General Options
+-- 1. General Options
 --------------------------------------------------------------------------------
 scribl.opt.dot_grid = true             -- Show dot-grid canvas background
 scribl.opt.default_tool = "pen"        -- Active tool on startup: "pen", "select", "eraser", "zoom"
@@ -40,9 +35,9 @@ scribl.opt.stroke_thinning = 0.6       -- Pressure thinning effect
 scribl.opt.auto_save = true            -- Automatically save drawings to local storage
 
 --------------------------------------------------------------------------------
--- 3. Keybindings
+-- 2. Keybindings
 -- Format: scribl.keymap.set(mode, lhs, rhs, opts)
--- Supports Vim notation: <C-x>, <D-x> (Cmd/Meta), <M-x> (Alt), <S-x>, <leader>, <Space>
+-- Supports key notation: <C-x>, <D-x> (Cmd/Meta), <M-x> (Alt), <S-x>, <Space>
 --------------------------------------------------------------------------------
 
 -- Tool Selection
@@ -75,11 +70,11 @@ scribl.keymap.set("n", "<Del>", "selection.delete", { desc = "Delete Selected" }
 -- File Actions & Quick Commands
 scribl.keymap.set("n", "<D-s>", "file.save", { desc = "Save Drawing" })
 scribl.keymap.set("n", "<D-o>", "file.open", { desc = "Open Drawing" })
-scribl.keymap.set("n", "<leader>c", "canvas.clear", { desc = "Clear Canvas" })
-scribl.keymap.set("n", "<leader>f", "zoom.fit_all", { desc = "Fit Drawing" })
+scribl.keymap.set("n", "c", "canvas.clear", { desc = "Clear Canvas" })
+scribl.keymap.set("n", "f", "zoom.fit_all", { desc = "Fit Drawing" })
 
 --------------------------------------------------------------------------------
--- 4. Floating Toolbar Layout
+-- 3. Floating Toolbar Layout
 -- Position: "bottom", "top", "left", "right"
 -- Items: "select", "pen", "eraser", "zoom", "|", "undo", "redo", "|", "clear"
 --------------------------------------------------------------------------------
