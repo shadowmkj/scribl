@@ -50,6 +50,12 @@ pub fn eval_lua_config_string(
     opt_table
         .set("auto_save", default.options.auto_save)
         .map_err(|e| e.to_string())?;
+    opt_table
+        .set(
+            "default_pen_color",
+            default.options.default_pen_color.clone(),
+        )
+        .map_err(|e| e.to_string())?;
     scribl_table
         .set("opt", opt_table)
         .map_err(|e| e.to_string())?;
@@ -176,6 +182,9 @@ pub fn eval_lua_config_string(
             .get("stroke_thinning")
             .unwrap_or(default.options.stroke_thinning),
         auto_save: opt.get("auto_save").unwrap_or(default.options.auto_save),
+        default_pen_color: opt
+            .get("default_pen_color")
+            .unwrap_or(default.options.default_pen_color),
     };
 
     // Extract keymaps and merge with defaults

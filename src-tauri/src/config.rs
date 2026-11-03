@@ -9,6 +9,12 @@ pub struct AppOptions {
     pub stroke_smoothing: f64,
     pub stroke_thinning: f64,
     pub auto_save: bool,
+    #[serde(default = "default_pen_color_val")]
+    pub default_pen_color: String,
+}
+
+fn default_pen_color_val() -> String {
+    "#0284c7".to_string()
 }
 
 impl Default for AppOptions {
@@ -20,6 +26,7 @@ impl Default for AppOptions {
             stroke_smoothing: 0.5,
             stroke_thinning: 0.6,
             auto_save: true,
+            default_pen_color: "#0284c7".to_string(),
         }
     }
 }

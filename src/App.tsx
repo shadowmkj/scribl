@@ -53,6 +53,9 @@ export function App() {
       if (current.options.default_tool) {
         useToolStore.getState().setTool(current.options.default_tool as any);
       }
+      if (current.options.default_pen_color) {
+        useToolStore.getState().setColor(current.options.default_pen_color);
+      }
       if (current.options.zoom_mode) {
         useToolStore.getState().setZoomMode(current.options.zoom_mode as any);
       }
@@ -67,6 +70,9 @@ export function App() {
         const config = event.payload;
         useConfigStore.getState().setConfig(config);
         keybindingEngine.registerKeymaps(config.keymaps);
+        if (config.options.default_pen_color) {
+          useToolStore.getState().setColor(config.options.default_pen_color);
+        }
         if (config.options.zoom_mode) {
           useToolStore.getState().setZoomMode(config.options.zoom_mode as any);
         }

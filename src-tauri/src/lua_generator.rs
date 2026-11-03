@@ -23,6 +23,10 @@ pub fn generate_lua_script(config: &ScriblConfig) -> String {
         config.options.default_tool
     ));
     out.push_str(&format!(
+        "scribl.opt.default_pen_color = \"{}\"\n",
+        config.options.default_pen_color
+    ));
+    out.push_str(&format!(
         "scribl.opt.zoom_mode = \"{}\"\n",
         config.options.zoom_mode
     ));
@@ -107,6 +111,7 @@ mod tests {
         let mut config = ScriblConfig::default();
         config.options.dot_grid = false;
         config.options.default_tool = "eraser".to_string();
+        config.options.default_pen_color = "#ff0077".to_string();
         config.options.zoom_mode = "selection".to_string();
         config.options.stroke_smoothing = 0.8;
         config.options.stroke_thinning = 0.4;
@@ -115,6 +120,7 @@ mod tests {
         let script = generate_lua_script(&config);
         assert!(script.contains("scribl.opt.dot_grid = false"));
         assert!(script.contains("scribl.opt.default_tool = \"eraser\""));
+        assert!(script.contains("scribl.opt.default_pen_color = \"#ff0077\""));
         assert!(script.contains("scribl.opt.zoom_mode = \"selection\""));
 
         // Round-trip verification: evaluating generated script must yield exact same config

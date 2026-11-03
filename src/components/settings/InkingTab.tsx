@@ -161,7 +161,7 @@ export const InkingTab: React.FC = () => {
           <svg width='300' height='60' viewBox='0 0 300 60' fill='none'>
             <path
               d='M 20 30 C 60 10, 100 50, 150 30 C 200 10, 240 50, 280 30'
-              stroke='var(--color-accent, #0284c7)'
+              stroke={config.options.default_pen_color || 'var(--color-accent, #0284c7)'}
               strokeWidth={Math.max(2, 8 * (1 - config.options.stroke_thinning * 0.5))}
               strokeLinecap='round'
             />
