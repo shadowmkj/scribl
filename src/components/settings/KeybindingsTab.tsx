@@ -8,6 +8,7 @@ interface ActionDefinition {
   label: string;
   category:
     | 'Tools'
+    | 'Edit & Clipboard'
     | 'Zoom & Navigation'
     | 'History'
     | 'Canvas & File'
@@ -22,6 +23,36 @@ const ALL_ACTIONS: ActionDefinition[] = [
   { id: 'tool.eraser', label: 'Eraser Tool', category: 'Tools', defaultLhs: 'e', mode: 'n' },
   { id: 'tool.select', label: 'Select Tool', category: 'Tools', defaultLhs: 'v', mode: 'n' },
   { id: 'tool.zoom', label: 'Zoom Tool', category: 'Tools', defaultLhs: 'z', mode: 'n' },
+
+  // Edit & Clipboard
+  {
+    id: 'edit.copy',
+    label: 'Copy Selected Elements',
+    category: 'Edit & Clipboard',
+    defaultLhs: '<D-c>',
+    mode: 'n',
+  },
+  {
+    id: 'edit.paste',
+    label: 'Paste Elements',
+    category: 'Edit & Clipboard',
+    defaultLhs: '<D-v>',
+    mode: 'n',
+  },
+  {
+    id: 'edit.cut',
+    label: 'Cut Selected Elements',
+    category: 'Edit & Clipboard',
+    defaultLhs: '<D-x>',
+    mode: 'n',
+  },
+  {
+    id: 'edit.duplicate',
+    label: 'Duplicate Selected',
+    category: 'Edit & Clipboard',
+    defaultLhs: '<D-d>',
+    mode: 'n',
+  },
 
   // Zoom & Navigation
   {
@@ -110,6 +141,22 @@ const ALL_ACTIONS: ActionDefinition[] = [
     label: 'Delete Selected (Visual Mode)',
     category: 'Visual Mode (Selection)',
     defaultLhs: 'd',
+    mode: 'v',
+  },
+  {
+    id: 'edit.copy_visual',
+    targetId: 'edit.copy',
+    label: 'Yank / Copy Selected (Visual Mode)',
+    category: 'Visual Mode (Selection)',
+    defaultLhs: 'y',
+    mode: 'v',
+  },
+  {
+    id: 'edit.paste_visual',
+    targetId: 'edit.paste',
+    label: 'Put / Paste Elements (Visual Mode)',
+    category: 'Visual Mode (Selection)',
+    defaultLhs: 'p',
     mode: 'v',
   },
 ];
@@ -260,12 +307,14 @@ export const KeybindingsTab: React.FC = () => {
   // Group actions by category
   const categories: Array<
     | 'Tools'
+    | 'Edit & Clipboard'
     | 'Zoom & Navigation'
     | 'History'
     | 'Canvas & File'
     | 'Visual Mode (Selection)'
   > = [
     'Tools',
+    'Edit & Clipboard',
     'Zoom & Navigation',
     'History',
     'Canvas & File',

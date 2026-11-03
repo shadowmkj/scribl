@@ -3,6 +3,7 @@ import { StrokeElement } from '../../types/canvas';
 import { DocumentData } from '../../types/commands';
 import {
   AddElementCommand,
+  AddElementsCommand,
   DeleteElementsCommand,
   MoveElementsCommand,
   TransformElementsCommand,
@@ -120,5 +121,28 @@ describe('HistoryStack and Commands', () => {
     data = history.redo(data);
     expect(data.elements['s1'].x).toBe(100);
     expect(data.elements['s1'].size).toBe(6);
+  });
+
+  it('executes AddElementsCommand and allows 1-step undo/redo for multiple elements', () => {
+    const history = new HistoryStack();
+    const s2: StrokeElement = { ...dummyStroke, id: 's2' };
+    const s3: StrokeElement = { ...dummyStroke, id: 's3' };
+    let data: DocumentData = { elements: { s1: dummyStroke }, elementIds: ['s1'], selectedIds: [] };
+
+    data = history.execute(new AddElementsCommand([s2, s3]), data);
+    expect(data.elementIds).toEqual(['s1', 's2', 's3']);
+    expect(data.selectedIds).toEqual(['s2', 's3']);
+    expect(history.canUndo()).toBe(true);
+
+    data = history.undo(data);
+    expect(data.elementIds).toEqual(['s1']);
+    expect(data.elements['s2']).toBeUndefined();
+    expect(data.elements['s3']).toBeUndefined();
+    expect(data.selectedIds).toEqual([]);
+    expect(history.canRedo()).toBe(true);
+
+    data = history.redo(data);
+    expect(data.elementIds).toEqual(['s1', 's2', 's3']);
+    expect(data.selectedIds).toEqual(['s2', 's3']);
   });
 });

@@ -26,6 +26,47 @@ export class AddElementCommand implements Command {
   }
 }
 
+export class AddElementsCommand implements Command {
+  id = `add_elements_${Date.now()}`;
+  name = 'Add Elements';
+
+  constructor(private elements: CanvasElement[]) {}
+
+  execute(data: DocumentData): DocumentData {
+    const newElements = { ...data.elements };
+    const newElementIds = [...data.elementIds];
+    const addedIds: string[] = [];
+
+    for (const el of this.elements) {
+      newElements[el.id] = el;
+      newElementIds.push(el.id);
+      addedIds.push(el.id);
+    }
+
+    return {
+      ...data,
+      elements: newElements,
+      elementIds: newElementIds,
+      selectedIds: addedIds,
+    };
+  }
+
+  undo(data: DocumentData): DocumentData {
+    const newElements = { ...data.elements };
+    const toRemove = new Set(this.elements.map((e) => e.id));
+    for (const id of toRemove) {
+      delete newElements[id];
+    }
+
+    return {
+      ...data,
+      elements: newElements,
+      elementIds: data.elementIds.filter((id) => !toRemove.has(id)),
+      selectedIds: data.selectedIds.filter((id) => !toRemove.has(id)),
+    };
+  }
+}
+
 export class DeleteElementsCommand implements Command {
   id = `del_${Date.now()}`;
   name = 'Delete Elements';
