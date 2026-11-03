@@ -28,10 +28,17 @@ export const GeneralTab: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 600, color: '#f8fafc' }}>
+        <h3
+          style={{
+            margin: '0 0 4px',
+            fontSize: 15,
+            fontWeight: 600,
+            color: 'var(--color-text-primary, #f8fafc)',
+          }}
+        >
           General Preferences
         </h3>
-        <p style={{ margin: 0, fontSize: 12, color: '#94a3b8' }}>
+        <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-secondary, #94a3b8)' }}>
           Configure startup tools, canvas background grid, and navigation modes.
         </p>
       </div>
@@ -44,16 +51,20 @@ export const GeneralTab: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '12px 14px',
-            background: 'rgba(255, 255, 255, 0.03)',
+            background: 'rgba(0, 0, 0, 0.05)',
             borderRadius: 10,
-            border: '1px solid rgba(255, 255, 255, 0.06)',
+            border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.06))',
           }}
         >
           <div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0' }}>
+            <div
+              style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary, #e2e8f0)' }}
+            >
               Dot Grid Background
             </div>
-            <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
+            <div
+              style={{ fontSize: 11, color: 'var(--color-text-secondary, #64748b)', marginTop: 2 }}
+            >
               Display subtle alignment dot grid on canvas
             </div>
           </div>
@@ -67,7 +78,9 @@ export const GeneralTab: React.FC = () => {
               width: 44,
               height: 24,
               borderRadius: 12,
-              background: config.options.dot_grid ? '#0284c7' : 'rgba(255, 255, 255, 0.15)',
+              background: config.options.dot_grid
+                ? 'var(--color-accent, #0284c7)'
+                : 'rgba(255, 255, 255, 0.15)',
               border: 'none',
               cursor: 'pointer',
               position: 'relative',
@@ -96,16 +109,20 @@ export const GeneralTab: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '12px 14px',
-            background: 'rgba(255, 255, 255, 0.03)',
+            background: 'rgba(0, 0, 0, 0.05)',
             borderRadius: 10,
-            border: '1px solid rgba(255, 255, 255, 0.06)',
+            border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.06))',
           }}
         >
           <div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0' }}>
+            <div
+              style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary, #e2e8f0)' }}
+            >
               Default Startup Tool
             </div>
-            <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
+            <div
+              style={{ fontSize: 11, color: 'var(--color-text-secondary, #64748b)', marginTop: 2 }}
+            >
               Active tool when opening or clearing a canvas
             </div>
           </div>
@@ -113,11 +130,11 @@ export const GeneralTab: React.FC = () => {
             value={config.options.default_tool}
             onChange={(e) => updateOption('default_tool', e.target.value)}
             style={{
-              background: 'rgba(15, 23, 42, 0.8)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              background: 'var(--color-panel-bg, rgba(15, 23, 42, 0.8))',
+              border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.15))',
               borderRadius: 8,
               padding: '5px 10px',
-              color: '#f8fafc',
+              color: 'var(--color-text-primary, #f8fafc)',
               fontSize: 12,
               cursor: 'pointer',
               outline: 'none',
@@ -137,16 +154,20 @@ export const GeneralTab: React.FC = () => {
             flexDirection: 'column',
             gap: 10,
             padding: '12px 14px',
-            background: 'rgba(255, 255, 255, 0.03)',
+            background: 'rgba(0, 0, 0, 0.05)',
             borderRadius: 10,
-            border: '1px solid rgba(255, 255, 255, 0.06)',
+            border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.06))',
           }}
         >
           <div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0' }}>
+            <div
+              style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary, #e2e8f0)' }}
+            >
               Zoom Interaction Mode
             </div>
-            <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
+            <div
+              style={{ fontSize: 11, color: 'var(--color-text-secondary, #64748b)', marginTop: 2 }}
+            >
               Choose how the Zoom tool behaves on click and drag
             </div>
           </div>
@@ -161,10 +182,10 @@ export const GeneralTab: React.FC = () => {
                 borderRadius: 8,
                 background: config.options.zoom_mode === 'scrubby'
                   ? 'rgba(2, 132, 199, 0.15)'
-                  : 'rgba(255, 255, 255, 0.02)',
+                  : 'rgba(0, 0, 0, 0.03)',
                 border: config.options.zoom_mode === 'scrubby'
-                  ? '1px solid rgba(56, 189, 248, 0.4)'
-                  : '1px solid rgba(255, 255, 255, 0.06)',
+                  ? '1px solid var(--color-accent-light, rgba(56, 189, 248, 0.4))'
+                  : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.06))',
                 cursor: 'pointer',
               }}
             >
@@ -177,8 +198,22 @@ export const GeneralTab: React.FC = () => {
                 style={{ marginTop: 2 }}
               />
               <div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#f1f5f9' }}>Scrubby Zoom</div>
-                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: 'var(--color-text-primary, #f1f5f9)',
+                  }}
+                >
+                  Scrubby Zoom
+                </div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: 'var(--color-text-secondary, #94a3b8)',
+                    marginTop: 2,
+                  }}
+                >
                   Drag horizontally to zoom smoothly in and out
                 </div>
               </div>
@@ -193,10 +228,10 @@ export const GeneralTab: React.FC = () => {
                 borderRadius: 8,
                 background: config.options.zoom_mode === 'selection'
                   ? 'rgba(2, 132, 199, 0.15)'
-                  : 'rgba(255, 255, 255, 0.02)',
+                  : 'rgba(0, 0, 0, 0.03)',
                 border: config.options.zoom_mode === 'selection'
-                  ? '1px solid rgba(56, 189, 248, 0.4)'
-                  : '1px solid rgba(255, 255, 255, 0.06)',
+                  ? '1px solid var(--color-accent-light, rgba(56, 189, 248, 0.4))'
+                  : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.06))',
                 cursor: 'pointer',
               }}
             >
@@ -209,10 +244,22 @@ export const GeneralTab: React.FC = () => {
                 style={{ marginTop: 2 }}
               />
               <div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#f1f5f9' }}>
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: 'var(--color-text-primary, #f1f5f9)',
+                  }}
+                >
                   Selection Zoom
                 </div>
-                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: 'var(--color-text-secondary, #94a3b8)',
+                    marginTop: 2,
+                  }}
+                >
                   Drag a marquee box to zoom into that region
                 </div>
               </div>
@@ -227,16 +274,20 @@ export const GeneralTab: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '12px 14px',
-            background: 'rgba(255, 255, 255, 0.03)',
+            background: 'rgba(0, 0, 0, 0.05)',
             borderRadius: 10,
-            border: '1px solid rgba(255, 255, 255, 0.06)',
+            border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.06))',
           }}
         >
           <div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0' }}>
+            <div
+              style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary, #e2e8f0)' }}
+            >
               Auto-Save Drawings
             </div>
-            <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
+            <div
+              style={{ fontSize: 11, color: 'var(--color-text-secondary, #64748b)', marginTop: 2 }}
+            >
               Continuously save strokes to local storage in background
             </div>
           </div>
@@ -250,7 +301,9 @@ export const GeneralTab: React.FC = () => {
               width: 44,
               height: 24,
               borderRadius: 12,
-              background: config.options.auto_save ? '#0284c7' : 'rgba(255, 255, 255, 0.15)',
+              background: config.options.auto_save
+                ? 'var(--color-accent, #0284c7)'
+                : 'rgba(255, 255, 255, 0.15)',
               border: 'none',
               cursor: 'pointer',
               position: 'relative',

@@ -289,10 +289,17 @@ export const KeybindingsTab: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 600, color: '#f8fafc' }}>
+          <h3
+            style={{
+              margin: '0 0 4px',
+              fontSize: 15,
+              fontWeight: 600,
+              color: 'var(--color-text-primary, #f8fafc)',
+            }}
+          >
             Keyboard Shortcuts
           </h3>
-          <p style={{ margin: 0, fontSize: 12, color: '#94a3b8' }}>
+          <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-secondary, #94a3b8)' }}>
             Click any badge to rebind. Press Esc to cancel recording.
           </p>
         </div>
@@ -301,15 +308,17 @@ export const KeybindingsTab: React.FC = () => {
           onClick={handleResetDefaults}
           style={{
             background: 'transparent',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.1))',
             borderRadius: 6,
             padding: '4px 10px',
             fontSize: 11,
-            color: '#94a3b8',
+            color: 'var(--color-text-secondary, #94a3b8)',
             cursor: 'pointer',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = '#f8fafc')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
+          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-text-primary, #f8fafc)')}
+          onMouseLeave={(
+            e,
+          ) => (e.currentTarget.style.color = 'var(--color-text-secondary, #94a3b8)')}
         >
           Reset to Defaults
         </button>
@@ -319,11 +328,11 @@ export const KeybindingsTab: React.FC = () => {
         <div
           style={{
             padding: '8px 12px',
-            background: 'rgba(234, 179, 8, 0.12)',
-            border: '1px solid rgba(234, 179, 8, 0.3)',
+            background: 'rgba(234, 179, 8, 0.15)',
+            border: '1px solid rgba(234, 179, 8, 0.35)',
             borderRadius: 8,
             fontSize: 12,
-            color: '#fde047',
+            color: '#d97706',
           }}
         >
           ⚠️ {conflictWarning}
@@ -337,11 +346,11 @@ export const KeybindingsTab: React.FC = () => {
         onChange={(e) => setSearch(e.target.value)}
         placeholder='Search commands or keys (e.g. "pen", "zoom", "⌘Z")...'
         style={{
-          background: 'rgba(2, 6, 23, 0.7)',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
+          background: 'rgba(0, 0, 0, 0.08)',
+          border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.12))',
           borderRadius: 8,
           padding: '8px 12px',
-          color: '#f8fafc',
+          color: 'var(--color-text-primary, #f8fafc)',
           fontSize: 12,
           outline: 'none',
         }}
@@ -369,7 +378,7 @@ export const KeybindingsTab: React.FC = () => {
                   fontWeight: 600,
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
-                  color: '#64748b',
+                  color: 'var(--color-text-secondary, #64748b)',
                   paddingLeft: 4,
                 }}
               >
@@ -378,8 +387,8 @@ export const KeybindingsTab: React.FC = () => {
 
               <div
                 style={{
-                  background: 'rgba(255, 255, 255, 0.02)',
-                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  background: 'rgba(0, 0, 0, 0.04)',
+                  border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.05))',
                   borderRadius: 10,
                   overflow: 'hidden',
                 }}
@@ -402,11 +411,17 @@ export const KeybindingsTab: React.FC = () => {
                         padding: '9px 12px',
                         borderBottom: idx === items.length - 1
                           ? 'none'
-                          : '1px solid rgba(255, 255, 255, 0.04)',
+                          : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.04))',
                         background: isRecording ? 'rgba(2, 132, 199, 0.1)' : 'transparent',
                       }}
                     >
-                      <span style={{ fontSize: 13, color: '#e2e8f0', fontWeight: 500 }}>
+                      <span
+                        style={{
+                          fontSize: 13,
+                          color: 'var(--color-text-primary, #e2e8f0)',
+                          fontWeight: 500,
+                        }}
+                      >
                         {action.label}
                       </span>
 
@@ -442,13 +457,15 @@ export const KeybindingsTab: React.FC = () => {
                                   display: 'flex',
                                   alignItems: 'center',
                                   gap: 4,
-                                  background: 'rgba(255, 255, 255, 0.08)',
-                                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                                  background:
+                                    'var(--color-panel-border, rgba(255, 255, 255, 0.08))',
+                                  border:
+                                    '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.12))',
                                   borderRadius: 6,
                                   padding: '2px 8px',
                                   fontSize: 11,
                                   fontWeight: 600,
-                                  color: '#f8fafc',
+                                  color: 'var(--color-text-primary, #f8fafc)',
                                   cursor: 'pointer',
                                 }}
                               >
@@ -458,7 +475,7 @@ export const KeybindingsTab: React.FC = () => {
                                   title='Remove shortcut'
                                   style={{
                                     fontSize: 10,
-                                    color: '#94a3b8',
+                                    color: 'var(--color-text-secondary, #94a3b8)',
                                     marginLeft: 2,
                                     cursor: 'pointer',
                                   }}
@@ -477,11 +494,12 @@ export const KeybindingsTab: React.FC = () => {
                               }}
                               style={{
                                 background: 'transparent',
-                                border: '1px dashed rgba(255, 255, 255, 0.2)',
+                                border:
+                                  '1px dashed var(--color-panel-border, rgba(255, 255, 255, 0.2))',
                                 borderRadius: 6,
                                 padding: '2px 8px',
                                 fontSize: 11,
-                                color: '#64748b',
+                                color: 'var(--color-text-secondary, #64748b)',
                                 cursor: 'pointer',
                               }}
                             >

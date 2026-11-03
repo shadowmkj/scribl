@@ -4,6 +4,7 @@ import { GeneralTab } from './GeneralTab';
 import { InkingTab } from './InkingTab';
 import { KeybindingsTab } from './KeybindingsTab';
 import { LuaTab } from './LuaTab';
+import { ThemeTab } from './ThemeTab';
 import { ToolbarTab } from './ToolbarTab';
 
 interface NavItem {
@@ -15,6 +16,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { id: 'general', label: 'General', icon: '⚙️' },
   { id: 'inking', label: 'Inking', icon: '✏️' },
+  { id: 'theme', label: 'Theme', icon: '🎨' },
   { id: 'keybindings', label: 'Keybindings', icon: '⌨️' },
   { id: 'toolbar', label: 'Toolbar', icon: '🎛️' },
   { id: 'lua', label: 'Lua Config', icon: '📜' },
@@ -68,16 +70,17 @@ export const SettingsModal: React.FC = () => {
           maxWidth: '92vw',
           height: 520,
           maxHeight: '88vh',
-          background: 'rgba(15, 23, 42, 0.94)',
+          background: 'var(--color-panel-bg, rgba(15, 23, 42, 0.94))',
           backdropFilter: 'blur(30px) saturate(190%)',
           WebkitBackdropFilter: 'blur(30px) saturate(190%)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.1))',
           borderRadius: 16,
-          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+          boxShadow:
+            'var(--color-panel-shadow, 0 25px 60px -15px rgba(0, 0, 0, 0.7)), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          color: '#f8fafc',
+          color: 'var(--color-text-primary, #f8fafc)',
           fontFamily: isMac
             ? '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif'
             : '"Segoe UI Variable", "Segoe UI", system-ui, sans-serif',
@@ -90,21 +93,26 @@ export const SettingsModal: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '12px 18px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-            background: 'rgba(255, 255, 255, 0.02)',
+            borderBottom: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
+            background: 'rgba(125, 125, 125, 0.04)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span
-              style={{ fontSize: 14, fontWeight: 700, letterSpacing: '0.02em', color: '#f8fafc' }}
+              style={{
+                fontSize: 14,
+                fontWeight: 700,
+                letterSpacing: '0.02em',
+                color: 'var(--color-text-primary, #f8fafc)',
+              }}
             >
               Preferences
             </span>
             <span
               style={{
                 fontSize: 10,
-                color: '#64748b',
-                background: 'rgba(255, 255, 255, 0.06)',
+                color: 'var(--color-text-secondary, #64748b)',
+                background: 'var(--color-panel-border, rgba(255, 255, 255, 0.06))',
                 padding: '2px 6px',
                 borderRadius: 4,
                 fontWeight: 600,
@@ -127,17 +135,17 @@ export const SettingsModal: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#94a3b8',
+              color: 'var(--color-text-secondary, #94a3b8)',
               cursor: 'pointer',
               fontSize: 14,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-              e.currentTarget.style.color = '#f8fafc';
+              e.currentTarget.style.background = 'rgba(125, 125, 125, 0.12)';
+              e.currentTarget.style.color = 'var(--color-text-primary, #f8fafc)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.color = '#94a3b8';
+              e.currentTarget.style.color = 'var(--color-text-secondary, #94a3b8)';
             }}
           >
             ✕
@@ -150,8 +158,8 @@ export const SettingsModal: React.FC = () => {
           <div
             style={{
               width: 175,
-              borderRight: '1px solid rgba(255, 255, 255, 0.08)',
-              background: 'rgba(2, 6, 23, 0.35)',
+              borderRight: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
+              background: 'rgba(0, 0, 0, 0.06)',
               padding: '12px 8px',
               display: 'flex',
               flexDirection: 'column',
@@ -173,8 +181,10 @@ export const SettingsModal: React.FC = () => {
                     borderRadius: 8,
                     fontSize: 12,
                     fontWeight: active ? 600 : 500,
-                    color: active ? '#ffffff' : '#94a3b8',
-                    background: active ? 'rgba(2, 132, 199, 0.85)' : 'transparent',
+                    color: active ? '#ffffff' : 'var(--color-text-secondary, #94a3b8)',
+                    background: active
+                      ? 'var(--color-accent, rgba(2, 132, 199, 0.85))'
+                      : 'transparent',
                     border: 'none',
                     cursor: 'pointer',
                     textAlign: 'left',
@@ -182,14 +192,14 @@ export const SettingsModal: React.FC = () => {
                   }}
                   onMouseEnter={(e) => {
                     if (!active) {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                      e.currentTarget.style.color = '#f1f5f9';
+                      e.currentTarget.style.background = 'rgba(125, 125, 125, 0.1)';
+                      e.currentTarget.style.color = 'var(--color-text-primary, #f1f5f9)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!active) {
                       e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.color = '#94a3b8';
+                      e.currentTarget.style.color = 'var(--color-text-secondary, #94a3b8)';
                     }
                   }}
                 >
@@ -211,6 +221,7 @@ export const SettingsModal: React.FC = () => {
           >
             {activeSettingsTab === 'general' && <GeneralTab />}
             {activeSettingsTab === 'inking' && <InkingTab />}
+            {activeSettingsTab === 'theme' && <ThemeTab />}
             {activeSettingsTab === 'keybindings' && <KeybindingsTab />}
             {activeSettingsTab === 'toolbar' && <ToolbarTab />}
             {activeSettingsTab === 'lua' && <LuaTab />}

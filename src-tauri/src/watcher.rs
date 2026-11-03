@@ -19,7 +19,7 @@ pub fn get_init_lua_path() -> PathBuf {
     get_config_dir().join("init.lua")
 }
 
-pub const DEFAULT_INIT_LUA_TEMPLATE: &str = r#"-- ~/.config/scribl/init.lua
+pub const DEFAULT_INIT_LUA_TEMPLATE: &str = r##"-- ~/.config/scribl/init.lua
 -- Scribl Neovim-style Lua Configuration File
 
 local scribl = require("scribl")
@@ -98,7 +98,19 @@ scribl.ui.toolbar = {
     "clear",
   },
 }
-"#;
+
+--------------------------------------------------------------------------------
+-- 4. Theme Configuration
+-- Presets: "default-dark", "light", "tokyo-night", "catppuccin"
+--------------------------------------------------------------------------------
+scribl.theme.name = "default-dark"
+
+-- Optional custom token overrides:
+-- scribl.theme.overrides = {
+--   canvas_bg = "#090d16",
+--   accent = "#0284c7",
+-- }
+"##;
 
 pub fn ensure_default_config_exists() -> Result<PathBuf, String> {
     let dir = get_config_dir();
@@ -109,10 +121,22 @@ pub fn ensure_default_config_exists() -> Result<PathBuf, String> {
     let init_path = dir.join("init.lua");
     if init_path.exists() {
         let content = std::fs::read_to_string(&init_path).unwrap_or_default();
+        let mut updated = content.clone();
+        let mut changed = false;
+
         if !content.is_empty() && !content.contains("scribl.keymap.set(\"v\"") {
             let visual_block = "\n-- Visual Mode (When selection is active)\nscribl.keymap.set(\"v\", \"r\", \"selection.rotate\", { desc = \"Rotate Selection\" })\nscribl.keymap.set(\"v\", \"<Esc>\", \"selection.deselect\", { desc = \"Deselect\" })\nscribl.keymap.set(\"v\", \"d\", \"selection.delete\", { desc = \"Delete Selected\" })\n";
-            let mut updated = content;
             updated.push_str(visual_block);
+            changed = true;
+        }
+
+        if !content.is_empty() && !content.contains("scribl.theme") {
+            let theme_block = "\n--------------------------------------------------------------------------------\n-- 4. Theme Configuration\n-- Presets: \"default-dark\", \"light\", \"tokyo-night\", \"catppuccin\"\n--------------------------------------------------------------------------------\nscribl.theme.name = \"default-dark\"\n";
+            updated.push_str(theme_block);
+            changed = true;
+        }
+
+        if changed {
             let _ = std::fs::write(&init_path, updated);
         }
     } else {

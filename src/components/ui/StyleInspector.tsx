@@ -79,14 +79,15 @@ export const StyleInspector: React.FC = () => {
           position: 'absolute',
           top: 70,
           left: 16,
-          background: 'rgba(15, 23, 42, 0.78)',
+          background: 'var(--color-panel-bg, rgba(15, 23, 42, 0.78))',
           backdropFilter: 'blur(16px) saturate(180%)',
           WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
           borderRadius: 14,
           padding: '12px',
           zIndex: 25,
-          boxShadow: '0 12px 36px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06)',
+          boxShadow:
+            'var(--color-panel-shadow, 0 12px 36px rgba(0,0,0,0.45)), inset 0 1px 0 rgba(255,255,255,0.06)',
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
@@ -98,7 +99,7 @@ export const StyleInspector: React.FC = () => {
             style={{
               fontSize: 10,
               textTransform: 'uppercase',
-              color: '#64748b',
+              color: 'var(--color-text-secondary, #64748b)',
               fontWeight: 700,
               letterSpacing: '0.05em',
               marginBottom: 8,
@@ -109,7 +110,7 @@ export const StyleInspector: React.FC = () => {
           <div
             style={{
               display: 'flex',
-              background: 'rgba(0, 0, 0, 0.25)',
+              background: 'rgba(125, 125, 125, 0.12)',
               padding: 3,
               borderRadius: 8,
               gap: 3,
@@ -120,11 +121,13 @@ export const StyleInspector: React.FC = () => {
               style={{
                 flex: 1,
                 background: zoomMode === 'scrubby'
-                  ? 'rgba(56, 189, 248, 0.18)'
+                  ? 'var(--color-accent, #0284c7)'
                   : 'transparent',
-                color: zoomMode === 'scrubby' ? '#38bdf8' : '#94a3b8',
+                color: zoomMode === 'scrubby'
+                  ? '#ffffff'
+                  : 'var(--color-text-secondary, #94a3b8)',
                 border: zoomMode === 'scrubby'
-                  ? '1px solid rgba(56, 189, 248, 0.35)'
+                  ? '1px solid var(--color-accent, #0284c7)'
                   : '1px solid transparent',
                 borderRadius: 6,
                 padding: '5px 8px',
@@ -157,11 +160,13 @@ export const StyleInspector: React.FC = () => {
               style={{
                 flex: 1,
                 background: zoomMode === 'selection'
-                  ? 'rgba(56, 189, 248, 0.18)'
+                  ? 'var(--color-accent, #0284c7)'
                   : 'transparent',
-                color: zoomMode === 'selection' ? '#38bdf8' : '#94a3b8',
+                color: zoomMode === 'selection'
+                  ? '#ffffff'
+                  : 'var(--color-text-secondary, #94a3b8)',
                 border: zoomMode === 'selection'
-                  ? '1px solid rgba(56, 189, 248, 0.35)'
+                  ? '1px solid var(--color-accent, #0284c7)'
                   : '1px solid transparent',
                 borderRadius: 6,
                 padding: '5px 8px',
@@ -190,14 +195,16 @@ export const StyleInspector: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ height: 1, background: 'rgba(255, 255, 255, 0.08)' }} />
+        <div
+          style={{ height: 1, background: 'var(--color-panel-border, rgba(255, 255, 255, 0.08))' }}
+        />
 
         <div>
           <div
             style={{
               fontSize: 10,
               textTransform: 'uppercase',
-              color: '#64748b',
+              color: 'var(--color-text-secondary, #64748b)',
               fontWeight: 700,
               letterSpacing: '0.05em',
               marginBottom: 8,
@@ -210,9 +217,9 @@ export const StyleInspector: React.FC = () => {
               onClick={resetZoom}
               style={{
                 flex: 1,
-                background: 'rgba(255, 255, 255, 0.04)',
-                color: '#cbd5e1',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                background: 'rgba(125, 125, 125, 0.08)',
+                color: 'var(--color-text-primary, #cbd5e1)',
+                border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
                 borderRadius: 6,
                 padding: '5px 8px',
                 fontSize: 11,
@@ -221,12 +228,12 @@ export const StyleInspector: React.FC = () => {
                 transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-                e.currentTarget.style.color = '#f1f5f9';
+                e.currentTarget.style.background = 'rgba(125, 125, 125, 0.16)';
+                e.currentTarget.style.color = 'var(--color-text-primary, #f1f5f9)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-                e.currentTarget.style.color = '#cbd5e1';
+                e.currentTarget.style.background = 'rgba(125, 125, 125, 0.08)';
+                e.currentTarget.style.color = 'var(--color-text-primary, #cbd5e1)';
               }}
             >
               100%
@@ -235,9 +242,9 @@ export const StyleInspector: React.FC = () => {
               onClick={handleFitAll}
               style={{
                 flex: 1,
-                background: 'rgba(255, 255, 255, 0.04)',
-                color: '#cbd5e1',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                background: 'rgba(125, 125, 125, 0.08)',
+                color: 'var(--color-text-primary, #cbd5e1)',
+                border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
                 borderRadius: 6,
                 padding: '5px 8px',
                 fontSize: 11,
@@ -246,12 +253,12 @@ export const StyleInspector: React.FC = () => {
                 transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-                e.currentTarget.style.color = '#f1f5f9';
+                e.currentTarget.style.background = 'rgba(125, 125, 125, 0.16)';
+                e.currentTarget.style.color = 'var(--color-text-primary, #f1f5f9)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-                e.currentTarget.style.color = '#cbd5e1';
+                e.currentTarget.style.background = 'rgba(125, 125, 125, 0.08)';
+                e.currentTarget.style.color = 'var(--color-text-primary, #cbd5e1)';
               }}
             >
               Fit Drawing
@@ -262,9 +269,9 @@ export const StyleInspector: React.FC = () => {
         <div
           style={{
             fontSize: 10,
-            color: '#64748b',
+            color: 'var(--color-text-secondary, #64748b)',
             lineHeight: 1.4,
-            borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+            borderTop: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.06))',
             paddingTop: 8,
           }}
         >
@@ -282,14 +289,15 @@ export const StyleInspector: React.FC = () => {
         position: 'absolute',
         top: 70,
         left: 16,
-        background: 'rgba(15, 23, 42, 0.78)',
+        background: 'var(--color-panel-bg, rgba(15, 23, 42, 0.78))',
         backdropFilter: 'blur(16px) saturate(180%)',
         WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
+        border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
         borderRadius: 14,
         padding: '12px',
         zIndex: 25,
-        boxShadow: '0 12px 36px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06)',
+        boxShadow:
+          'var(--color-panel-shadow, 0 12px 36px rgba(0,0,0,0.45)), inset 0 1px 0 rgba(255,255,255,0.06)',
         display: 'flex',
         flexDirection: 'column',
         gap: 12,
@@ -300,7 +308,7 @@ export const StyleInspector: React.FC = () => {
           style={{
             fontSize: 10,
             textTransform: 'uppercase',
-            color: '#64748b',
+            color: 'var(--color-text-secondary, #64748b)',
             fontWeight: 700,
             letterSpacing: '0.05em',
             marginBottom: 8,
@@ -321,7 +329,9 @@ export const StyleInspector: React.FC = () => {
                   height: 26,
                   borderRadius: 7,
                   background: swatch.hex,
-                  border: isSelected ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.12)',
+                  border: isSelected
+                    ? '2px solid var(--color-accent, #38bdf8)'
+                    : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.12))',
                   boxShadow: isSelected ? '0 0 8px rgba(56, 189, 248, 0.5)' : 'none',
                   cursor: 'pointer',
                   outline: 'none',
@@ -339,14 +349,16 @@ export const StyleInspector: React.FC = () => {
         </div>
       </div>
 
-      <div style={{ height: 1, background: 'rgba(255, 255, 255, 0.08)' }} />
+      <div
+        style={{ height: 1, background: 'var(--color-panel-border, rgba(255, 255, 255, 0.08))' }}
+      />
 
       <div>
         <div
           style={{
             fontSize: 10,
             textTransform: 'uppercase',
-            color: '#64748b',
+            color: 'var(--color-text-secondary, #64748b)',
             fontWeight: 700,
             letterSpacing: '0.05em',
             marginBottom: 8,
@@ -362,11 +374,15 @@ export const StyleInspector: React.FC = () => {
                 key={s.value}
                 onClick={() => setStrokeSize(s.value)}
                 style={{
-                  background: isSelected ? 'rgba(2, 132, 199, 0.25)' : 'rgba(255, 255, 255, 0.04)',
-                  color: isSelected ? '#38bdf8' : '#94a3b8',
+                  background: isSelected
+                    ? 'var(--color-accent, #0284c7)'
+                    : 'transparent',
+                  color: isSelected
+                    ? '#ffffff'
+                    : 'var(--color-text-secondary, #94a3b8)',
                   border: isSelected
-                    ? '1px solid rgba(56, 189, 248, 0.4)'
-                    : '1px solid rgba(255, 255, 255, 0.06)',
+                    ? '1px solid var(--color-accent, #0284c7)'
+                    : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
                   borderRadius: 6,
                   padding: '4px 7px',
                   fontSize: 11,
@@ -376,14 +392,14 @@ export const StyleInspector: React.FC = () => {
                 }}
                 onMouseEnter={(e) => {
                   if (!isSelected) {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-                    e.currentTarget.style.color = '#f1f5f9';
+                    e.currentTarget.style.background = 'rgba(125, 125, 125, 0.12)';
+                    e.currentTarget.style.color = 'var(--color-text-primary, #f1f5f9)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isSelected) {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-                    e.currentTarget.style.color = '#94a3b8';
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = 'var(--color-text-secondary, #94a3b8)';
                   }
                 }}
               >

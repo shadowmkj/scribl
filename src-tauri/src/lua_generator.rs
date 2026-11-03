@@ -72,7 +72,27 @@ pub fn generate_lua_script(config: &ScriblConfig) -> String {
         out.push_str(&format!("    \"{}\",\n", item));
     }
     out.push_str("  },\n");
-    out.push_str("}\n");
+    out.push_str("}\n\n");
+
+    out.push_str(
+        "--------------------------------------------------------------------------------\n",
+    );
+    out.push_str("-- 4. Theme Configuration\n");
+    out.push_str(
+        "--------------------------------------------------------------------------------\n",
+    );
+    out.push_str(&format!("scribl.theme.name = \"{}\"\n", config.theme.name));
+    if !config.theme.overrides.is_empty() {
+        out.push_str("scribl.theme.overrides = {\n");
+        let mut sorted_keys: Vec<_> = config.theme.overrides.keys().collect();
+        sorted_keys.sort();
+        for k in sorted_keys {
+            out.push_str(&format!("  {} = \"{}\",\n", k, config.theme.overrides[k]));
+        }
+        out.push_str("}\n");
+    } else {
+        out.push_str("-- scribl.theme.overrides = {}\n");
+    }
 
     out
 }
@@ -102,5 +122,21 @@ mod tests {
         assert_eq!(parsed.options, config.options);
         assert_eq!(parsed.toolbar, config.toolbar);
         assert_eq!(parsed.keymaps, config.keymaps);
+    }
+
+    #[test]
+    fn test_generate_lua_round_trip_theme() {
+        let mut config = ScriblConfig::default();
+        config.theme.name = "tokyo-night".to_string();
+        config
+            .theme
+            .overrides
+            .insert("accent".to_string(), "#ffaa00".to_string());
+        config.theme.active = Some(crate::config::resolve_theme(&config.theme));
+
+        let script = generate_lua_script(&config);
+        let evaluated = eval_lua_config_string(&script, None).expect("should evaluate");
+        assert_eq!(evaluated.theme.name, "tokyo-night");
+        assert_eq!(evaluated.theme.overrides.get("accent").unwrap(), "#ffaa00");
     }
 }

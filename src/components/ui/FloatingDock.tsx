@@ -209,17 +209,18 @@ export const FloatingDock: React.FC = () => {
       style={{
         position: 'absolute',
         ...getPositionStyle(),
-        background: 'rgba(15, 23, 42, 0.78)',
+        background: 'var(--color-panel-bg, rgba(15, 23, 42, 0.78))',
         backdropFilter: 'blur(16px) saturate(180%)',
         WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
+        border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
         borderRadius: 14,
         padding: '5px',
         display: 'flex',
         gap: 6,
         alignItems: 'center',
         zIndex: 25,
-        boxShadow: '0 12px 36px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+        boxShadow:
+          'var(--color-panel-shadow, 0 12px 36px rgba(0, 0, 0, 0.45)), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
       }}
     >
       {toolbar.items.map((item, index) => {
@@ -230,7 +231,7 @@ export const FloatingDock: React.FC = () => {
               style={{
                 width: isVertical ? '20px' : '1px',
                 height: isVertical ? '1px' : '20px',
-                background: 'rgba(255, 255, 255, 0.1)',
+                background: 'var(--color-panel-border, rgba(255, 255, 255, 0.1))',
                 margin: isVertical ? '2px 0' : '0 2px',
               }}
             />
@@ -259,10 +260,12 @@ export const FloatingDock: React.FC = () => {
             title={`${def.label}${shortcut ? ` (${shortcut})` : ''}`}
             style={{
               background: isActive
-                ? 'linear-gradient(180deg, #0284c7 0%, #0369a1 100%)'
+                ? 'linear-gradient(180deg, var(--color-accent, #0284c7) 0%, var(--color-accent-hover, #0369a1) 100%)'
                 : 'transparent',
-              color: isActive ? '#ffffff' : '#94a3b8',
-              border: isActive ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid transparent',
+              color: isActive ? '#ffffff' : 'var(--color-text-secondary, #94a3b8)',
+              border: isActive
+                ? '1px solid var(--color-accent-light, rgba(56, 189, 248, 0.4))'
+                : '1px solid transparent',
               borderRadius: 10,
               padding: isVertical ? '8px' : '6px 14px',
               fontSize: 13,
@@ -277,14 +280,14 @@ export const FloatingDock: React.FC = () => {
             }}
             onMouseEnter={(e) => {
               if (!isActive) {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
-                e.currentTarget.style.color = '#f1f5f9';
+                e.currentTarget.style.background = 'rgba(125, 125, 125, 0.12)';
+                e.currentTarget.style.color = 'var(--color-text-primary, #f1f5f9)';
               }
             }}
             onMouseLeave={(e) => {
               if (!isActive) {
                 e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = '#94a3b8';
+                e.currentTarget.style.color = 'var(--color-text-secondary, #94a3b8)';
               }
             }}
           >
@@ -294,8 +297,11 @@ export const FloatingDock: React.FC = () => {
               <span
                 style={{
                   fontSize: 10,
-                  opacity: isActive ? 0.8 : 0.4,
-                  background: isActive ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.06)',
+                  opacity: isActive ? 0.9 : 0.7,
+                  background: isActive
+                    ? 'rgba(0,0,0,0.2)'
+                    : 'var(--color-panel-border, rgba(255,255,255,0.06))',
+                  color: isActive ? '#ffffff' : 'var(--color-text-secondary, #94a3b8)',
                   padding: '1px 5px',
                   borderRadius: 4,
                   fontWeight: 600,

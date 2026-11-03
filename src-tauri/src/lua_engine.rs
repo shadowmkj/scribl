@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 
-use crate::config::{AppOptions, KeymapEntry, ScriblConfig, ToolbarConfig};
+use crate::config::{AppOptions, KeymapEntry, ScriblConfig, ThemeConfig, ToolbarConfig};
 
 pub fn eval_lua_config_string(
     script: &str,
@@ -134,6 +134,19 @@ pub fn eval_lua_config_string(
         .set("ui", ui_table)
         .map_err(|e| e.to_string())?;
 
+    // scribl.theme
+    let theme_table = lua.create_table().map_err(|e| e.to_string())?;
+    theme_table
+        .set("name", default.theme.name.clone())
+        .map_err(|e| e.to_string())?;
+    let overrides_table = lua.create_table().map_err(|e| e.to_string())?;
+    theme_table
+        .set("overrides", overrides_table)
+        .map_err(|e| e.to_string())?;
+    scribl_table
+        .set("theme", theme_table)
+        .map_err(|e| e.to_string())?;
+
     // Register globally as `scribl` and as preloaded module `require('scribl')`
     lua.globals()
         .set("scribl", scribl_table.clone())
@@ -214,10 +227,40 @@ pub fn eval_lua_config_string(
         items = default.toolbar.items;
     }
 
+    // Extract theme
+    let mut theme_config = ThemeConfig::default();
+    if let Ok(theme_name) = scribl_table.get::<String>("theme") {
+        theme_config.name = theme_name;
+    } else if let Ok(theme_tbl) = scribl_table.get::<Table>("theme") {
+        if let Ok(name) = theme_tbl.get::<String>("name") {
+            theme_config.name = name;
+        }
+        if let Ok(ov_tbl) = theme_tbl.get::<Table>("overrides") {
+            for pair in ov_tbl.pairs::<String, String>().flatten() {
+                theme_config.overrides.insert(pair.0, pair.1);
+            }
+        }
+        // Also support direct token keys on theme_tbl (e.g. scribl.theme.canvas_bg = "#...")
+        for (k, v) in theme_tbl.pairs::<String, mlua::Value>().flatten() {
+            if k == "name" || k == "overrides" {
+                continue;
+            }
+            let str_val = match v {
+                mlua::Value::String(s) => s.to_str().ok().map(|s| s.to_string()),
+                _ => None,
+            };
+            if let Some(val) = str_val {
+                theme_config.overrides.insert(k, val);
+            }
+        }
+    }
+    theme_config.active = Some(crate::config::resolve_theme(&theme_config));
+
     Ok(ScriblConfig {
         options,
         keymaps,
         toolbar: ToolbarConfig { position, items },
+        theme: theme_config,
     })
 }
 
@@ -402,5 +445,48 @@ scribl.keymap.set("n", "<BS>", "selection.delete")
             "Visual mode delete ('d') should not be blocked by normal mode delete ('<BS>')"
         );
         assert_eq!(delete_v.unwrap().lhs, "d");
+    }
+
+    #[test]
+    fn test_eval_theme_preset_selection() {
+        let script = r#"
+            local scribl = require("scribl")
+            scribl.theme.name = "tokyo-night"
+        "#;
+        let config = eval_lua_config_string(script, None).expect("should evaluate");
+        assert_eq!(config.theme.name, "tokyo-night");
+        assert_eq!(config.theme.active.as_ref().unwrap().canvas_bg, "#1a1b26");
+    }
+
+    #[test]
+    fn test_eval_theme_overrides() {
+        let script = r##"
+            local scribl = require("scribl")
+            scribl.theme.name = "default-dark"
+            scribl.theme.overrides = {
+                canvas_bg = "#112233",
+                accent = "#ff007f",
+            }
+        "##;
+        let config = eval_lua_config_string(script, None).expect("should evaluate");
+        assert_eq!(config.theme.active.as_ref().unwrap().canvas_bg, "#112233");
+        assert_eq!(config.theme.active.as_ref().unwrap().accent, "#ff007f");
+        assert_eq!(config.theme.active.as_ref().unwrap().grid_dot, "#334155");
+    }
+
+    #[test]
+    fn test_eval_theme_table_syntax() {
+        let script = r##"
+            local scribl = require("scribl")
+            scribl.theme = {
+                name = "catppuccin",
+                overrides = {
+                    accent = "#ffffff",
+                }
+            }
+        "##;
+        let config = eval_lua_config_string(script, None).expect("should evaluate");
+        assert_eq!(config.theme.name, "catppuccin");
+        assert_eq!(config.theme.active.as_ref().unwrap().accent, "#ffffff");
     }
 }

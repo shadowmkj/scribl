@@ -20,6 +20,7 @@ import {
   serializeScriblDoc,
   triggerDownload,
 } from './core/persistence/fileIO';
+import { applyThemeToDom, resolveTheme } from './core/theme/themeManager';
 import { useCameraStore } from './stores/useCameraStore';
 import { ScriblConfig, useConfigStore } from './stores/useConfigStore';
 import { useDocumentStore } from './stores/useDocumentStore';
@@ -28,6 +29,15 @@ import './App.css';
 
 export function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const theme = useConfigStore((state) => state.config.theme);
+
+  // Apply theme to DOM
+  useEffect(() => {
+    if (theme) {
+      const active = theme.active || resolveTheme(theme);
+      applyThemeToDom(active);
+    }
+  }, [theme]);
 
   useEffect(() => {
     restoreAutoSave();

@@ -1,4 +1,7 @@
 import { create } from 'zustand';
+import { THEME_PRESETS, ThemeColors, ThemeConfig } from '../core/theme/themeManager';
+
+export type { ThemeColors, ThemeConfig };
 
 export interface AppOptions {
   dot_grid: boolean;
@@ -25,6 +28,7 @@ export interface ScriblConfig {
   options: AppOptions;
   keymaps: KeymapEntry[];
   toolbar: ToolbarConfig;
+  theme: ThemeConfig;
 }
 
 export const DEFAULT_CONFIG: ScriblConfig = {
@@ -79,9 +83,14 @@ export const DEFAULT_CONFIG: ScriblConfig = {
       'clear',
     ],
   },
+  theme: {
+    name: 'default-dark',
+    overrides: {},
+    active: THEME_PRESETS['default-dark'],
+  },
 };
 
-export type SettingsTab = 'general' | 'inking' | 'keybindings' | 'toolbar' | 'lua';
+export type SettingsTab = 'general' | 'inking' | 'theme' | 'keybindings' | 'toolbar' | 'lua';
 
 interface ConfigState {
   config: ScriblConfig;

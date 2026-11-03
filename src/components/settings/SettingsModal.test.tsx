@@ -25,6 +25,10 @@ describe('SettingsModal', () => {
           position: 'bottom',
           items: ['select', 'pen'],
         },
+        theme: {
+          name: 'default-dark',
+          overrides: {},
+        },
       },
     });
   });
@@ -41,6 +45,7 @@ describe('SettingsModal', () => {
     expect(screen.getByText('Preferences')).toBeTruthy();
     expect(screen.getByText('General')).toBeTruthy();
     expect(screen.getByText('Inking')).toBeTruthy();
+    expect(screen.getByText('Theme')).toBeTruthy();
     expect(screen.getByText('Keybindings')).toBeTruthy();
     expect(screen.getByText('Toolbar')).toBeTruthy();
     expect(screen.getByText('Lua Config')).toBeTruthy();
