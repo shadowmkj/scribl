@@ -173,6 +173,33 @@ impl Default for ThemeConfig {
     }
 }
 
+pub fn darken_hex(hex: &str, factor: f64) -> String {
+    let clean = hex.trim().trim_start_matches('#');
+    if clean.len() == 6 {
+        if let (Ok(r), Ok(g), Ok(b)) = (
+            u8::from_str_radix(&clean[0..2], 16),
+            u8::from_str_radix(&clean[2..4], 16),
+            u8::from_str_radix(&clean[4..6], 16),
+        ) {
+            let dr = (r as f64 * factor).clamp(0.0, 255.0).round() as u8;
+            let dg = (g as f64 * factor).clamp(0.0, 255.0).round() as u8;
+            let db = (b as f64 * factor).clamp(0.0, 255.0).round() as u8;
+            return format!("#{:02x}{:02x}{:02x}", dr, dg, db);
+        }
+    } else if clean.len() == 3 {
+        let r_res = u8::from_str_radix(&clean[0..1], 16);
+        let g_res = u8::from_str_radix(&clean[1..2], 16);
+        let b_res = u8::from_str_radix(&clean[2..3], 16);
+        if let (Ok(r), Ok(g), Ok(b)) = (r_res, g_res, b_res) {
+            let dr = (r as f64 * 17.0 * factor).clamp(0.0, 255.0).round() as u8;
+            let dg = (g as f64 * 17.0 * factor).clamp(0.0, 255.0).round() as u8;
+            let db = (b as f64 * 17.0 * factor).clamp(0.0, 255.0).round() as u8;
+            return format!("#{:02x}{:02x}{:02x}", dr, dg, db);
+        }
+    }
+    hex.to_string()
+}
+
 pub fn resolve_theme(config: &ThemeConfig) -> ThemeColors {
     let mut base = get_preset_theme(&config.name);
     for (k, v) in &config.overrides {
@@ -193,6 +220,10 @@ pub fn resolve_theme(config: &ThemeConfig) -> ThemeColors {
             "danger" => base.danger = v.clone(),
             _ => {}
         }
+    }
+    // If accent is overridden but accent_hover is not, derive accent_hover from accent
+    if config.overrides.contains_key("accent") && !config.overrides.contains_key("accent_hover") {
+        base.accent_hover = darken_hex(&base.accent, 0.82);
     }
     base
 }
@@ -417,6 +448,14 @@ mod tests {
         let resolved = resolve_theme(&theme);
         assert_eq!(resolved.canvas_bg, "#000000");
         assert_eq!(resolved.accent, "#ff0000");
+        assert_eq!(resolved.accent_hover, "#d10000"); // Auto-derived gradient stop
         assert_eq!(resolved.grid_dot, "#334155"); // Preserved from preset
+
+        // Explicit accent_hover takes precedence over auto-derivation
+        theme
+            .overrides
+            .insert("accent_hover".to_string(), "#123456".to_string());
+        let resolved2 = resolve_theme(&theme);
+        assert_eq!(resolved2.accent_hover, "#123456");
     }
 }

@@ -260,11 +260,11 @@ export const FloatingDock: React.FC = () => {
             title={`${def.label}${shortcut ? ` (${shortcut})` : ''}`}
             style={{
               background: isActive
-                ? 'linear-gradient(180deg, var(--color-accent, #0284c7) 0%, var(--color-accent-hover, #0369a1) 100%)'
+                ? 'linear-gradient(180deg, var(--color-accent, #0284c7) 0%, var(--color-accent-hover, color-mix(in srgb, var(--color-accent, #0284c7) 80%, black)) 100%)'
                 : 'transparent',
               color: isActive ? '#ffffff' : 'var(--color-text-secondary, #94a3b8)',
               border: isActive
-                ? '1px solid var(--color-accent-light, rgba(56, 189, 248, 0.4))'
+                ? '1px solid var(--color-accent-light, color-mix(in srgb, var(--color-accent, #0284c7) 50%, white))'
                 : '1px solid transparent',
               borderRadius: 10,
               padding: isVertical ? '8px' : '6px 14px',
@@ -276,7 +276,9 @@ export const FloatingDock: React.FC = () => {
               justifyContent: 'center',
               gap: 7,
               transition: 'all 0.15s ease',
-              boxShadow: isActive ? '0 2px 8px rgba(2, 132, 199, 0.35)' : 'none',
+              boxShadow: isActive
+                ? '0 2px 10px color-mix(in srgb, var(--color-accent, #0284c7) 40%, transparent)'
+                : 'none',
             }}
             onMouseEnter={(e) => {
               if (!isActive) {

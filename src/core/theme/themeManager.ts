@@ -88,13 +88,47 @@ export const THEME_PRESETS: Record<string, ThemeColors> = {
   },
 };
 
+export function darkenHex(hex: string, factor = 0.82): string {
+  const clean = hex.trim().replace(/^#/, '');
+  if (clean.length === 6) {
+    const r = parseInt(clean.slice(0, 2), 16);
+    const g = parseInt(clean.slice(2, 4), 16);
+    const b = parseInt(clean.slice(4, 6), 16);
+    if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+      const dr = Math.min(255, Math.max(0, Math.round(r * factor)));
+      const dg = Math.min(255, Math.max(0, Math.round(g * factor)));
+      const db = Math.min(255, Math.max(0, Math.round(b * factor)));
+      return `#${dr.toString(16).padStart(2, '0')}${dg.toString(16).padStart(2, '0')}${
+        db.toString(16).padStart(2, '0')
+      }`;
+    }
+  } else if (clean.length === 3) {
+    const r = parseInt(clean[0] + clean[0], 16);
+    const g = parseInt(clean[1] + clean[1], 16);
+    const b = parseInt(clean[2] + clean[2], 16);
+    if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+      const dr = Math.min(255, Math.max(0, Math.round(r * factor)));
+      const dg = Math.min(255, Math.max(0, Math.round(g * factor)));
+      const db = Math.min(255, Math.max(0, Math.round(b * factor)));
+      return `#${dr.toString(16).padStart(2, '0')}${dg.toString(16).padStart(2, '0')}${
+        db.toString(16).padStart(2, '0')
+      }`;
+    }
+  }
+  return hex;
+}
+
 export function resolveTheme(config: ThemeConfig): ThemeColors {
   const base = THEME_PRESETS[config.name] || THEME_PRESETS['default-dark'];
   const overrides = config.overrides || {};
-  return {
+  const resolved: ThemeColors = {
     ...base,
     ...overrides,
   };
+  if (overrides.accent && !overrides.accent_hover) {
+    resolved.accent_hover = darkenHex(overrides.accent, 0.82);
+  }
+  return resolved;
 }
 
 export function applyThemeToDom(

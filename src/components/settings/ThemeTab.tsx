@@ -1,5 +1,5 @@
 import React from 'react';
-import { resolveTheme, THEME_PRESETS, ThemeColors } from '../../core/theme/themeManager';
+import { darkenHex, resolveTheme, THEME_PRESETS, ThemeColors } from '../../core/theme/themeManager';
 import { useConfigStore } from '../../stores/useConfigStore';
 
 interface PresetItem {
@@ -71,7 +71,16 @@ const TOKEN_GROUPS: { title: string; tokens: TokenField[]; }[] = [
   {
     title: 'Accents & Selection',
     tokens: [
-      { key: 'accent', label: 'Accent Color', desc: 'Active tool buttons and brand color' },
+      {
+        key: 'accent',
+        label: 'Accent Color',
+        desc: 'Active tool buttons, brand color, and gradient start',
+      },
+      {
+        key: 'accent_hover',
+        label: 'Accent Gradient / Hover',
+        desc: 'Gradient bottom for active dock items and hover shade',
+      },
       { key: 'accent_light', label: 'Accent Highlight', desc: 'Focus rings and active indicators' },
       {
         key: 'selection_stroke',
@@ -114,6 +123,9 @@ export const ThemeTab: React.FC = () => {
       ...overrides,
       [token]: value,
     };
+    if (token === 'accent' && !('accent_hover' in overrides)) {
+      updatedOverrides.accent_hover = darkenHex(value, 0.82);
+    }
     const updatedTheme = {
       ...themeConfig,
       overrides: updatedOverrides,
