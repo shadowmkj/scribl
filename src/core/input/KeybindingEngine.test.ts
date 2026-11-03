@@ -203,5 +203,77 @@ describe('KeybindingEngine', () => {
       visualEngine.handleKeyDown(new KeyboardEvent('keydown', { key: 'r' }));
       expect(executedCommands).toEqual(['selection.rotate', 'history.redo']);
     });
+
+    it('dispatches copy, paste, cut, duplicate and visual mode y/p bindings', () => {
+      let isVisual = false;
+      const isMac = typeof navigator !== 'undefined'
+        && navigator.platform?.toUpperCase().indexOf('MAC') >= 0;
+
+      const visualEngine = new KeybindingEngine({
+        executeCommand: (id) => {
+          executedCommands.push(id);
+          return true;
+        },
+        getActiveMode: () => (isVisual ? 'v' : 'n'),
+      });
+
+      visualEngine.registerKeymaps([
+        { mode: 'n', lhs: '<D-c>', rhs: 'edit.copy' },
+        { mode: 'n', lhs: '<D-v>', rhs: 'edit.paste' },
+        { mode: 'n', lhs: '<D-x>', rhs: 'edit.cut' },
+        { mode: 'n', lhs: '<D-d>', rhs: 'edit.duplicate' },
+        { mode: 'v', lhs: 'y', rhs: 'edit.copy' },
+        { mode: 'v', lhs: 'p', rhs: 'edit.paste' },
+      ]);
+
+      // In Normal mode: Cmd/Ctrl+C invokes edit.copy
+      executedCommands.length = 0;
+      visualEngine.handleKeyDown(
+        new KeyboardEvent('keydown', {
+          key: 'c',
+          metaKey: isMac,
+          ctrlKey: !isMac,
+          cancelable: true,
+        }),
+      );
+      expect(executedCommands).toEqual(['edit.copy']);
+
+      // In Normal mode: Cmd/Ctrl+V invokes edit.paste
+      visualEngine.handleKeyDown(
+        new KeyboardEvent('keydown', {
+          key: 'v',
+          metaKey: isMac,
+          ctrlKey: !isMac,
+          cancelable: true,
+        }),
+      );
+      expect(executedCommands).toEqual(['edit.copy', 'edit.paste']);
+
+      // Switch to Visual mode: 'y' invokes edit.copy
+      isVisual = true;
+      visualEngine.handleKeyDown(new KeyboardEvent('keydown', { key: 'y', cancelable: true }));
+      expect(executedCommands).toEqual(['edit.copy', 'edit.paste', 'edit.copy']);
+
+      // In Visual mode: 'p' invokes edit.paste
+      visualEngine.handleKeyDown(new KeyboardEvent('keydown', { key: 'p', cancelable: true }));
+      expect(executedCommands).toEqual(['edit.copy', 'edit.paste', 'edit.copy', 'edit.paste']);
+
+      // In Visual mode: Cmd/Ctrl+D falls back to normal mode edit.duplicate
+      visualEngine.handleKeyDown(
+        new KeyboardEvent('keydown', {
+          key: 'd',
+          metaKey: isMac,
+          ctrlKey: !isMac,
+          cancelable: true,
+        }),
+      );
+      expect(executedCommands).toEqual([
+        'edit.copy',
+        'edit.paste',
+        'edit.copy',
+        'edit.paste',
+        'edit.duplicate',
+      ]);
+    });
   });
 });

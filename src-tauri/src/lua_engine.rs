@@ -384,8 +384,8 @@ mod tests {
         "#;
         let config = eval_lua_config_string(script, None).expect("should evaluate");
         assert!(
-            !config.keymaps.iter().any(|k| k.lhs == "p"),
-            "Deleted 'p' keymap should not be present"
+            !config.keymaps.iter().any(|k| k.mode == "n" && k.lhs == "p"),
+            "Deleted 'n' mode 'p' keymap should not be present"
         );
         // Default "2" for tool.pen should still exist
         assert!(

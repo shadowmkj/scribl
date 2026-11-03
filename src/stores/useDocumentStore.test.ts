@@ -115,4 +115,29 @@ describe('useDocumentStore - movement and atomic undo/redo', () => {
     expect(useDocumentStore.getState().elements['s1'].width).toBe(60);
     expect(useDocumentStore.getState().elements['s1'].size).toBe(4);
   });
+
+  it('adds multiple elements at once and selects them with atomic undo', () => {
+    const store = useDocumentStore.getState();
+    const s2: StrokeElement = { ...dummyStroke, id: 's2' };
+    const s3: StrokeElement = { ...dummyStroke, id: 's3' };
+
+    store.addElements([s2, s3]);
+
+    const stateAfterAdd = useDocumentStore.getState();
+    expect(stateAfterAdd.elementIds).toEqual(['s1', 's2', 's3']);
+    expect(stateAfterAdd.selectedIds).toEqual(['s2', 's3']);
+
+    // Undo removes both s2 and s3 in 1 step
+    store.undo();
+    const stateAfterUndo = useDocumentStore.getState();
+    expect(stateAfterUndo.elementIds).toEqual(['s1']);
+    expect(stateAfterUndo.elements['s2']).toBeUndefined();
+    expect(stateAfterUndo.elements['s3']).toBeUndefined();
+
+    // Redo restores both and selects them
+    store.redo();
+    const stateAfterRedo = useDocumentStore.getState();
+    expect(stateAfterRedo.elementIds).toEqual(['s1', 's2', 's3']);
+    expect(stateAfterRedo.selectedIds).toEqual(['s2', 's3']);
+  });
 });

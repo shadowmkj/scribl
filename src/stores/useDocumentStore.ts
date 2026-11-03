@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import {
   AddElementCommand,
+  AddElementsCommand,
   applyElementDelta,
   DeleteElementsCommand,
   MoveElementsCommand,
@@ -15,6 +16,7 @@ interface DocumentState extends DocumentData {
   canUndo: boolean;
   canRedo: boolean;
   addElement: (element: CanvasElement) => void;
+  addElements: (elements: CanvasElement[]) => void;
   deleteSelected: () => void;
   moveSelected: (dx: number, dy: number) => void;
   translateSelected: (dx: number, dy: number) => void;
@@ -45,6 +47,18 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     const { elements, elementIds, selectedIds, history } = get();
     const currentData: DocumentData = { elements, elementIds, selectedIds };
     const nextData = history.execute(new AddElementCommand(element), currentData);
+    set({
+      ...nextData,
+      canUndo: history.canUndo(),
+      canRedo: history.canRedo(),
+    });
+  },
+
+  addElements: (newElements: CanvasElement[]) => {
+    if (newElements.length === 0) return;
+    const { elements, elementIds, selectedIds, history } = get();
+    const currentData: DocumentData = { elements, elementIds, selectedIds };
+    const nextData = history.execute(new AddElementsCommand(newElements), currentData);
     set({
       ...nextData,
       canUndo: history.canUndo(),

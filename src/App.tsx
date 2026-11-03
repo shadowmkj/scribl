@@ -6,6 +6,7 @@ import { FloatingDock } from './components/ui/FloatingDock';
 import { StyleInspector } from './components/ui/StyleInspector';
 import { TopHeader } from './components/ui/TopHeader';
 import { ZoomHUD } from './components/ui/ZoomHUD';
+import { copySelected, cutSelected, paste } from './core/clipboard/clipboard';
 import { registerDefaultCommands } from './core/commands/CommandRegistry';
 import {
   handleGlobalBlur,
@@ -109,6 +110,42 @@ export function App() {
       window.removeEventListener('keydown', handleGlobalKeyDown);
       window.removeEventListener('keyup', handleGlobalKeyUp);
       window.removeEventListener('blur', handleGlobalBlur);
+    };
+  }, []);
+
+  // Native clipboard event listener (for macOS menu Edit > Copy / Paste / Cut)
+  useEffect(() => {
+    const handleCopy = (e: ClipboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      e.preventDefault();
+      copySelected();
+    };
+
+    const handleCut = (e: ClipboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      e.preventDefault();
+      cutSelected();
+    };
+
+    const handlePaste = (e: ClipboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      e.preventDefault();
+      paste();
+    };
+
+    window.addEventListener('copy', handleCopy);
+    window.addEventListener('cut', handleCut);
+    window.addEventListener('paste', handlePaste);
+    return () => {
+      window.removeEventListener('copy', handleCopy);
+      window.removeEventListener('cut', handleCut);
+      window.removeEventListener('paste', handlePaste);
     };
   }, []);
 
