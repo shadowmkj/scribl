@@ -74,10 +74,22 @@ scribl.keymap.set("n", "c", "canvas.clear", { desc = "Clear Canvas" })
 scribl.keymap.set("n", "f", "zoom.fit_all", { desc = "Fit Drawing" })
 scribl.keymap.set("n", "<D-,>", "app.settings", { desc = "Open Settings" })
 
+-- Edit & Clipboard
+scribl.keymap.set("n", "<D-c>", "edit.copy", { desc = "Copy" })
+scribl.keymap.set("n", "<D-v>", "edit.paste", { desc = "Paste" })
+scribl.keymap.set("n", "<D-x>", "edit.cut", { desc = "Cut" })
+scribl.keymap.set("n", "<D-d>", "edit.duplicate", { desc = "Duplicate" })
+
 -- Visual Mode (When selection is active)
 scribl.keymap.set("v", "r", "selection.rotate", { desc = "Rotate Selection" })
 scribl.keymap.set("v", "<Esc>", "selection.deselect", { desc = "Deselect" })
 scribl.keymap.set("v", "d", "selection.delete", { desc = "Delete Selected" })
+scribl.keymap.set("v", "y", "edit.copy", { desc = "Yank (Copy)" })
+scribl.keymap.set("v", "p", "edit.paste", { desc = "Put (Paste)" })
+scribl.keymap.set("v", "<D-c>", "edit.copy", { desc = "Copy" })
+scribl.keymap.set("v", "<D-v>", "edit.paste", { desc = "Paste" })
+scribl.keymap.set("v", "<D-x>", "edit.cut", { desc = "Cut" })
+scribl.keymap.set("v", "<D-d>", "edit.duplicate", { desc = "Duplicate" })
 
 --------------------------------------------------------------------------------
 -- 3. Floating Toolbar Layout
@@ -108,12 +120,23 @@ pub fn ensure_default_config_exists() -> Result<PathBuf, String> {
     }
     let init_path = dir.join("init.lua");
     if init_path.exists() {
-        let content = std::fs::read_to_string(&init_path).unwrap_or_default();
+        let mut content = std::fs::read_to_string(&init_path).unwrap_or_default();
+        let mut modified = false;
+
         if !content.is_empty() && !content.contains("scribl.keymap.set(\"v\"") {
             let visual_block = "\n-- Visual Mode (When selection is active)\nscribl.keymap.set(\"v\", \"r\", \"selection.rotate\", { desc = \"Rotate Selection\" })\nscribl.keymap.set(\"v\", \"<Esc>\", \"selection.deselect\", { desc = \"Deselect\" })\nscribl.keymap.set(\"v\", \"d\", \"selection.delete\", { desc = \"Delete Selected\" })\n";
-            let mut updated = content;
-            updated.push_str(visual_block);
-            let _ = std::fs::write(&init_path, updated);
+            content.push_str(visual_block);
+            modified = true;
+        }
+
+        if !content.is_empty() && !content.contains("edit.copy") {
+            let clipboard_block = "\n-- Edit & Clipboard\nscribl.keymap.set(\"n\", \"<D-c>\", \"edit.copy\", { desc = \"Copy\" })\nscribl.keymap.set(\"n\", \"<D-v>\", \"edit.paste\", { desc = \"Paste\" })\nscribl.keymap.set(\"n\", \"<D-x>\", \"edit.cut\", { desc = \"Cut\" })\nscribl.keymap.set(\"n\", \"<D-d>\", \"edit.duplicate\", { desc = \"Duplicate\" })\nscribl.keymap.set(\"v\", \"y\", \"edit.copy\", { desc = \"Yank (Copy)\" })\nscribl.keymap.set(\"v\", \"p\", \"edit.paste\", { desc = \"Put (Paste)\" })\nscribl.keymap.set(\"v\", \"<D-c>\", \"edit.copy\", { desc = \"Copy\" })\nscribl.keymap.set(\"v\", \"<D-v>\", \"edit.paste\", { desc = \"Paste\" })\nscribl.keymap.set(\"v\", \"<D-x>\", \"edit.cut\", { desc = \"Cut\" })\nscribl.keymap.set(\"v\", \"<D-d>\", \"edit.duplicate\", { desc = \"Duplicate\" })\n";
+            content.push_str(clipboard_block);
+            modified = true;
+        }
+
+        if modified {
+            let _ = std::fs::write(&init_path, content);
         }
     } else {
         std::fs::write(&init_path, DEFAULT_INIT_LUA_TEMPLATE)

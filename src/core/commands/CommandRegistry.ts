@@ -3,6 +3,7 @@ import { useConfigStore } from '../../stores/useConfigStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
 import { calculateBoxFitCamera } from '../camera/cameraMath';
+import { copySelected, cutSelected, duplicateSelected, paste } from '../clipboard/clipboard';
 
 export interface Command {
   id: string;
@@ -215,6 +216,79 @@ export function registerDefaultCommands(handlers?: {
     category: 'selection',
     description: 'Trigger selection rotation mode',
     execute: () => {},
+  });
+
+  // Clipboard & Duplicate
+  commandRegistry.register({
+    id: 'edit.copy',
+    label: 'Copy',
+    category: 'selection',
+    description: 'Copy selected elements to clipboard',
+    execute: () => {
+      void copySelected();
+    },
+  });
+  commandRegistry.register({
+    id: 'selection.copy',
+    label: 'Copy',
+    category: 'selection',
+    execute: () => {
+      void copySelected();
+    },
+  });
+
+  commandRegistry.register({
+    id: 'edit.paste',
+    label: 'Paste',
+    category: 'selection',
+    description: 'Paste elements from clipboard',
+    execute: () => {
+      void paste();
+    },
+  });
+  commandRegistry.register({
+    id: 'selection.paste',
+    label: 'Paste',
+    category: 'selection',
+    execute: () => {
+      void paste();
+    },
+  });
+
+  commandRegistry.register({
+    id: 'edit.cut',
+    label: 'Cut',
+    category: 'selection',
+    description: 'Cut selected elements to clipboard',
+    execute: () => {
+      void cutSelected();
+    },
+  });
+  commandRegistry.register({
+    id: 'selection.cut',
+    label: 'Cut',
+    category: 'selection',
+    execute: () => {
+      void cutSelected();
+    },
+  });
+
+  commandRegistry.register({
+    id: 'edit.duplicate',
+    label: 'Duplicate',
+    category: 'selection',
+    description: 'Duplicate selected elements in-place',
+    execute: () => {
+      void duplicateSelected();
+    },
+  });
+  commandRegistry.register({
+    id: 'selection.duplicate',
+    label: 'Duplicate',
+    category: 'selection',
+    execute: () => {
+      void duplicateSelected();
+    },
   });
 
   // File & Canvas
