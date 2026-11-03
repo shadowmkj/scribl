@@ -237,7 +237,7 @@ export const CanvasViewport: React.FC = () => {
         width: '100%',
         height: '100%',
         overflow: 'hidden',
-        background: '#090d16',
+        background: 'var(--color-canvas-bg, #090d16)',
         touchAction: 'none',
         userSelect: 'none',
         cursor: cursorStyle,

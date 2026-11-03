@@ -16,6 +16,7 @@ describe('SettingsModal', () => {
           stroke_smoothing: 0.5,
           stroke_thinning: 0.6,
           auto_save: true,
+          default_pen_color: '#0284c7',
         },
         keymaps: [
           { mode: 'n', lhs: 'p', rhs: 'tool.pen', desc: 'Pen Tool' },
@@ -24,6 +25,10 @@ describe('SettingsModal', () => {
         toolbar: {
           position: 'bottom',
           items: ['select', 'pen'],
+        },
+        theme: {
+          name: 'default-dark',
+          overrides: {},
         },
       },
     });
@@ -41,6 +46,7 @@ describe('SettingsModal', () => {
     expect(screen.getByText('Preferences')).toBeTruthy();
     expect(screen.getByText('General')).toBeTruthy();
     expect(screen.getByText('Inking')).toBeTruthy();
+    expect(screen.getByText('Theme')).toBeTruthy();
     expect(screen.getByText('Keybindings')).toBeTruthy();
     expect(screen.getByText('Toolbar')).toBeTruthy();
     expect(screen.getByText('Lua Config')).toBeTruthy();

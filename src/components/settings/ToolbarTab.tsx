@@ -56,10 +56,17 @@ export const ToolbarTab: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 600, color: '#f8fafc' }}>
+        <h3
+          style={{
+            margin: '0 0 4px',
+            fontSize: 15,
+            fontWeight: 600,
+            color: 'var(--color-text-primary, #f8fafc)',
+          }}
+        >
           Floating Dock & Toolbar
         </h3>
-        <p style={{ margin: 0, fontSize: 12, color: '#94a3b8' }}>
+        <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-secondary, #94a3b8)' }}>
           Adjust dock positioning on screen and choose which tools appear.
         </p>
       </div>
@@ -69,15 +76,19 @@ export const ToolbarTab: React.FC = () => {
         <div
           style={{
             padding: '14px',
-            background: 'rgba(255, 255, 255, 0.03)',
+            background: 'rgba(0, 0, 0, 0.05)',
             borderRadius: 10,
-            border: '1px solid rgba(255, 255, 255, 0.06)',
+            border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.06))',
             display: 'flex',
             flexDirection: 'column',
             gap: 10,
           }}
         >
-          <span style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0' }}>Dock Position</span>
+          <span
+            style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary, #e2e8f0)' }}
+          >
+            Dock Position
+          </span>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
             {positions.map((p) => {
               const active = config.toolbar.position === p.id;
@@ -91,9 +102,13 @@ export const ToolbarTab: React.FC = () => {
                     borderRadius: 8,
                     fontSize: 12,
                     fontWeight: active ? 600 : 500,
-                    color: active ? '#ffffff' : '#94a3b8',
-                    background: active ? '#0284c7' : 'rgba(255, 255, 255, 0.04)',
-                    border: active ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
+                    color: active ? '#ffffff' : 'var(--color-text-secondary, #94a3b8)',
+                    background: active
+                      ? 'var(--color-accent, #0284c7)'
+                      : 'rgba(125, 125, 125, 0.08)',
+                    border: active
+                      ? '1px solid var(--color-accent-light, #38bdf8)'
+                      : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
                     cursor: 'pointer',
                     transition: 'all 0.15s ease',
                   }}
@@ -109,15 +124,19 @@ export const ToolbarTab: React.FC = () => {
         <div
           style={{
             padding: '14px',
-            background: 'rgba(255, 255, 255, 0.03)',
+            background: 'rgba(0, 0, 0, 0.05)',
             borderRadius: 10,
-            border: '1px solid rgba(255, 255, 255, 0.06)',
+            border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.06))',
             display: 'flex',
             flexDirection: 'column',
             gap: 10,
           }}
         >
-          <span style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0' }}>Active Tools</span>
+          <span
+            style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary, #e2e8f0)' }}
+          >
+            Active Tools
+          </span>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
             {ALL_TOOLBAR_ITEMS.filter((i) => i.id !== '|').map((item) => {
               const enabled = config.toolbar.items.includes(item.id);
@@ -132,18 +151,20 @@ export const ToolbarTab: React.FC = () => {
                     borderRadius: 6,
                     background: enabled ? 'rgba(2, 132, 199, 0.1)' : 'transparent',
                     border: enabled
-                      ? '1px solid rgba(56, 189, 248, 0.3)'
-                      : '1px solid rgba(255, 255, 255, 0.04)',
+                      ? '1px solid var(--color-accent-light, rgba(56, 189, 248, 0.3))'
+                      : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.04))',
                     cursor: 'pointer',
                     fontSize: 12,
-                    color: enabled ? '#f8fafc' : '#64748b',
+                    color: enabled
+                      ? 'var(--color-text-primary, #f8fafc)'
+                      : 'var(--color-text-disabled, #64748b)',
                   }}
                 >
                   <input
                     type='checkbox'
                     checked={enabled}
                     onChange={() => toggleItem(item.id)}
-                    style={{ accentColor: '#0284c7' }}
+                    style={{ accentColor: 'var(--color-accent, #0284c7)' }}
                   />
                   {item.label}
                 </label>

@@ -19,7 +19,7 @@ pub fn get_init_lua_path() -> PathBuf {
     get_config_dir().join("init.lua")
 }
 
-pub const DEFAULT_INIT_LUA_TEMPLATE: &str = r#"-- ~/.config/scribl/init.lua
+pub const DEFAULT_INIT_LUA_TEMPLATE: &str = r##"-- ~/.config/scribl/init.lua
 -- Scribl Neovim-style Lua Configuration File
 
 local scribl = require("scribl")
@@ -29,6 +29,7 @@ local scribl = require("scribl")
 --------------------------------------------------------------------------------
 scribl.opt.dot_grid = true             -- Show dot-grid canvas background
 scribl.opt.default_tool = "pen"        -- Active tool on startup: "pen", "select", "eraser", "zoom"
+scribl.opt.default_pen_color = "#0284c7" -- Initial pen drawing color
 scribl.opt.zoom_mode = "scrubby"       -- "scrubby" or "selection"
 scribl.opt.stroke_smoothing = 0.5      -- Perfect-freehand smoothing
 scribl.opt.stroke_thinning = 0.6       -- Pressure thinning effect
@@ -110,7 +111,19 @@ scribl.ui.toolbar = {
     "clear",
   },
 }
-"#;
+
+--------------------------------------------------------------------------------
+-- 4. Theme Configuration
+-- Presets: "default-dark", "light", "tokyo-night", "catppuccin"
+--------------------------------------------------------------------------------
+scribl.theme.name = "default-dark"
+
+-- Optional custom token overrides:
+-- scribl.theme.overrides = {
+--   canvas_bg = "#090d16",
+--   accent = "#0284c7",
+-- }
+"##;
 
 pub fn ensure_default_config_exists() -> Result<PathBuf, String> {
     let dir = get_config_dir();
@@ -132,6 +145,12 @@ pub fn ensure_default_config_exists() -> Result<PathBuf, String> {
         if !content.is_empty() && !content.contains("edit.copy") {
             let clipboard_block = "\n-- Edit & Clipboard\nscribl.keymap.set(\"n\", \"<D-c>\", \"edit.copy\", { desc = \"Copy\" })\nscribl.keymap.set(\"n\", \"<D-v>\", \"edit.paste\", { desc = \"Paste\" })\nscribl.keymap.set(\"n\", \"<D-x>\", \"edit.cut\", { desc = \"Cut\" })\nscribl.keymap.set(\"n\", \"<D-d>\", \"edit.duplicate\", { desc = \"Duplicate\" })\nscribl.keymap.set(\"v\", \"y\", \"edit.copy\", { desc = \"Yank (Copy)\" })\nscribl.keymap.set(\"v\", \"p\", \"edit.paste\", { desc = \"Put (Paste)\" })\nscribl.keymap.set(\"v\", \"<D-c>\", \"edit.copy\", { desc = \"Copy\" })\nscribl.keymap.set(\"v\", \"<D-v>\", \"edit.paste\", { desc = \"Paste\" })\nscribl.keymap.set(\"v\", \"<D-x>\", \"edit.cut\", { desc = \"Cut\" })\nscribl.keymap.set(\"v\", \"<D-d>\", \"edit.duplicate\", { desc = \"Duplicate\" })\n";
             content.push_str(clipboard_block);
+            modified = true;
+        }
+
+        if !content.is_empty() && !content.contains("scribl.theme") {
+            let theme_block = "\n--------------------------------------------------------------------------------\n-- 4. Theme Configuration\n-- Presets: \"default-dark\", \"light\", \"tokyo-night\", \"catppuccin\"\n--------------------------------------------------------------------------------\nscribl.theme.name = \"default-dark\"\n";
+            content.push_str(theme_block);
             modified = true;
         }
 

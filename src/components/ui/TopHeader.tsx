@@ -60,11 +60,12 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
           display: 'flex',
           alignItems: 'center',
           gap: 10,
-          background: 'rgba(15, 23, 42, 0.78)',
+          background: 'var(--color-panel-bg, rgba(15, 23, 42, 0.78))',
           backdropFilter: 'blur(16px) saturate(180%)',
           WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+          border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
+          boxShadow:
+            'var(--color-panel-shadow, 0 8px 30px rgba(0, 0, 0, 0.4)), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
           borderRadius: 12,
           padding: '4px 10px',
           pointerEvents: 'auto',
@@ -88,7 +89,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
               fontSize: 13,
               fontWeight: 700,
               letterSpacing: '0.04em',
-              color: '#f8fafc',
+              color: 'var(--color-text-primary, #f8fafc)',
               textTransform: 'uppercase',
             }}
           >
@@ -97,7 +98,12 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
         </div>
 
         <div
-          style={{ width: 1, height: 16, background: 'rgba(255, 255, 255, 0.12)', margin: '0 2px' }}
+          style={{
+            width: 1,
+            height: 16,
+            background: 'var(--color-panel-border, rgba(255, 255, 255, 0.12))',
+            margin: '0 2px',
+          }}
         />
 
         <input
@@ -110,7 +116,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
             border: '1px solid transparent',
             borderRadius: 6,
             padding: '3px 8px',
-            color: '#cbd5e1',
+            color: 'var(--color-text-primary, #cbd5e1)',
             fontSize: 13,
             fontWeight: 500,
             outline: 'none',
@@ -119,8 +125,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
             transition: 'all 0.15s ease',
           }}
           onFocus={(e) => {
-            e.currentTarget.style.background = 'rgba(2, 6, 23, 0.6)';
-            e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.4)';
+            e.currentTarget.style.background = 'rgba(125, 125, 125, 0.12)';
+            e.currentTarget.style.borderColor = 'var(--color-accent, rgba(56, 189, 248, 0.4))';
           }}
           onBlur={(e) => {
             e.currentTarget.style.background = 'transparent';
@@ -128,7 +134,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
           }}
           onMouseEnter={(e) => {
             if (document.activeElement !== e.currentTarget) {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+              e.currentTarget.style.background = 'rgba(125, 125, 125, 0.08)';
             }
           }}
           onMouseLeave={(e) => {
@@ -145,11 +151,12 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
           display: 'flex',
           alignItems: 'center',
           gap: 6,
-          background: 'rgba(15, 23, 42, 0.78)',
+          background: 'var(--color-panel-bg, rgba(15, 23, 42, 0.78))',
           backdropFilter: 'blur(16px) saturate(180%)',
           WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+          border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
+          boxShadow:
+            'var(--color-panel-shadow, 0 8px 30px rgba(0, 0, 0, 0.4)), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
           borderRadius: 12,
           padding: '4px',
           pointerEvents: 'auto',
@@ -170,7 +177,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: canUndo ? '#f1f5f9' : '#475569',
+            color: canUndo
+              ? 'var(--color-text-primary, #f1f5f9)'
+              : 'var(--color-text-disabled, #475569)',
             cursor: canUndo ? 'pointer' : 'default',
             transition: 'background 0.15s ease',
           }}
@@ -210,7 +219,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: canRedo ? '#f1f5f9' : '#475569',
+            color: canRedo
+              ? 'var(--color-text-primary, #f1f5f9)'
+              : 'var(--color-text-disabled, #475569)',
             cursor: canRedo ? 'pointer' : 'default',
             transition: 'background 0.15s ease',
           }}
@@ -237,7 +248,12 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
         </button>
 
         <div
-          style={{ width: 1, height: 16, background: 'rgba(255, 255, 255, 0.1)', margin: '0 2px' }}
+          style={{
+            width: 1,
+            height: 16,
+            background: 'var(--color-panel-border, rgba(255, 255, 255, 0.1))',
+            margin: '0 2px',
+          }}
         />
 
         {/* Open */}
@@ -253,7 +269,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
             display: 'flex',
             alignItems: 'center',
             gap: 6,
-            color: '#cbd5e1',
+            color: 'var(--color-text-secondary, #cbd5e1)',
             fontSize: 12,
             fontWeight: 500,
             cursor: 'pointer',
@@ -261,11 +277,11 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-            e.currentTarget.style.color = '#f8fafc';
+            e.currentTarget.style.color = 'var(--color-text-primary, #f8fafc)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.color = '#cbd5e1';
+            e.currentTarget.style.color = 'var(--color-text-secondary, #cbd5e1)';
           }}
         >
           <svg
@@ -297,7 +313,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
             display: 'flex',
             alignItems: 'center',
             gap: 6,
-            color: '#cbd5e1',
+            color: 'var(--color-text-secondary, #cbd5e1)',
             fontSize: 12,
             fontWeight: 500,
             cursor: 'pointer',
@@ -305,11 +321,11 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-            e.currentTarget.style.color = '#f8fafc';
+            e.currentTarget.style.color = 'var(--color-text-primary, #f8fafc)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.color = '#cbd5e1';
+            e.currentTarget.style.color = 'var(--color-text-secondary, #cbd5e1)';
           }}
         >
           <svg
@@ -334,27 +350,29 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
           onClick={onExportPNG}
           title='Export as PNG image'
           style={{
-            background: 'rgba(2, 132, 199, 0.16)',
-            border: '1px solid rgba(56, 189, 248, 0.28)',
+            background: 'var(--color-selection-fill, rgba(2, 132, 199, 0.16))',
+            border: '1px solid var(--color-panel-border, rgba(56, 189, 248, 0.28))',
             borderRadius: 8,
             padding: '0 12px',
             height: 32,
             display: 'flex',
             alignItems: 'center',
             gap: 6,
-            color: '#38bdf8',
+            color: 'var(--color-accent-light, #0284c7)',
             fontSize: 12,
             fontWeight: 600,
             cursor: 'pointer',
             transition: 'all 0.15s ease',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(2, 132, 199, 0.3)';
-            e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.5)';
+            e.currentTarget.style.background = 'rgba(2, 132, 199, 0.25)';
+            e.currentTarget.style.borderColor = 'var(--color-accent, rgba(56, 189, 248, 0.5))';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(2, 132, 199, 0.16)';
-            e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.28)';
+            e.currentTarget.style.background =
+              'var(--color-selection-fill, rgba(2, 132, 199, 0.16))';
+            e.currentTarget.style.borderColor =
+              'var(--color-panel-border, rgba(56, 189, 248, 0.28))';
           }}
         >
           <svg
@@ -375,7 +393,12 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
         </button>
 
         <div
-          style={{ width: 1, height: 16, background: 'rgba(255, 255, 255, 0.1)', margin: '0 2px' }}
+          style={{
+            width: 1,
+            height: 16,
+            background: 'var(--color-panel-border, rgba(255, 255, 255, 0.1))',
+            margin: '0 2px',
+          }}
         />
 
         {/* Clear Canvas */}
@@ -391,7 +414,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
             display: 'flex',
             alignItems: 'center',
             gap: 6,
-            color: confirmClear ? '#f87171' : '#94a3b8',
+            color: confirmClear
+              ? 'var(--color-danger, #f87171)'
+              : 'var(--color-text-secondary, #94a3b8)',
             fontSize: 12,
             fontWeight: confirmClear ? 600 : 500,
             cursor: 'pointer',
@@ -400,13 +425,13 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
           onMouseEnter={(e) => {
             if (!confirmClear) {
               e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
-              e.currentTarget.style.color = '#f87171';
+              e.currentTarget.style.color = 'var(--color-danger, #f87171)';
             }
           }}
           onMouseLeave={(e) => {
             if (!confirmClear) {
               e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.color = '#94a3b8';
+              e.currentTarget.style.color = 'var(--color-text-secondary, #94a3b8)';
             }
           }}
         >
@@ -427,7 +452,12 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
         </button>
 
         <div
-          style={{ width: 1, height: 16, background: 'rgba(255, 255, 255, 0.1)', margin: '0 2px' }}
+          style={{
+            width: 1,
+            height: 16,
+            background: 'var(--color-panel-border, rgba(255, 255, 255, 0.1))',
+            margin: '0 2px',
+          }}
         />
 
         {/* Settings / Preferences */}
@@ -448,17 +478,17 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#94a3b8',
+            color: 'var(--color-text-secondary, #94a3b8)',
             cursor: 'pointer',
             transition: 'all 0.15s ease',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-            e.currentTarget.style.color = '#f8fafc';
+            e.currentTarget.style.color = 'var(--color-text-primary, #f8fafc)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.color = '#94a3b8';
+            e.currentTarget.style.color = 'var(--color-text-secondary, #94a3b8)';
           }}
         >
           <svg

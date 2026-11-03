@@ -1,4 +1,7 @@
 import { create } from 'zustand';
+import { THEME_PRESETS, ThemeColors, ThemeConfig } from '../core/theme/themeManager';
+
+export type { ThemeColors, ThemeConfig };
 
 export interface AppOptions {
   dot_grid: boolean;
@@ -7,6 +10,7 @@ export interface AppOptions {
   stroke_smoothing: number;
   stroke_thinning: number;
   auto_save: boolean;
+  default_pen_color: string;
 }
 
 export interface KeymapEntry {
@@ -25,6 +29,7 @@ export interface ScriblConfig {
   options: AppOptions;
   keymaps: KeymapEntry[];
   toolbar: ToolbarConfig;
+  theme: ThemeConfig;
 }
 
 export const DEFAULT_CONFIG: ScriblConfig = {
@@ -35,6 +40,7 @@ export const DEFAULT_CONFIG: ScriblConfig = {
     stroke_smoothing: 0.5,
     stroke_thinning: 0.6,
     auto_save: true,
+    default_pen_color: '#0284c7',
   },
   keymaps: [
     { mode: 'n', lhs: 'p', rhs: 'tool.pen', desc: 'Pen Tool' },
@@ -89,9 +95,14 @@ export const DEFAULT_CONFIG: ScriblConfig = {
       'clear',
     ],
   },
+  theme: {
+    name: 'default-dark',
+    overrides: {},
+    active: THEME_PRESETS['default-dark'],
+  },
 };
 
-export type SettingsTab = 'general' | 'inking' | 'keybindings' | 'toolbar' | 'lua';
+export type SettingsTab = 'general' | 'inking' | 'theme' | 'keybindings' | 'toolbar' | 'lua';
 
 interface ConfigState {
   config: ScriblConfig;

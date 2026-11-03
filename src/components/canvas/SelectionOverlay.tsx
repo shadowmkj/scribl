@@ -53,8 +53,8 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
               y={screenTL.y}
               width={boxW}
               height={boxH}
-              fill='rgba(2, 132, 199, 0.04)'
-              stroke='#0284c7'
+              fill='var(--color-selection-fill, rgba(2, 132, 199, 0.04))'
+              stroke='var(--color-selection-stroke, #0284c7)'
               strokeWidth={1.5}
             />
 
@@ -66,7 +66,7 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
               width={9}
               height={9}
               fill='#ffffff'
-              stroke='#0284c7'
+              stroke='var(--color-selection-stroke, #0284c7)'
               strokeWidth={1.5}
               rx={1.5}
             />
@@ -77,7 +77,7 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
               width={9}
               height={9}
               fill='#ffffff'
-              stroke='#0284c7'
+              stroke='var(--color-selection-stroke, #0284c7)'
               strokeWidth={1.5}
               rx={1.5}
             />
@@ -88,7 +88,7 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
               width={9}
               height={9}
               fill='#ffffff'
-              stroke='#0284c7'
+              stroke='var(--color-selection-stroke, #0284c7)'
               strokeWidth={1.5}
               rx={1.5}
             />
@@ -99,7 +99,7 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
               width={9}
               height={9}
               fill='#ffffff'
-              stroke='#0284c7'
+              stroke='var(--color-selection-stroke, #0284c7)'
               strokeWidth={1.5}
               rx={1.5}
             />
@@ -164,8 +164,10 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
                 y={screenTopLeft.y}
                 width={boxW}
                 height={boxH}
-                fill={isZoom ? 'rgba(56, 189, 248, 0.12)' : 'rgba(2, 132, 199, 0.15)'}
-                stroke={isZoom ? '#38bdf8' : '#0284c7'}
+                fill={isZoom
+                  ? 'rgba(56, 189, 248, 0.12)'
+                  : 'var(--color-selection-fill, rgba(2, 132, 199, 0.15))'}
+                stroke={isZoom ? '#38bdf8' : 'var(--color-selection-stroke, #0284c7)'}
                 strokeWidth={isZoom ? 1.5 : 1}
                 strokeDasharray={isZoom ? '5 3' : undefined}
               />

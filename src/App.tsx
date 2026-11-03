@@ -21,6 +21,7 @@ import {
   serializeScriblDoc,
   triggerDownload,
 } from './core/persistence/fileIO';
+import { applyThemeToDom, resolveTheme } from './core/theme/themeManager';
 import { useCameraStore } from './stores/useCameraStore';
 import { ScriblConfig, useConfigStore } from './stores/useConfigStore';
 import { useDocumentStore } from './stores/useDocumentStore';
@@ -29,6 +30,15 @@ import './App.css';
 
 export function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const theme = useConfigStore((state) => state.config.theme);
+
+  // Apply theme to DOM
+  useEffect(() => {
+    if (theme) {
+      const active = theme.active || resolveTheme(theme);
+      applyThemeToDom(active);
+    }
+  }, [theme]);
 
   useEffect(() => {
     restoreAutoSave();
@@ -44,6 +54,9 @@ export function App() {
       if (current.options.default_tool) {
         useToolStore.getState().setTool(current.options.default_tool as any);
       }
+      if (current.options.default_pen_color) {
+        useToolStore.getState().setColor(current.options.default_pen_color);
+      }
       if (current.options.zoom_mode) {
         useToolStore.getState().setZoomMode(current.options.zoom_mode as any);
       }
@@ -58,6 +71,9 @@ export function App() {
         const config = event.payload;
         useConfigStore.getState().setConfig(config);
         keybindingEngine.registerKeymaps(config.keymaps);
+        if (config.options.default_pen_color) {
+          useToolStore.getState().setColor(config.options.default_pen_color);
+        }
         if (config.options.zoom_mode) {
           useToolStore.getState().setZoomMode(config.options.zoom_mode as any);
         }

@@ -19,7 +19,7 @@ export const InfiniteGrid: React.FC<InfiniteGridProps> = ({ camera, width, heigh
         position: 'absolute',
         inset: 0,
         pointerEvents: 'none',
-        backgroundImage: `radial-gradient(#334155 1.5px, transparent 1.5px)`,
+        backgroundImage: `radial-gradient(var(--color-grid-dot, #334155) 1.5px, transparent 1.5px)`,
         backgroundSize: `${scaledGridSize}px ${scaledGridSize}px`,
         backgroundPosition: `${offsetX}px ${offsetY}px`,
         opacity: Math.min(1, Math.max(0.2, camera.zoom * 0.6)),
