@@ -27,6 +27,16 @@ export const SettingsModal: React.FC = () => {
   const activeSettingsTab = useConfigStore((s) => s.activeSettingsTab);
   const openSettings = useConfigStore((s) => s.openSettings);
   const closeSettings = useConfigStore((s) => s.closeSettings);
+  const appVersion = useConfigStore((s) => s.appVersion);
+
+  useEffect(() => {
+    if (!appVersion) {
+      import('@tauri-apps/api/core')
+        .then(({ invoke }) => invoke<string>('get_app_version'))
+        .then((ver) => useConfigStore.getState().setAppVersion(ver))
+        .catch(() => {});
+    }
+  }, [appVersion]);
 
   const isMac = typeof navigator !== 'undefined'
     && navigator.platform?.toUpperCase().indexOf('MAC') >= 0;
@@ -166,48 +176,88 @@ export const SettingsModal: React.FC = () => {
               gap: 4,
             }}
           >
-            {NAV_ITEMS.map((item) => {
-              const active = activeSettingsTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type='button'
-                  onClick={() => openSettings(item.id)}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+              {NAV_ITEMS.map((item) => {
+                const active = activeSettingsTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type='button'
+                    onClick={() => openSettings(item.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '8px 10px',
+                      borderRadius: 8,
+                      fontSize: 12,
+                      fontWeight: active ? 600 : 500,
+                      color: active ? '#ffffff' : 'var(--color-text-secondary, #94a3b8)',
+                      background: active
+                        ? 'var(--color-accent, rgba(2, 132, 199, 0.85))'
+                        : 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!active) {
+                        e.currentTarget.style.background = 'rgba(125, 125, 125, 0.1)';
+                        e.currentTarget.style.color = 'var(--color-text-primary, #f1f5f9)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!active) {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--color-text-secondary, #94a3b8)';
+                      }
+                    }}
+                  >
+                    <span style={{ fontSize: 13 }}>{item.icon}</span>
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Sidebar Footer with App Version */}
+            {appVersion && (
+              <div
+                data-testid='settings-version-footer'
+                style={{
+                  padding: '10px 8px 4px',
+                  borderTop: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2,
+                }}
+              >
+                <div
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    padding: '8px 10px',
-                    borderRadius: 8,
-                    fontSize: 12,
-                    fontWeight: active ? 600 : 500,
-                    color: active ? '#ffffff' : 'var(--color-text-secondary, #94a3b8)',
-                    background: active
-                      ? 'var(--color-accent, rgba(2, 132, 199, 0.85))'
-                      : 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'all 0.15s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!active) {
-                      e.currentTarget.style.background = 'rgba(125, 125, 125, 0.1)';
-                      e.currentTarget.style.color = 'var(--color-text-primary, #f1f5f9)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!active) {
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.color = 'var(--color-text-secondary, #94a3b8)';
-                    }
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: 'var(--color-text-secondary, #64748b)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
                   }}
                 >
-                  <span style={{ fontSize: 13 }}>{item.icon}</span>
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
+                  Scribl
+                </div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                    color: 'var(--color-text-secondary, #94a3b8)',
+                    wordBreak: 'break-all',
+                    lineHeight: '1.25',
+                  }}
+                  title={appVersion}
+                >
+                  {appVersion.startsWith('v') ? appVersion : `v${appVersion}`}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Content Pane */}

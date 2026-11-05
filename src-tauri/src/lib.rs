@@ -3,6 +3,16 @@ pub mod lua_engine;
 pub mod lua_generator;
 pub mod watcher;
 
+pub const APP_VERSION: &str = match option_env!("SCRIBL_VERSION") {
+    Some(v) => v,
+    None => env!("CARGO_PKG_VERSION"),
+};
+
+#[tauri::command]
+fn get_app_version() -> &'static str {
+    APP_VERSION
+}
+
 #[tauri::command]
 fn get_config() -> Result<config::ScriblConfig, String> {
     let init_path = watcher::ensure_default_config_exists()?;
@@ -61,9 +71,12 @@ pub fn run() {
 
             #[cfg(target_os = "macos")]
             {
-                use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
+                use tauri::menu::{AboutMetadata, MenuBuilder, MenuItemBuilder, SubmenuBuilder};
                 let app_submenu = SubmenuBuilder::new(app, "Scribl")
-                    .about(None)
+                    .about(Some(AboutMetadata {
+                        version: Some(APP_VERSION.to_string()),
+                        ..Default::default()
+                    }))
                     .separator()
                     .item(
                         &MenuItemBuilder::with_id("settings", "Settings...")
@@ -121,8 +134,24 @@ pub fn run() {
             get_config_path,
             save_config,
             open_config_file,
-            reveal_config_file
+            reveal_config_file,
+            get_app_version
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_version_format() {
+        let base = env!("CARGO_PKG_VERSION");
+        let unreleased_prefix = format!("{base}+");
+        assert!(
+            APP_VERSION == base || APP_VERSION.starts_with(&unreleased_prefix),
+            "expected version '{APP_VERSION}' to be '{base}' or start with '{unreleased_prefix}'"
+        );
+    }
 }

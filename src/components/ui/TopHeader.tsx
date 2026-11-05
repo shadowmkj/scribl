@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useConfigStore } from '../../stores/useConfigStore';
+import { isDevVersion, useConfigStore } from '../../stores/useConfigStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 
 interface TopHeaderProps {
@@ -11,6 +11,18 @@ interface TopHeaderProps {
 export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPNG }) => {
   const [docName, setDocName] = useState('Untitled Drawing');
   const [confirmClear, setConfirmClear] = useState(false);
+  const appVersion = useConfigStore((s) => s.appVersion);
+
+  useEffect(() => {
+    if (!appVersion) {
+      import('@tauri-apps/api/core')
+        .then(({ invoke }) => invoke<string>('get_app_version'))
+        .then((ver) => useConfigStore.getState().setAppVersion(ver))
+        .catch(() => {});
+    }
+  }, [appVersion]);
+
+  const isDev = isDevVersion(appVersion);
 
   const canUndo = useDocumentStore((s) => s.canUndo);
   const canRedo = useDocumentStore((s) => s.canRedo);
@@ -95,6 +107,39 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
           >
             Scribl
           </span>
+          {isDev && appVersion && (
+            <span
+              data-testid='dev-version-badge'
+              title={`Development build (${appVersion})`}
+              style={{
+                fontSize: 10,
+                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                padding: '1px 6px',
+                borderRadius: 9999,
+                background: 'var(--color-selection-fill, rgba(2, 132, 199, 0.16))',
+                border: '1px solid var(--color-panel-border, rgba(56, 189, 248, 0.3))',
+                color: 'var(--color-accent-light, #38bdf8)',
+                fontWeight: 600,
+                letterSpacing: '0.02em',
+                lineHeight: '14px',
+                userSelect: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+              }}
+            >
+              <span
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: '50%',
+                  background: 'var(--color-accent-light, #38bdf8)',
+                  display: 'inline-block',
+                }}
+              />
+              {appVersion.startsWith('v') ? appVersion : `v${appVersion}`}
+            </span>
+          )}
         </div>
 
         <div

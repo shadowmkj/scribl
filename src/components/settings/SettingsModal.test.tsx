@@ -86,4 +86,32 @@ describe('SettingsModal', () => {
     fireEvent.click(switchBtn);
     expect(useConfigStore.getState().config.options.dot_grid).toBe(false);
   });
+
+  it('displays release version in sidebar footer', () => {
+    useConfigStore.setState({ appVersion: '0.1.0' });
+    useConfigStore.getState().openSettings();
+    render(<SettingsModal />);
+
+    const footer = screen.getByTestId('settings-version-footer');
+    expect(footer).toBeTruthy();
+    expect(footer.textContent).toContain('v0.1.0');
+  });
+
+  it('displays development version with git hash in sidebar footer', () => {
+    useConfigStore.setState({ appVersion: '0.1.0+9a7a796' });
+    useConfigStore.getState().openSettings();
+    render(<SettingsModal />);
+
+    const footer = screen.getByTestId('settings-version-footer');
+    expect(footer).toBeTruthy();
+    expect(footer.textContent).toContain('v0.1.0+9a7a796');
+  });
+
+  it('does not render sidebar footer when appVersion is null', () => {
+    useConfigStore.setState({ appVersion: null });
+    useConfigStore.getState().openSettings();
+    render(<SettingsModal />);
+
+    expect(screen.queryByTestId('settings-version-footer')).toBeNull();
+  });
 });

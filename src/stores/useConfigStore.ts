@@ -104,9 +104,15 @@ export const DEFAULT_CONFIG: ScriblConfig = {
 
 export type SettingsTab = 'general' | 'inking' | 'theme' | 'keybindings' | 'toolbar' | 'lua';
 
+export function isDevVersion(version: string | null | undefined): boolean {
+  if (!version) return false;
+  return version.includes('+');
+}
+
 interface ConfigState {
   config: ScriblConfig;
   configPath: string | null;
+  appVersion: string | null;
   configError: string | null;
   isLoaded: boolean;
   isSettingsOpen: boolean;
@@ -114,6 +120,7 @@ interface ConfigState {
   loadConfig: () => Promise<void>;
   setConfig: (config: ScriblConfig) => void;
   setError: (error: string | null) => void;
+  setAppVersion: (appVersion: string | null) => void;
   openSettings: (tab?: SettingsTab) => void;
   closeSettings: () => void;
   saveConfigToDisk: (config: ScriblConfig) => Promise<void>;
@@ -122,6 +129,7 @@ interface ConfigState {
 export const useConfigStore = create<ConfigState>((set) => ({
   config: DEFAULT_CONFIG,
   configPath: null,
+  appVersion: null,
   configError: null,
   isLoaded: false,
   isSettingsOpen: false,
@@ -133,7 +141,13 @@ export const useConfigStore = create<ConfigState>((set) => ({
       const { invoke } = await import('@tauri-apps/api/core');
       const config = await invoke<ScriblConfig>('get_config');
       const configPath = await invoke<string>('get_config_path');
-      set({ config, configPath, isLoaded: true, configError: null });
+      let appVersion: string | null = null;
+      try {
+        appVersion = await invoke<string>('get_app_version');
+      } catch {
+        // Fallback for mock/older backends
+      }
+      set({ config, configPath, appVersion, isLoaded: true, configError: null });
     } catch {
       // Running in browser or mock environment
       set({ config: DEFAULT_CONFIG, isLoaded: true });
@@ -142,6 +156,7 @@ export const useConfigStore = create<ConfigState>((set) => ({
 
   setConfig: (config) => set({ config, configError: null }),
   setError: (configError) => set({ configError }),
+  setAppVersion: (appVersion) => set({ appVersion }),
 
   openSettings: (tab = 'general') => set({ isSettingsOpen: true, activeSettingsTab: tab }),
   closeSettings: () => set({ isSettingsOpen: false }),
