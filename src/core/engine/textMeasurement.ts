@@ -31,7 +31,8 @@ export function measureTextBounds(
     ctx.font = font;
   }
 
-  for (const line of lines) {
+  for (const rawLine of lines) {
+    const line = rawLine.replace(/\t/g, '  ');
     let lineWidth = 0;
     if (ctx && typeof ctx.measureText === 'function') {
       const metrics = ctx.measureText(line);

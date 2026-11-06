@@ -31,4 +31,10 @@ describe('textMeasurement', () => {
     expect(large.height).toBeGreaterThan(small.height);
     expect(large.width).toBeGreaterThan(small.width);
   });
+
+  it('measures tab characters by expanding them to 2 spaces', () => {
+    const withTab = measureTextBounds('\tHello', 24);
+    const withSpaces = measureTextBounds('  Hello', 24);
+    expect(withTab.width).toBe(withSpaces.width);
+  });
 });

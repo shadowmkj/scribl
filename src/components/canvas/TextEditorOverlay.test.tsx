@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCameraStore } from '../../stores/useCameraStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
@@ -125,5 +125,81 @@ describe('TextEditorOverlay', () => {
 
     expect(useToolStore.getState().editingText).toBeNull();
     expect(useDocumentStore.getState().elementIds.length).toBe(0);
+  });
+
+  it('inserts 2 spaces on Tab keydown instead of default browser focus navigation', () => {
+    useToolStore.setState({
+      editingText: {
+        x: 50,
+        y: 60,
+        text: 'hello',
+        fontSize: 24,
+        color: '#0284c7',
+      },
+    });
+
+    render(<TextEditorOverlay />);
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+
+    // Place cursor between 'he' and 'llo'
+    textarea.setSelectionRange(2, 2);
+
+    const tabEvent = new KeyboardEvent('keydown', {
+      key: 'Tab',
+      bubbles: true,
+      cancelable: true,
+    });
+    const preventDefaultSpy = vi.spyOn(tabEvent, 'preventDefault');
+
+    act(() => {
+      textarea.dispatchEvent(tabEvent);
+    });
+
+    expect(preventDefaultSpy).toHaveBeenCalled();
+    expect(textarea.value).toBe('he  llo');
+    expect(useToolStore.getState().editingText?.text).toBe('he  llo');
+  });
+
+  it('indents multiple lines on Tab and unindents on Shift+Tab', () => {
+    useToolStore.setState({
+      editingText: {
+        x: 50,
+        y: 60,
+        text: 'line 1\nline 2',
+        fontSize: 24,
+        color: '#0284c7',
+      },
+    });
+
+    render(<TextEditorOverlay />);
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+
+    // Select across both lines
+    textarea.setSelectionRange(0, 13);
+
+    // Tab -> Indent both lines
+    const tabEvent = new KeyboardEvent('keydown', {
+      key: 'Tab',
+      bubbles: true,
+      cancelable: true,
+    });
+    act(() => {
+      textarea.dispatchEvent(tabEvent);
+    });
+
+    expect(textarea.value).toBe('  line 1\n  line 2');
+
+    // Shift+Tab -> Unindent both lines
+    const shiftTabEvent = new KeyboardEvent('keydown', {
+      key: 'Tab',
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+    act(() => {
+      textarea.dispatchEvent(shiftTabEvent);
+    });
+
+    expect(textarea.value).toBe('line 1\nline 2');
   });
 });

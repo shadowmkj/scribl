@@ -203,6 +203,103 @@ export const TextEditorOverlay: React.FC = () => {
           if (e.key === 'Escape' || ((e.metaKey || e.ctrlKey) && e.key === 'Enter')) {
             e.preventDefault();
             handleCommit();
+            return;
+          }
+
+          if (e.key === 'Tab') {
+            e.preventDefault();
+            const textarea = textareaRef.current;
+            if (!textarea) return;
+
+            const currentText = textarea.value;
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const TAB = '  ';
+
+            if (e.shiftKey) {
+              // Unindent
+              const lineStart = currentText.lastIndexOf('\n', start - 1) + 1;
+              const lineEndIdx = currentText.indexOf('\n', end);
+              const lineEnd = lineEndIdx === -1 ? currentText.length : lineEndIdx;
+              const selectedBlock = currentText.slice(lineStart, lineEnd);
+              const lines = selectedBlock.split('\n');
+
+              let removedFirstLine = 0;
+              let totalRemoved = 0;
+
+              const unindented = lines.map((line, idx) => {
+                let removed = 0;
+                let newLine = line;
+                if (line.startsWith(TAB)) {
+                  newLine = line.slice(TAB.length);
+                  removed = TAB.length;
+                } else if (line.startsWith('\t')) {
+                  newLine = line.slice(1);
+                  removed = 1;
+                } else if (line.startsWith(' ')) {
+                  newLine = line.slice(1);
+                  removed = 1;
+                }
+                if (idx === 0) removedFirstLine = removed;
+                totalRemoved += removed;
+                return newLine;
+              });
+
+              if (totalRemoved > 0) {
+                const nextText = currentText.slice(0, lineStart) + unindented.join('\n')
+                  + currentText.slice(lineEnd);
+                setDraft(nextText);
+                updateEditingTextDraft(nextText);
+                textarea.value = nextText;
+                adjustTextareaSize(textarea);
+
+                const newStart = Math.max(lineStart, start - removedFirstLine);
+                const newEnd = Math.max(newStart, end - totalRemoved);
+                textarea.setSelectionRange(newStart, newEnd);
+                requestAnimationFrame(() => {
+                  textareaRef.current?.setSelectionRange(newStart, newEnd);
+                });
+              }
+            } else {
+              // Indent
+              const hasNewline = currentText.slice(start, end).includes('\n');
+              if (hasNewline) {
+                // Multiline indent
+                const lineStart = currentText.lastIndexOf('\n', start - 1) + 1;
+                const lineEndIdx = currentText.indexOf('\n', end);
+                const lineEnd = lineEndIdx === -1 ? currentText.length : lineEndIdx;
+                const selectedBlock = currentText.slice(lineStart, lineEnd);
+                const lines = selectedBlock.split('\n');
+
+                const indented = lines.map((line) => TAB + line).join('\n');
+                const nextText = currentText.slice(0, lineStart) + indented
+                  + currentText.slice(lineEnd);
+                setDraft(nextText);
+                updateEditingTextDraft(nextText);
+                textarea.value = nextText;
+                adjustTextareaSize(textarea);
+
+                const newStart = start + TAB.length;
+                const newEnd = end + TAB.length * lines.length;
+                textarea.setSelectionRange(newStart, newEnd);
+                requestAnimationFrame(() => {
+                  textareaRef.current?.setSelectionRange(newStart, newEnd);
+                });
+              } else {
+                // Single line or single cursor: insert 2 spaces
+                const nextText = currentText.slice(0, start) + TAB + currentText.slice(end);
+                setDraft(nextText);
+                updateEditingTextDraft(nextText);
+                textarea.value = nextText;
+                adjustTextareaSize(textarea);
+
+                const nextPos = start + TAB.length;
+                textarea.setSelectionRange(nextPos, nextPos);
+                requestAnimationFrame(() => {
+                  textareaRef.current?.setSelectionRange(nextPos, nextPos);
+                });
+              }
+            }
           }
         }}
         style={{
@@ -215,6 +312,7 @@ export const TextEditorOverlay: React.FC = () => {
           resize: 'none',
           overflow: 'hidden',
           whiteSpace: 'pre',
+          tabSize: 2,
           color: editingText.color,
           fontSize: `${screenFontSize}px`,
           fontFamily: getFontFamilyString(editingText.fontFamily),

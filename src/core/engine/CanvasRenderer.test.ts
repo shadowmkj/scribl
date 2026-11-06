@@ -69,6 +69,17 @@ describe('CanvasRenderer with TextElement', () => {
     expect(mockCtx.font).toContain('monospace');
   });
 
+  it('expands tab characters to 2 spaces in renderText', () => {
+    const tabEl: TextElement = {
+      ...dummyText,
+      id: 't_tab',
+      text: '\tIndent\nNo indent\tEnd',
+    };
+    renderText(mockCtx, tabEl);
+    expect(mockCtx.fillText).toHaveBeenCalledWith('  Indent', 100, 150);
+    expect(mockCtx.fillText).toHaveBeenCalledWith('No indent  End', 100, 150 + 24 * 1.25);
+  });
+
   it('renders text in renderCommittedCanvas alongside strokes', () => {
     const stroke: StrokeElement = {
       id: 's1',
