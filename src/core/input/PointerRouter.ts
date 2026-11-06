@@ -519,6 +519,8 @@ export class PointerRouter {
           zIndex,
         };
         useDocumentStore.getState().addElement(element);
+        useDocumentStore.getState().setSelected([id]);
+        useToolStore.getState().setTool('select');
       }
       this.activeShapeTool = null;
     } else if (this.state === 'DRAGGING_SELECTION') {

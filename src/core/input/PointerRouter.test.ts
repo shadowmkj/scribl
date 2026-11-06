@@ -520,6 +520,10 @@ describe('PointerRouter - Shape Drawing', () => {
 
     // Scratch preview should be cleared on pointer up
     expect(scratch.getShapePreview()).toBeNull();
+
+    // Shape should be selected and tool transitioned to select (visual mode)
+    expect(doc.selectedIds).toEqual([element.id]);
+    expect(useToolStore.getState().currentTool).toBe('select');
   });
 
   it('constrains rectangle to square when Shift is held', () => {
@@ -691,5 +695,83 @@ describe('PointerRouter - Shape Drawing', () => {
     const element = useDocumentStore.getState()
       .elements[useDocumentStore.getState().elementIds[0]] as ShapeElement;
     expect(element.endPoint?.y).toBeCloseTo(0, 1);
+  });
+
+  it('selects newly drawn shape and allows moving it immediately in visual mode', () => {
+    // 1. Draw a rectangle
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 600,
+        clientY: 500,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+      container,
+    );
+
+    router.handlePointerMove(
+      new PointerEvent('pointermove', {
+        clientX: 700,
+        clientY: 580,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+    );
+
+    router.handlePointerUp(
+      new PointerEvent('pointerup', {
+        clientX: 700,
+        clientY: 580,
+        pointerId: 1,
+        pointerType: 'mouse',
+      }),
+      container,
+    );
+
+    const doc = useDocumentStore.getState();
+    const shapeId = doc.elementIds[0];
+    expect(doc.selectedIds).toEqual([shapeId]);
+    expect(useToolStore.getState().currentTool).toBe('select');
+
+    // 2. Immediately drag to move the shape
+    // Pointer down on the shape at world (120, 120) -> screen (620, 520)
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 620,
+        clientY: 520,
+        pointerId: 2,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+      container,
+    );
+    expect(router.getState()).toBe('DRAGGING_SELECTION');
+
+    // Drag by +40px X and +30px Y to screen (660, 550)
+    router.handlePointerMove(
+      new PointerEvent('pointermove', {
+        clientX: 660,
+        clientY: 550,
+        pointerId: 2,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+    );
+
+    router.handlePointerUp(
+      new PointerEvent('pointerup', {
+        clientX: 660,
+        clientY: 550,
+        pointerId: 2,
+        pointerType: 'mouse',
+      }),
+      container,
+    );
+
+    const movedElement = useDocumentStore.getState().elements[shapeId] as ShapeElement;
+    expect(movedElement.x).toBe(140); // 100 + 40
+    expect(movedElement.y).toBe(130); // 100 + 30
   });
 });
