@@ -6,16 +6,16 @@
 # See https://keats.github.io/tera/docs/#introduction
 body = """
 {% if version %}\
-    ## [{{ version }}](https://github.com/shadowmkj/leetrs/releases/tag/{{ version }}) - {{ timestamp | date(format="%Y-%m-%d") }}
+    ## [{{ version }}](https://github.com/shadowmkj/scribl/releases/tag/{{ version }}) - {{ timestamp | date(format="%Y-%m-%d") }}
 {% else %}\
-    ## [unreleased](https://github.com/shadowmkj/leetrs)
+    ## [unreleased](https://github.com/shadowmkj/scribl)
 {% endif %}\
 {% for commit in commits %}\
     {% if commit.breaking %}\
         {% if loop.first %}
 ### 💥 Breaking Changes
         {% endif %}\
-        - {% if commit.scope %}*({{ commit.scope }})* {% endif %}{{ commit.message | upper_first }} - ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/shadowmkj/leetrs/commit/{{ commit.id }}))\
+        - {% if commit.scope %}*({{ commit.scope }})* {% endif %}{{ commit.message | upper_first }} - ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/shadowmkj/scribl/commit/{{ commit.id }}))\
         {% if commit.remote.username %} (from [`@{{ commit.remote.username }}`](https://github.com/{{ commit.remote.username }})){% elif commit.author.name %} (by {{ commit.author.name }}){% endif %}
     {% endif %}\
 {% endfor %}\
@@ -23,14 +23,14 @@ body = """
     ### {{ group | striptags | trim | upper_first }}
     {% for commit in commits %}
         - {% if commit.scope %}*({{ commit.scope }})* {% endif %}\
-            {{ commit.message | upper_first }} - ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/shadowmkj/leetrs/commit/{{ commit.id }}))\
+            {{ commit.message | upper_first }} - ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/shadowmkj/scribl/commit/{{ commit.id }}))\
             {% if commit.remote.username %} (from [`@{{ commit.remote.username }}`](https://github.com/{{ commit.remote.username }})){% elif commit.author.name %} (by {{ commit.author.name }}){% endif %}\
     {% endfor %}
 {% endfor %}\
 {% if github.contributors | filter(attribute="is_first_time", value=true) | length > 0 %}
 ### 👥 New Contributors
 {% for contributor in github.contributors | filter(attribute="is_first_time", value=true) %}
-- [`@{{ contributor.username }}`](https://github.com/{{ contributor.username }}) made their first contribution{% if contributor.pr_number %} in [#{{ contributor.pr_number }}](https://github.com/shadowmkj/leetrs/pull/{{ contributor.pr_number }}){% endif %}
+- [`@{{ contributor.username }}`](https://github.com/{{ contributor.username }}) made their first contribution{% if contributor.pr_number %} in [#{{ contributor.pr_number }}](https://github.com/shadowmkj/scribl/pull/{{ contributor.pr_number }}){% endif %}
 {% endfor %}
 {% endif %}
 """
@@ -55,7 +55,7 @@ split_commits = false
 # An array of regex based parsers to modify commit messages prior to further processing.
 commit_preprocessors = [
   # Replace PR numbers with markdown links to GitHub pull requests
-  { pattern = '\(#([0-9]+)\)', replace = "([#${1}](https://github.com/shadowmkj/leetrs/pull/${1}))" },
+  { pattern = '\(#([0-9]+)\)', replace = "([#${1}](https://github.com/shadowmkj/scribl/pull/${1}))" },
 ]
 # Prevent commits that are breaking from being excluded by commit parsers.
 protect_breaking_commits = false
@@ -93,4 +93,4 @@ recurse_submodules = false
 
 [remote.github]
 owner = "shadowmkj"
-repo = "leetrs"
+repo = "scribl"
