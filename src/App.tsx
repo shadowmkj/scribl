@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { CanvasViewport } from './components/canvas/CanvasViewport';
+import { TextEditorOverlay } from './components/canvas/TextEditorOverlay';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { ConfigErrorToast } from './components/ui/ConfigErrorToast';
 import { FloatingDock } from './components/ui/FloatingDock';
@@ -220,6 +221,7 @@ export function App() {
       <ConfigErrorToast />
       <StyleInspector />
       <CanvasViewport />
+      <TextEditorOverlay />
       <FloatingDock />
       <ZoomHUD />
       <SettingsModal />

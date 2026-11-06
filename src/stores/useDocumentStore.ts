@@ -31,6 +31,7 @@ interface DocumentState extends DocumentData {
   redo: () => void;
   loadDocument: (data: { elements: Record<string, CanvasElement>; elementIds: string[]; }) => void;
   clearDocument: () => void;
+  executeCommand: (command: Command) => void;
 }
 
 const historyInstance = new HistoryStack();
@@ -180,6 +181,17 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       selectedIds: [],
       canUndo: false,
       canRedo: false,
+    });
+  },
+
+  executeCommand: (command) => {
+    const { elements, elementIds, selectedIds, history } = get();
+    const currentData: DocumentData = { elements, elementIds, selectedIds };
+    const nextData = history.execute(command, currentData);
+    set({
+      ...nextData,
+      canUndo: history.canUndo(),
+      canRedo: history.canRedo(),
     });
   },
 }));
