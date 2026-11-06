@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CanvasElement, ShapeElement, StrokeElement } from '../../types/canvas';
+import { CanvasElement, ShapeElement, ShapeType, StrokeElement } from '../../types/canvas';
 import { hitTestMarquee, hitTestPoint, hitTestShape } from './HitTester';
 
 describe('HitTester', () => {
@@ -400,11 +400,38 @@ describe('HitTester', () => {
       expect(hitTestShape(ellipse, { x: 105, y: 105 })).toBe(false);
     });
 
+    it('does not falsely hit interior of a hollow rounded rectangle near corner arc circle', () => {
+      const hollowRound: ShapeElement = {
+        id: 'round-hollow',
+        type: 'shape',
+        shapeType: 'rectangle',
+        x: 100,
+        y: 100,
+        width: 200,
+        height: 200,
+        borderRadius: 40,
+        zIndex: 1,
+        strokeColor: '#000',
+        fillColor: 'transparent',
+        strokeWidth: 2,
+        strokeStyle: 'solid',
+      };
+
+      // Corner center is (140, 140). A point at (180, 140) is in the interior at distance 40 from (140, 140),
+      // which would be on the full 360 circle if not quadrant clamped.
+      expect(hitTestShape(hollowRound, { x: 180, y: 140 })).toBe(false);
+      // Center of rectangle
+      expect(hitTestShape(hollowRound, { x: 200, y: 200 })).toBe(false);
+      // Actual top-left rounded corner arc at around (112, 112)
+      // dist((112, 112), (140, 140)) = sqrt(28^2 + 28^2) = 39.6 -> diff to 40 is 0.4 <= tolerance
+      expect(hitTestShape(hollowRound, { x: 112, y: 112 })).toBe(true);
+    });
+
     it('returns false for unknown shape type', () => {
       const unknown = {
         id: 'u1',
         type: 'shape' as const,
-        shapeType: 'polygon' as any,
+        shapeType: 'polygon' as unknown as ShapeType,
         x: 0,
         y: 0,
         width: 10,

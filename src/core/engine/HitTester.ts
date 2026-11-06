@@ -119,10 +119,18 @@ export function hitTestShape(
         const d2 = distanceToSegment(point.x, point.y, maxX, minY + r, maxX, maxY - r);
         const d3 = distanceToSegment(point.x, point.y, maxX - r, maxY, minX + r, maxY);
         const d4 = distanceToSegment(point.x, point.y, minX, maxY - r, minX, minY + r);
-        const c1 = Math.abs(Math.hypot(point.x - (minX + r), point.y - (minY + r)) - r);
-        const c2 = Math.abs(Math.hypot(point.x - (maxX - r), point.y - (minY + r)) - r);
-        const c3 = Math.abs(Math.hypot(point.x - (maxX - r), point.y - (maxY - r)) - r);
-        const c4 = Math.abs(Math.hypot(point.x - (minX + r), point.y - (maxY - r)) - r);
+        const c1 = point.x <= minX + r && point.y <= minY + r
+          ? Math.abs(Math.hypot(point.x - (minX + r), point.y - (minY + r)) - r)
+          : Infinity;
+        const c2 = point.x >= maxX - r && point.y <= minY + r
+          ? Math.abs(Math.hypot(point.x - (maxX - r), point.y - (minY + r)) - r)
+          : Infinity;
+        const c3 = point.x >= maxX - r && point.y >= maxY - r
+          ? Math.abs(Math.hypot(point.x - (maxX - r), point.y - (maxY - r)) - r)
+          : Infinity;
+        const c4 = point.x <= minX + r && point.y >= maxY - r
+          ? Math.abs(Math.hypot(point.x - (minX + r), point.y - (maxY - r)) - r)
+          : Infinity;
         return Math.min(d1, d2, d3, d4, c1, c2, c3, c4) <= strokeTolerance;
       }
     }
