@@ -5,6 +5,7 @@ const ALL_TOOLBAR_ITEMS = [
   { id: 'select', label: 'Select Tool' },
   { id: 'pen', label: 'Pen Tool' },
   { id: 'eraser', label: 'Eraser Tool' },
+  { id: 'text', label: 'Text Tool' },
   { id: 'zoom', label: 'Zoom Tool' },
   { id: '|', label: 'Divider' },
   { id: 'undo', label: 'Undo Action' },

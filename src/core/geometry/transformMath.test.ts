@@ -97,7 +97,7 @@ describe('transformMath', () => {
 
   it('scales element points and stroke size proportionally', () => {
     const anchor = { x: 10, y: 20 };
-    const scaled = scaleElement(stroke1, anchor, 2, 2);
+    const scaled = scaleElement(stroke1, anchor, 2, 2) as StrokeElement;
 
     expect(scaled.x).toBe(10);
     expect(scaled.y).toBe(20);
@@ -109,7 +109,7 @@ describe('transformMath', () => {
 
   it('rotates element points around center', () => {
     const center = { x: 30, y: 35 };
-    const rotated = rotateElement(stroke1, center, Math.PI / 2); // 90 deg clockwise
+    const rotated = rotateElement(stroke1, center, Math.PI / 2) as StrokeElement; // 90 deg clockwise
 
     expect(rotated.size).toBe(4); // invariant
     // (x', y') for (10, 20) around (30, 35):

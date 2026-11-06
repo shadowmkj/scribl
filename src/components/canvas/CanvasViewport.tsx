@@ -244,6 +244,7 @@ export const CanvasViewport: React.FC = () => {
   return (
     <div
       ref={containerRef}
+      data-testid='canvas-viewport'
       style={{
         position: 'relative',
         width: '100%',
@@ -300,6 +301,7 @@ export const CanvasViewport: React.FC = () => {
         height={height}
         marqueeBox={marqueeBox}
         rotationAngle={rotationAngle}
+        editingTextElementId={editingText?.elementId ?? (editingText ? '__new__' : null)}
       />
     </div>
   );

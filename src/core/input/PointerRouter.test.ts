@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCameraStore } from '../../stores/useCameraStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
+import { StrokeElement } from '../../types/canvas';
 import { ScratchRenderer } from '../engine/ScratchRenderer';
 import { PointerRouter } from './PointerRouter';
 
@@ -345,14 +346,14 @@ describe('PointerRouter - Zoom Tool', () => {
     const scaled = useDocumentStore.getState();
     expect(scaled.elements['scale-stroke-1'].width).toBe(80);
     expect(scaled.elements['scale-stroke-1'].height).toBe(80);
-    expect(scaled.elements['scale-stroke-1'].size).toBe(8); // Scaled proportionally
+    expect((scaled.elements['scale-stroke-1'] as StrokeElement).size).toBe(8); // Scaled proportionally
 
     // Exactly 1 undo restores original dimensions
     scaled.undo();
     const undone = useDocumentStore.getState();
     expect(undone.elements['scale-stroke-1'].width).toBe(40);
     expect(undone.elements['scale-stroke-1'].height).toBe(40);
-    expect(undone.elements['scale-stroke-1'].size).toBe(4);
+    expect((undone.elements['scale-stroke-1'] as StrokeElement).size).toBe(4);
   });
 
   it('rotates selection around center when r is held with single undo step', async () => {
@@ -422,14 +423,14 @@ describe('PointerRouter - Zoom Tool', () => {
 
     const rotated = useDocumentStore.getState();
     // After 90 deg rotation, horizontal line (10, 20)->(30, 20) becomes vertical line
-    expect(rotated.elements['rotate-stroke-1'].points[0].x).toBeCloseTo(20, 1);
-    expect(rotated.elements['rotate-stroke-1'].points[1].x).toBeCloseTo(20, 1);
+    expect((rotated.elements['rotate-stroke-1'] as StrokeElement).points[0].x).toBeCloseTo(20, 1);
+    expect((rotated.elements['rotate-stroke-1'] as StrokeElement).points[1].x).toBeCloseTo(20, 1);
 
     // Exactly 1 undo restores original horizontal line
     rotated.undo();
     const undone = useDocumentStore.getState();
-    expect(undone.elements['rotate-stroke-1'].points[0].y).toBeCloseTo(20, 1);
-    expect(undone.elements['rotate-stroke-1'].points[1].y).toBeCloseTo(20, 1);
+    expect((undone.elements['rotate-stroke-1'] as StrokeElement).points[0].y).toBeCloseTo(20, 1);
+    expect((undone.elements['rotate-stroke-1'] as StrokeElement).points[1].y).toBeCloseTo(20, 1);
   });
 
   it('triggers startEditingText when pointer down occurs with active text tool', () => {
@@ -502,5 +503,6 @@ describe('PointerRouter - Zoom Tool', () => {
     expect(editing?.elementId).toBe('text-1');
     expect(editing?.text).toBe('Existing Note');
     expect(editing?.fontSize).toBe(24);
+    expect(useDocumentStore.getState().selectedIds).toEqual([]);
   });
 });

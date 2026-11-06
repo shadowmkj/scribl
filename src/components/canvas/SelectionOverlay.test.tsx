@@ -70,4 +70,21 @@ describe('SelectionOverlay', () => {
     const selectionBox = container.querySelector('[data-testid="unified-selection-box"]');
     expect(selectionBox).toBeNull();
   });
+
+  it('does not render selection box when editingTextElementId matches the selected element', () => {
+    const { container } = render(
+      <SelectionOverlay
+        elements={elements}
+        selectedIds={['s1']}
+        camera={{ x: 0, y: 0, zoom: 1 }}
+        width={1000}
+        height={800}
+        marqueeBox={null}
+        editingTextElementId='s1'
+      />,
+    );
+
+    const selectionBox = container.querySelector('[data-testid="unified-selection-box"]');
+    expect(selectionBox).toBeNull();
+  });
 });

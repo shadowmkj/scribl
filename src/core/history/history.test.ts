@@ -69,11 +69,11 @@ describe('HistoryStack and Commands', () => {
 
     data = history.execute(new MoveElementsCommand(['s1'], 20, 30), data);
     expect(data.elements['s1'].x).toBe(20);
-    expect(data.elements['s1'].points[0].x).toBe(20);
+    expect((data.elements['s1'] as StrokeElement).points[0].x).toBe(20);
 
     data = history.undo(data);
     expect(data.elements['s1'].x).toBe(0);
-    expect(data.elements['s1'].points[0].x).toBe(0);
+    expect((data.elements['s1'] as StrokeElement).points[0].x).toBe(0);
   });
 
   it('records already-executed commands with pushExecuted without re-executing', () => {
@@ -116,12 +116,12 @@ describe('HistoryStack and Commands', () => {
     // Undo returns to initial
     data = history.undo(data);
     expect(data.elements['s1'].x).toBe(0);
-    expect(data.elements['s1'].size).toBe(2);
+    expect((data.elements['s1'] as StrokeElement).size).toBe(2);
 
     // Redo returns to final
     data = history.redo(data);
     expect(data.elements['s1'].x).toBe(100);
-    expect(data.elements['s1'].size).toBe(6);
+    expect((data.elements['s1'] as StrokeElement).size).toBe(6);
   });
 
   it('executes AddElementsCommand and allows 1-step undo/redo for multiple elements', () => {

@@ -16,32 +16,35 @@ export const TextEditorOverlay: React.FC = () => {
   const stopEditingText = useToolStore((s) => s.stopEditingText);
   const updateEditingTextDraft = useToolStore((s) => s.updateEditingTextDraft);
   const setTool = useToolStore((s) => s.setTool);
+  const currentTool = useToolStore((s) => s.currentTool);
 
   const camera = useCameraStore((s) => s.camera);
   const width = useCameraStore((s) => s.viewportWidth);
   const height = useCameraStore((s) => s.viewportHeight);
 
+  const overlayRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [draft, setDraft] = useState('');
   const isCommittingRef = useRef(false);
 
-  // Sync draft when editing starts
+  // Sync draft when a new editing session starts
   useEffect(() => {
     if (editingText) {
       setDraft(editingText.text);
       isCommittingRef.current = false;
 
       // Focus and position cursor at end
-      requestAnimationFrame(() => {
+      const timer = setTimeout(() => {
         if (textareaRef.current) {
           textareaRef.current.focus();
           const len = textareaRef.current.value.length;
           textareaRef.current.setSelectionRange(len, len);
           adjustTextareaSize(textareaRef.current);
         }
-      });
+      }, 20);
+      return () => clearTimeout(timer);
     }
-  }, [editingText]);
+  }, [editingText?.elementId, editingText?.x, editingText?.y]);
 
   const adjustTextareaSize = (el: HTMLTextAreaElement) => {
     el.style.height = 'auto';
@@ -115,6 +118,48 @@ export const TextEditorOverlay: React.FC = () => {
     stopEditingText();
   }, [draft, editingText, setTool, stopEditingText]);
 
+  // Click-outside listener to commit text
+  useEffect(() => {
+    if (!editingText) return;
+
+    const handlePointerDownOutside = (e: MouseEvent | PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      // Inside editor
+      if (overlayRef.current && overlayRef.current.contains(target)) {
+        return;
+      }
+
+      // Allow clicking StyleInspector, Toolbar, or TopHeader buttons without dismissing editor
+      if (
+        target.closest('aside') || target.closest('nav') || target.closest('header')
+        || target.closest('button')
+      ) {
+        return;
+      }
+
+      handleCommit();
+    };
+
+    // Attach after a short delay so the pointerup of the opening click cannot trigger it
+    const timer = setTimeout(() => {
+      window.addEventListener('pointerdown', handlePointerDownOutside);
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('pointerdown', handlePointerDownOutside);
+    };
+  }, [editingText, handleCommit]);
+
+  // Auto-commit if user switches tools away from text and select
+  useEffect(() => {
+    if (editingText && currentTool !== 'text' && currentTool !== 'select') {
+      handleCommit();
+    }
+  }, [currentTool, editingText, handleCommit]);
+
   if (!editingText) return null;
 
   const screenPos = worldToScreen(
@@ -129,6 +174,7 @@ export const TextEditorOverlay: React.FC = () => {
 
   return (
     <div
+      ref={overlayRef}
       style={{
         position: 'absolute',
         left: screenPos.x,
@@ -151,12 +197,11 @@ export const TextEditorOverlay: React.FC = () => {
         }}
         onKeyDown={(e) => {
           e.stopPropagation();
-          if (e.key === 'Escape') {
+          if (e.key === 'Escape' || ((e.metaKey || e.ctrlKey) && e.key === 'Enter')) {
             e.preventDefault();
             handleCommit();
           }
         }}
-        onBlur={handleCommit}
         style={{
           background: 'transparent',
           border: '1px dashed var(--color-accent, #0284c7)',
@@ -171,7 +216,7 @@ export const TextEditorOverlay: React.FC = () => {
           fontSize: `${screenFontSize}px`,
           fontFamily: 'system-ui, -apple-system, sans-serif',
           lineHeight: `${screenLineHeight}px`,
-          minWidth: `${Math.max(screenFontSize * 3, 40)}px`,
+          minWidth: `${Math.max(screenFontSize * 3, 50)}px`,
           minHeight: `${screenLineHeight}px`,
           boxSizing: 'border-box',
           caretColor: editingText.color,

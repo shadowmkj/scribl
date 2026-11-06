@@ -66,9 +66,6 @@ export class PointerRouter {
       this.isPenTouching = true;
     }
 
-    container.setPointerCapture(e.pointerId);
-    this.activePointerId = e.pointerId;
-
     const camera = useCameraStore.getState().camera;
     const width = useCameraStore.getState().viewportWidth;
     const height = useCameraStore.getState().viewportHeight;
@@ -81,6 +78,8 @@ export class PointerRouter {
     const isSpacePressed = useCameraStore.getState().isSpacePressed;
     // Spacebar held, Middle Click, or Shift+LeftClick = Pan
     if (isSpacePressed || e.buttons === 4 || (e.shiftKey && e.buttons === 1)) {
+      container.setPointerCapture(e.pointerId);
+      this.activePointerId = e.pointerId;
       this.state = 'PANNING';
       useCameraStore.getState().setIsPanning(true);
       this.lastDragWorld = { x: e.clientX, y: e.clientY };
@@ -89,6 +88,8 @@ export class PointerRouter {
 
     if (activeTool === 'text') {
       const toolStore = useToolStore.getState();
+      const doc = useDocumentStore.getState();
+      doc.setSelected([]);
       toolStore.startEditingText({
         x: worldPoint.x,
         y: worldPoint.y,
@@ -98,6 +99,9 @@ export class PointerRouter {
       });
       return;
     }
+
+    container.setPointerCapture(e.pointerId);
+    this.activePointerId = e.pointerId;
 
     if (activeTool === 'pen') {
       this.state = 'DRAWING';
@@ -485,6 +489,7 @@ export class PointerRouter {
 
     const el = doc.elements[hitId];
     if (el && el.type === 'text') {
+      doc.setSelected([]);
       useToolStore.getState().startEditingText({
         elementId: el.id,
         x: el.x,

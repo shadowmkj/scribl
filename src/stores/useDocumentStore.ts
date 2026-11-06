@@ -9,7 +9,7 @@ import {
 } from '../core/history/commands';
 import { HistoryStack } from '../core/history/HistoryStack';
 import { CanvasElement } from '../types/canvas';
-import { DocumentData } from '../types/commands';
+import { Command, DocumentData } from '../types/commands';
 
 interface DocumentState extends DocumentData {
   history: HistoryStack;
