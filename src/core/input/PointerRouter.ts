@@ -96,6 +96,24 @@ export class PointerRouter {
     if (activeTool === 'text') {
       const toolStore = useToolStore.getState();
       const doc = useDocumentStore.getState();
+      const hitId = hitTestPoint(doc.elements, doc.elementIds, worldPoint);
+      const hitEl = hitId ? doc.elements[hitId] : null;
+      if (hitEl && hitEl.type === 'text') {
+        doc.setSelected([]);
+        const fontId = getFontFamilyId(hitEl.fontFamily);
+        toolStore.setFontFamily(fontId);
+        toolStore.startEditingText({
+          elementId: hitEl.id,
+          x: hitEl.x,
+          y: hitEl.y,
+          text: hitEl.text,
+          fontSize: hitEl.fontSize,
+          fontFamily: fontId,
+          color: hitEl.color,
+        });
+        return;
+      }
+
       doc.setSelected([]);
       toolStore.startEditingText({
         x: worldPoint.x,

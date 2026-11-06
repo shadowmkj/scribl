@@ -21,7 +21,7 @@ export function measureTextBounds(
   fontFamily: string = 'system-ui, -apple-system, sans-serif',
   lineHeight: number = 1.25,
 ): TextBounds {
-  const lines = text.split('\n');
+  const lines = (text ?? '').split('\n');
   const ctx = getMeasurementContext();
   const font = `${fontSize}px ${fontFamily}`;
 

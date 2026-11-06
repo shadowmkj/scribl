@@ -505,4 +505,51 @@ describe('PointerRouter - Zoom Tool', () => {
     expect(editing?.fontSize).toBe(24);
     expect(useDocumentStore.getState().selectedIds).toEqual([]);
   });
+
+  it('triggers startEditingText for existing element when clicked with active text tool', () => {
+    const textEl = {
+      id: 'text-2',
+      type: 'text' as const,
+      x: 50,
+      y: 50,
+      width: 100,
+      height: 40,
+      zIndex: 1,
+      text: 'Click to Edit Note',
+      fontSize: 20,
+      fontFamily: 'normal',
+      color: '#0284c7',
+      lineHeight: 1.25,
+    };
+
+    useDocumentStore.setState({
+      elements: { 'text-2': textEl },
+      elementIds: ['text-2'],
+      selectedIds: [],
+    });
+
+    useToolStore.setState({
+      currentTool: 'text',
+      editingText: null,
+    });
+
+    // Single click at screen (560, 460) -> world (60, 60), inside text-2
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 560,
+        clientY: 460,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+      container,
+    );
+
+    const editing = useToolStore.getState().editingText;
+    expect(editing).toBeTruthy();
+    expect(editing?.elementId).toBe('text-2');
+    expect(editing?.text).toBe('Click to Edit Note');
+    expect(editing?.fontSize).toBe(20);
+    expect(editing?.color).toBe('#0284c7');
+  });
 });

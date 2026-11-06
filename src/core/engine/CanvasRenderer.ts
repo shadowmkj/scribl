@@ -71,7 +71,7 @@ export function renderText(ctx: CanvasRenderingContext2D, textEl: TextElement) {
   ctx.fillStyle = textEl.color;
   ctx.textBaseline = 'top';
 
-  const lines = textEl.text.split('\n');
+  const lines = (textEl.text ?? '').split('\n');
   const lineHeightPx = textEl.fontSize * (textEl.lineHeight || 1.25);
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].replace(/\t/g, '  ');
