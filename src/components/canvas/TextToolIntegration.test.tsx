@@ -289,4 +289,47 @@ describe('Text Tool Integration', () => {
     expect(updated.text).toBe('Updated Existing Text');
     expect(doc.selectedIds).toEqual(['editable_txt']);
   });
+
+  it('does not display previous text when opening a new text input after saving previous text', async () => {
+    render(<App />);
+
+    const canvasContainer = screen.getByTestId('canvas-viewport');
+
+    // 1. First text input
+    fireEvent.pointerDown(canvasContainer, {
+      clientX: 100,
+      clientY: 100,
+      pointerId: 1,
+      buttons: 1,
+    });
+    fireEvent.pointerUp(canvasContainer, { clientX: 100, clientY: 100, pointerId: 1 });
+
+    const firstTextarea = screen.getByTestId('text-editor-input') as HTMLTextAreaElement;
+    expect(firstTextarea.value).toBe('');
+
+    fireEvent.change(firstTextarea, { target: { value: 'First text message' } });
+    expect(firstTextarea.value).toBe('First text message');
+
+    // Save by pressing Escape
+    fireEvent.keyDown(firstTextarea, { key: 'Escape' });
+    expect(useToolStore.getState().editingText).toBeNull();
+    expect(screen.queryByTestId('text-editor-input')).toBeNull();
+
+    // 2. Switch back to text tool and create second text input
+    useToolStore.getState().setTool('text');
+
+    fireEvent.pointerDown(canvasContainer, {
+      clientX: 300,
+      clientY: 300,
+      pointerId: 2,
+      buttons: 1,
+    });
+    fireEvent.pointerUp(canvasContainer, { clientX: 300, clientY: 300, pointerId: 2 });
+
+    // The newly opened textarea MUST be immediately empty without flickering previous text
+    const secondTextarea = screen.getByTestId('text-editor-input') as HTMLTextAreaElement;
+    expect(secondTextarea).not.toBeNull();
+    expect(secondTextarea.value).toBe('');
+    expect(secondTextarea.value).not.toBe('First text message');
+  });
 });

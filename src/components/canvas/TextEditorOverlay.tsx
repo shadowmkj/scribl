@@ -3,10 +3,13 @@ import { worldToScreen } from '../../core/camera/cameraMath';
 import { getFontFamilyString } from '../../core/engine/fontConstants';
 import { commitEditingText } from '../../core/engine/textCommit';
 import { useCameraStore } from '../../stores/useCameraStore';
-import { useToolStore } from '../../stores/useToolStore';
+import { EditingTextState, useToolStore } from '../../stores/useToolStore';
 
-export const TextEditorOverlay: React.FC = () => {
-  const editingText = useToolStore((s) => s.editingText);
+interface TextEditorInputProps {
+  editingText: EditingTextState;
+}
+
+const TextEditorInput: React.FC<TextEditorInputProps> = ({ editingText }) => {
   const updateEditingTextDraft = useToolStore((s) => s.updateEditingTextDraft);
   const currentTool = useToolStore((s) => s.currentTool);
 
@@ -16,10 +19,19 @@ export const TextEditorOverlay: React.FC = () => {
 
   const overlayRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [draft, setDraft] = useState('');
   const isCommittingRef = useRef(false);
 
-  const screenFontSize = editingText ? Math.max(editingText.fontSize * camera.zoom, 8) : 24;
+  // Initialize draft immediately with the active editingText's text
+  const [draft, setDraft] = useState(editingText.text);
+
+  // Sync draft during render if editingText.text changes externally
+  const [prevEditingText, setPrevEditingText] = useState(editingText.text);
+  if (editingText.text !== prevEditingText) {
+    setPrevEditingText(editingText.text);
+    setDraft(editingText.text);
+  }
+
+  const screenFontSize = Math.max(editingText.fontSize * camera.zoom, 8);
   const screenLineHeight = screenFontSize * 1.25;
 
   const adjustTextareaSize = useCallback((el: HTMLTextAreaElement) => {
@@ -29,42 +41,36 @@ export const TextEditorOverlay: React.FC = () => {
     el.scrollTop = 0;
   }, [screenLineHeight]);
 
-  // Sync draft when a new editing session starts
+  // Focus and position cursor on mount
   useEffect(() => {
-    if (editingText) {
-      setDraft(editingText.text);
-      isCommittingRef.current = false;
+    isCommittingRef.current = false;
 
-      // Focus and position cursor at end
-      const focusTextarea = () => {
-        if (textareaRef.current) {
-          textareaRef.current.focus();
-          const len = textareaRef.current.value.length;
-          textareaRef.current.setSelectionRange(len, len);
-          adjustTextareaSize(textareaRef.current);
-        }
-      };
+    const focusTextarea = () => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        const len = textareaRef.current.value.length;
+        textareaRef.current.setSelectionRange(len, len);
+        adjustTextareaSize(textareaRef.current);
+      }
+    };
 
-      focusTextarea();
-      const raf = requestAnimationFrame(focusTextarea);
-      const timer = setTimeout(focusTextarea, 20);
-      return () => {
-        cancelAnimationFrame(raf);
-        clearTimeout(timer);
-      };
-    }
-  }, [editingText?.elementId, editingText?.x, editingText?.y, adjustTextareaSize]);
+    focusTextarea();
+    const raf = requestAnimationFrame(focusTextarea);
+    const timer = setTimeout(focusTextarea, 20);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(timer);
+    };
+  }, [editingText.elementId, adjustTextareaSize]);
 
   const handleCommit = useCallback(() => {
-    if (!editingText || isCommittingRef.current) return;
+    if (isCommittingRef.current) return;
     isCommittingRef.current = true;
     commitEditingText(textareaRef.current?.value ?? draft);
-  }, [draft, editingText]);
+  }, [draft]);
 
   // Click-outside listener to commit text
   useEffect(() => {
-    if (!editingText) return;
-
     const handlePointerDownOutside = (e: MouseEvent | PointerEvent) => {
       const target = e.target as HTMLElement | null;
       if (!target) return;
@@ -91,16 +97,14 @@ export const TextEditorOverlay: React.FC = () => {
     return () => {
       window.removeEventListener('pointerdown', handlePointerDownOutside, true);
     };
-  }, [editingText, handleCommit]);
+  }, [handleCommit]);
 
   // Auto-commit if user switches tools away from text and select
   useEffect(() => {
-    if (editingText && currentTool !== 'text' && currentTool !== 'select') {
+    if (currentTool !== 'text' && currentTool !== 'select') {
       handleCommit();
     }
-  }, [currentTool, editingText, handleCommit]);
-
-  if (!editingText) return null;
+  }, [currentTool, handleCommit]);
 
   const screenPos = worldToScreen(
     editingText.x,
@@ -265,5 +269,17 @@ export const TextEditorOverlay: React.FC = () => {
         }}
       />
     </div>
+  );
+};
+
+export const TextEditorOverlay: React.FC = () => {
+  const editingText = useToolStore((s) => s.editingText);
+  if (!editingText) return null;
+
+  return (
+    <TextEditorInput
+      key={editingText.elementId ?? `${editingText.x}_${editingText.y}`}
+      editingText={editingText}
+    />
   );
 };
