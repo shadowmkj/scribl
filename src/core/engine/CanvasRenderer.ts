@@ -1,4 +1,4 @@
-import { Camera, CanvasElement, StrokeElement } from '../../types/canvas';
+import { Camera, CanvasElement, StrokeElement, TextElement } from '../../types/canvas';
 import { getStrokeOutline, getSvgPathFromStroke } from './InkingEngine';
 
 export function renderCommittedCanvas(
@@ -9,6 +9,7 @@ export function renderCommittedCanvas(
   width: number,
   height: number,
   dpr: number = window.devicePixelRatio || 1,
+  editingTextElementId?: string | null,
 ) {
   // Clear full canvas
   ctx.save();
@@ -52,9 +53,28 @@ export function renderCommittedCanvas(
 
     if (el.type === 'stroke') {
       renderStroke(ctx, el);
+    } else if (el.type === 'text') {
+      if (editingTextElementId && editingTextElementId === el.id) {
+        continue;
+      }
+      renderText(ctx, el);
     }
   }
 
+  ctx.restore();
+}
+
+export function renderText(ctx: CanvasRenderingContext2D, textEl: TextElement) {
+  ctx.save();
+  ctx.font = `${textEl.fontSize}px ${textEl.fontFamily || 'system-ui, -apple-system, sans-serif'}`;
+  ctx.fillStyle = textEl.color;
+  ctx.textBaseline = 'top';
+
+  const lines = textEl.text.split('\n');
+  const lineHeightPx = textEl.fontSize * (textEl.lineHeight || 1.25);
+  for (let i = 0; i < lines.length; i++) {
+    ctx.fillText(lines[i], textEl.x, textEl.y + i * lineHeightPx);
+  }
   ctx.restore();
 }
 
