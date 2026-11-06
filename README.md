@@ -40,7 +40,7 @@ Engineered from the ground up to support high-refresh-rate displays (120Hz–240
   - Clean slate-gray trailing streak that tapers and smoothly dissolves over ~180ms.
   - Circular reticle cursor matching the eraser's hit-detection footprint.
 - 🎨 **Glassmorphic Floating HUD**:
-  - Bottom-docked floating island toolbar (`Select`, `Pen`, `Eraser`, `Zoom`).
+  - Bottom-docked floating island toolbar (`Select`, `Pen`, `Eraser`, `Shapes`, `Zoom`).
   - Dedicated **Zoom Tool** featuring **Scrubby Zoom** (horizontal drag scaling) and **Selection Zoom** (box framing).
   - Contextual color palette (8 curated swatches) and 4 discrete stroke thicknesses.
   - Zoom HUD with quick presets (`100% / Shift+0`, `+`, `-`).
@@ -84,10 +84,18 @@ scribl.keymap.set("n", "f", "zoom.fit_all", { desc = "Fit Drawing" })
 -- Dynamic Toolbar Layout
 scribl.ui.toolbar = {
   position = "bottom", -- "bottom", "top", "left", "right"
+  groups = {
+    shapes = {
+      label = "Shapes",
+      default = "rectangle",
+      items = { "rectangle", "circle", "diamond", "line", "arrow" },
+    },
+  },
   items = {
     "select",
     "pen",
     "eraser",
+    "shapes",
     "zoom",
     "|",
     "undo",
