@@ -1,9 +1,9 @@
 import React from 'react';
 import { commandRegistry } from '../../core/commands/CommandRegistry';
 import { formatKeybindForDisplay } from '../../core/input/KeybindingEngine';
-import { useConfigStore } from '../../stores/useConfigStore';
+import { DEFAULT_GROUPS, useConfigStore } from '../../stores/useConfigStore';
 import { useToolStore } from '../../stores/useToolStore';
-import { ToolType } from '../../types/canvas';
+import { ShapeType, ToolType } from '../../types/canvas';
 
 interface ItemDef {
   label: string;
@@ -254,10 +254,29 @@ const KNOWN_ITEMS: Record<string, ItemDef> = {
 export const FloatingDock: React.FC = () => {
   const currentTool = useToolStore((s) => s.currentTool);
   const setTool = useToolStore((s) => s.setTool);
+  const activeShapeTool = useToolStore((s) => s.activeShapeTool);
+  const setActiveShapeTool = useToolStore((s) => s.setActiveShapeTool);
   const toolbar = useConfigStore((s) => s.config.toolbar);
   const keymaps = useConfigStore((s) => s.config.keymaps);
 
+  const [openFlyout, setOpenFlyout] = React.useState<string | null>(null);
+  const flyoutRef = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    if (!openFlyout) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (flyoutRef.current && !flyoutRef.current.contains(e.target as Node)) {
+        setOpenFlyout(null);
+      }
+    };
+    document.addEventListener('pointerdown', handleClickOutside);
+    return () => {
+      document.removeEventListener('pointerdown', handleClickOutside);
+    };
+  }, [openFlyout]);
+
   const isVertical = toolbar.position === 'left' || toolbar.position === 'right';
+  const groups = toolbar.groups || DEFAULT_GROUPS;
 
   const getPositionStyle = (): React.CSSProperties => {
     switch (toolbar.position) {
@@ -289,6 +308,36 @@ export const FloatingDock: React.FC = () => {
           left: '50%',
           transform: 'translateX(-50%)',
           flexDirection: 'row',
+        };
+    }
+  };
+
+  const getFlyoutPositionStyle = (): React.CSSProperties => {
+    switch (toolbar.position) {
+      case 'top':
+        return {
+          top: 'calc(100% + 8px)',
+          left: '50%',
+          transform: 'translateX(-50%)',
+        };
+      case 'left':
+        return {
+          left: 'calc(100% + 8px)',
+          top: '50%',
+          transform: 'translateY(-50%)',
+        };
+      case 'right':
+        return {
+          right: 'calc(100% + 8px)',
+          top: '50%',
+          transform: 'translateY(-50%)',
+        };
+      case 'bottom':
+      default:
+        return {
+          bottom: 'calc(100% + 8px)',
+          left: '50%',
+          transform: 'translateX(-50%)',
         };
     }
   };
@@ -334,6 +383,273 @@ export const FloatingDock: React.FC = () => {
           );
         }
 
+        const group = groups[item];
+        if (group) {
+          const displayedTool = item === 'shapes'
+            ? (group.items.includes(activeShapeTool)
+              ? activeShapeTool
+              : (group.default || group.items[0]))
+            : (group.default || group.items[0]);
+          const def = KNOWN_ITEMS[displayedTool];
+          if (!def) return null;
+
+          const isGroupActive = group.items.includes(currentTool);
+          const isFlyoutOpen = openFlyout === item;
+          const shortcut = getShortcut(def.actionId);
+
+          const borderStyle = isGroupActive
+            ? '1px solid var(--color-accent-light, color-mix(in srgb, var(--color-accent, #0284c7) 50%, white))'
+            : '1px solid transparent';
+          const sepBorder = isGroupActive
+            ? '1px solid rgba(255, 255, 255, 0.25)'
+            : '1px solid rgba(255, 255, 255, 0.08)';
+
+          return (
+            <div
+              key={`group-${item}`}
+              ref={isFlyoutOpen ? flyoutRef : undefined}
+              style={{
+                position: 'relative',
+                display: 'flex',
+                flexDirection: isVertical ? 'column' : 'row',
+                alignItems: 'stretch',
+              }}
+            >
+              <button
+                type='button'
+                onClick={() => {
+                  if (currentTool === displayedTool) {
+                    setOpenFlyout(isFlyoutOpen ? null : item);
+                  } else {
+                    setTool(displayedTool as ToolType);
+                  }
+                }}
+                title={`${def.label} (${group.label})${shortcut ? ` (${shortcut})` : ''}`}
+                style={{
+                  background: isGroupActive
+                    ? 'linear-gradient(180deg, var(--color-accent, #0284c7) 0%, var(--color-accent-hover, color-mix(in srgb, var(--color-accent, #0284c7) 80%, black)) 100%)'
+                    : 'transparent',
+                  color: isGroupActive ? '#ffffff' : 'var(--color-text-secondary, #94a3b8)',
+                  borderTop: borderStyle,
+                  borderBottom: isVertical ? 'none' : borderStyle,
+                  borderLeft: borderStyle,
+                  borderRight: !isVertical ? 'none' : borderStyle,
+                  borderRadius: isVertical ? '10px 10px 0 0' : '10px 0 0 10px',
+                  padding: isVertical ? '8px 10px 4px' : '6px 8px 6px 12px',
+                  fontSize: 13,
+                  fontWeight: isGroupActive ? 600 : 500,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 7,
+                  transition: 'all 0.15s ease',
+                  boxShadow: isGroupActive
+                    ? '0 2px 10px color-mix(in srgb, var(--color-accent, #0284c7) 40%, transparent)'
+                    : 'none',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isGroupActive) {
+                    e.currentTarget.style.background = 'rgba(125, 125, 125, 0.12)';
+                    e.currentTarget.style.color = 'var(--color-text-primary, #f1f5f9)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isGroupActive) {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = 'var(--color-text-secondary, #94a3b8)';
+                  }
+                }}
+              >
+                <span>{def.icon}</span>
+                {!isVertical && <span>{def.label}</span>}
+                {shortcut && !isVertical && (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      opacity: isGroupActive ? 0.9 : 0.7,
+                      background: isGroupActive
+                        ? 'rgba(0,0,0,0.2)'
+                        : 'var(--color-panel-border, rgba(255,255,255,0.06))',
+                      color: isGroupActive ? '#ffffff' : 'var(--color-text-secondary, #94a3b8)',
+                      padding: '1px 5px',
+                      borderRadius: 4,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {shortcut}
+                  </span>
+                )}
+              </button>
+              <button
+                type='button'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenFlyout(isFlyoutOpen ? null : item);
+                }}
+                title={`Browse ${group.label}`}
+                style={{
+                  background: isGroupActive
+                    ? 'linear-gradient(180deg, var(--color-accent, #0284c7) 0%, var(--color-accent-hover, color-mix(in srgb, var(--color-accent, #0284c7) 80%, black)) 100%)'
+                    : 'transparent',
+                  color: isGroupActive ? '#ffffff' : 'var(--color-text-secondary, #94a3b8)',
+                  borderTop: isVertical ? sepBorder : borderStyle,
+                  borderBottom: borderStyle,
+                  borderLeft: !isVertical ? sepBorder : borderStyle,
+                  borderRight: borderStyle,
+                  borderRadius: isVertical ? '0 0 10px 10px' : '0 10px 10px 0',
+                  padding: isVertical ? '2px 8px 4px' : '6px 6px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.15s ease',
+                  boxShadow: isGroupActive
+                    ? '0 2px 10px color-mix(in srgb, var(--color-accent, #0284c7) 40%, transparent)'
+                    : 'none',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isGroupActive) {
+                    e.currentTarget.style.background = 'rgba(125, 125, 125, 0.12)';
+                    e.currentTarget.style.color = 'var(--color-text-primary, #f1f5f9)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isGroupActive) {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = 'var(--color-text-secondary, #94a3b8)';
+                  }
+                }}
+              >
+                <svg
+                  width='10'
+                  height='10'
+                  viewBox='0 0 24 24'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='2.5'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  style={{
+                    transform: isFlyoutOpen
+                      ? (isVertical ? 'rotate(-90deg)' : 'rotate(180deg)')
+                      : 'none',
+                    transition: 'transform 0.15s ease',
+                  }}
+                >
+                  <polyline points='6 9 12 15 18 9' />
+                </svg>
+              </button>
+
+              {isFlyoutOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    ...getFlyoutPositionStyle(),
+                    background: 'var(--color-panel-bg, rgba(15, 23, 42, 0.94))',
+                    backdropFilter: 'blur(16px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+                    border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.1))',
+                    borderRadius: 12,
+                    padding: '5px',
+                    display: 'flex',
+                    flexDirection: isVertical ? 'column' : 'row',
+                    gap: 5,
+                    alignItems: 'center',
+                    zIndex: 50,
+                    boxShadow:
+                      'var(--color-panel-shadow, 0 12px 36px rgba(0, 0, 0, 0.55)), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+                  }}
+                >
+                  {group.items.map((subItem) => {
+                    const subDef = KNOWN_ITEMS[subItem];
+                    if (!subDef) return null;
+                    const isSubActive = currentTool === subDef.toolId;
+                    const subShortcut = getShortcut(subDef.actionId);
+
+                    return (
+                      <button
+                        key={subItem}
+                        type='button'
+                        onClick={() => {
+                          if (subDef.toolId) {
+                            setTool(subDef.toolId);
+                            if (
+                              ['rectangle', 'circle', 'diamond', 'line', 'arrow'].includes(
+                                subDef.toolId,
+                              )
+                            ) {
+                              setActiveShapeTool(subDef.toolId as ShapeType);
+                            }
+                          } else if (subDef.actionId) {
+                            commandRegistry.execute(subDef.actionId);
+                          }
+                          setOpenFlyout(null);
+                        }}
+                        title={`${subDef.label}${subShortcut ? ` (${subShortcut})` : ''}`}
+                        style={{
+                          background: isSubActive
+                            ? 'linear-gradient(180deg, var(--color-accent, #0284c7) 0%, var(--color-accent-hover, color-mix(in srgb, var(--color-accent, #0284c7) 80%, black)) 100%)'
+                            : 'transparent',
+                          color: isSubActive ? '#ffffff' : 'var(--color-text-secondary, #94a3b8)',
+                          border: isSubActive
+                            ? '1px solid var(--color-accent-light, color-mix(in srgb, var(--color-accent, #0284c7) 50%, white))'
+                            : '1px solid transparent',
+                          borderRadius: 8,
+                          padding: isVertical ? '7px 12px' : '6px 10px',
+                          fontSize: 12,
+                          fontWeight: isSubActive ? 600 : 500,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 6,
+                          transition: 'all 0.15s ease',
+                          whiteSpace: 'nowrap',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSubActive) {
+                            e.currentTarget.style.background = 'rgba(125, 125, 125, 0.15)';
+                            e.currentTarget.style.color = 'var(--color-text-primary, #f1f5f9)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSubActive) {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.color = 'var(--color-text-secondary, #94a3b8)';
+                          }
+                        }}
+                      >
+                        <span>{subDef.icon}</span>
+                        <span>{subDef.label}</span>
+                        {subShortcut && (
+                          <span
+                            style={{
+                              fontSize: 10,
+                              opacity: isSubActive ? 0.9 : 0.7,
+                              background: isSubActive
+                                ? 'rgba(0,0,0,0.2)'
+                                : 'var(--color-panel-border, rgba(255,255,255,0.06))',
+                              color: isSubActive
+                                ? '#ffffff'
+                                : 'var(--color-text-secondary, #94a3b8)',
+                              padding: '1px 5px',
+                              borderRadius: 4,
+                              fontWeight: 600,
+                            }}
+                          >
+                            {subShortcut}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        }
+
         const def = KNOWN_ITEMS[item];
         if (!def) return null;
 
@@ -352,6 +668,7 @@ export const FloatingDock: React.FC = () => {
         return (
           <button
             key={item}
+            type='button'
             onClick={handleClick}
             title={`${def.label}${shortcut ? ` (${shortcut})` : ''}`}
             style={{

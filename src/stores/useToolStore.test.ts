@@ -28,12 +28,20 @@ describe('useToolStore', () => {
     expect(useToolStore.getState().strokeStyle).toBe('dashed');
   });
 
-  it('updates tool type including shape tools', () => {
+  it('updates tool type including shape tools and tracks activeShapeTool', () => {
     const store = useToolStore.getState();
-    store.setTool('rectangle');
-    expect(useToolStore.getState().currentTool).toBe('rectangle');
+    expect(store.activeShapeTool).toBe('rectangle');
 
-    store.setTool('arrow');
-    expect(useToolStore.getState().currentTool).toBe('arrow');
+    store.setTool('circle');
+    expect(useToolStore.getState().currentTool).toBe('circle');
+    expect(useToolStore.getState().activeShapeTool).toBe('circle');
+
+    store.setTool('pen');
+    expect(useToolStore.getState().currentTool).toBe('pen');
+    // activeShapeTool remains circle (last-used shape memory)
+    expect(useToolStore.getState().activeShapeTool).toBe('circle');
+
+    store.setActiveShapeTool('diamond');
+    expect(useToolStore.getState().activeShapeTool).toBe('diamond');
   });
 });

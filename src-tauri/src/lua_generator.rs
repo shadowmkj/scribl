@@ -71,6 +71,24 @@ pub fn generate_lua_script(config: &ScriblConfig) -> String {
     );
     out.push_str("scribl.ui.toolbar = {\n");
     out.push_str(&format!("  position = \"{}\",\n", config.toolbar.position));
+    if !config.toolbar.groups.is_empty() {
+        out.push_str("  groups = {\n");
+        let mut sorted_group_keys: Vec<_> = config.toolbar.groups.keys().collect();
+        sorted_group_keys.sort();
+        for g_name in sorted_group_keys {
+            let g = &config.toolbar.groups[g_name];
+            out.push_str(&format!("    {} = {{\n", g_name));
+            out.push_str(&format!("      label = \"{}\",\n", g.label));
+            out.push_str(&format!("      default = \"{}\",\n", g.default));
+            out.push_str("      items = {\n");
+            for item in &g.items {
+                out.push_str(&format!("        \"{}\",\n", item));
+            }
+            out.push_str("      },\n");
+            out.push_str("    },\n");
+        }
+        out.push_str("  },\n");
+    }
     out.push_str("  items = {\n");
     for item in &config.toolbar.items {
         out.push_str(&format!("    \"{}\",\n", item));

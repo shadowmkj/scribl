@@ -95,14 +95,29 @@ scribl.keymap.set("v", "<D-d>", "edit.duplicate", { desc = "Duplicate" })
 --------------------------------------------------------------------------------
 -- 3. Floating Toolbar Layout
 -- Position: "bottom", "top", "left", "right"
--- Items: "select", "pen", "eraser", "zoom", "|", "undo", "redo", "|", "clear"
+-- Groups: Custom tool flyouts/drawers (e.g. shapes)
+-- Items: Tools ("select", "pen", "eraser", "zoom"), groups ("shapes"), or actions ("undo", "redo", "clear")
 --------------------------------------------------------------------------------
 scribl.ui.toolbar = {
   position = "bottom",
+  groups = {
+    shapes = {
+      label = "Shapes",
+      default = "rectangle",
+      items = {
+        "rectangle",
+        "circle",
+        "diamond",
+        "line",
+        "arrow",
+      },
+    },
+  },
   items = {
     "select",
     "pen",
     "eraser",
+    "shapes",
     "zoom",
     "|",
     "undo",

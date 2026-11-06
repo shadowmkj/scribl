@@ -1,5 +1,7 @@
 import { create } from 'zustand';
-import { StrokeStyle, ToolType, ZoomMode } from '../types/canvas';
+import { ShapeType, StrokeStyle, ToolType, ZoomMode } from '../types/canvas';
+
+const SHAPE_TOOLS: readonly string[] = ['rectangle', 'circle', 'diamond', 'line', 'arrow'];
 
 interface ToolState {
   currentTool: ToolType;
@@ -8,7 +10,9 @@ interface ToolState {
   fillColor: string;
   strokeSize: number;
   strokeStyle: StrokeStyle;
+  activeShapeTool: ShapeType;
   setTool: (tool: ToolType) => void;
+  setActiveShapeTool: (shape: ShapeType) => void;
   setZoomMode: (mode: ZoomMode) => void;
   setColor: (color: string) => void;
   setFillColor: (color: string) => void;
@@ -23,8 +27,16 @@ export const useToolStore = create<ToolState>((set) => ({
   fillColor: 'transparent',
   strokeSize: 4,
   strokeStyle: 'solid',
+  activeShapeTool: 'rectangle',
 
-  setTool: (tool) => set({ currentTool: tool }),
+  setTool: (tool) => {
+    if (SHAPE_TOOLS.includes(tool)) {
+      set({ currentTool: tool, activeShapeTool: tool as ShapeType });
+    } else {
+      set({ currentTool: tool });
+    }
+  },
+  setActiveShapeTool: (activeShapeTool) => set({ activeShapeTool }),
   setZoomMode: (zoomMode) => set({ zoomMode }),
   setColor: (color) => set({ color }),
   setFillColor: (fillColor) => set({ fillColor }),

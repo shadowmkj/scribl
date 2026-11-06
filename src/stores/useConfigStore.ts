@@ -20,10 +20,25 @@ export interface KeymapEntry {
   desc?: string;
 }
 
+export interface ToolGroupConfig {
+  label: string;
+  default: string;
+  items: string[];
+}
+
 export interface ToolbarConfig {
   position: 'bottom' | 'top' | 'left' | 'right';
   items: string[];
+  groups?: Record<string, ToolGroupConfig>;
 }
+
+export const DEFAULT_GROUPS: Record<string, ToolGroupConfig> = {
+  shapes: {
+    label: 'Shapes',
+    default: 'rectangle',
+    items: ['rectangle', 'circle', 'diamond', 'line', 'arrow'],
+  },
+};
 
 export interface ScriblConfig {
   options: AppOptions;
@@ -83,15 +98,12 @@ export const DEFAULT_CONFIG: ScriblConfig = {
   ],
   toolbar: {
     position: 'bottom',
+    groups: DEFAULT_GROUPS,
     items: [
       'select',
       'pen',
       'eraser',
-      'rectangle',
-      'circle',
-      'diamond',
-      'line',
-      'arrow',
+      'shapes',
       'zoom',
       '|',
       'undo',

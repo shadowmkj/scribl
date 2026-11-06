@@ -133,6 +133,33 @@ pub fn eval_lua_config_string(
     toolbar_table
         .set("items", items_table)
         .map_err(|e| e.to_string())?;
+
+    let groups_table = lua.create_table().map_err(|e| e.to_string())?;
+    for (g_id, g_cfg) in &default.toolbar.groups {
+        let group_tbl = lua.create_table().map_err(|e| e.to_string())?;
+        group_tbl
+            .set("label", g_cfg.label.clone())
+            .map_err(|e| e.to_string())?;
+        group_tbl
+            .set("default", g_cfg.default.clone())
+            .map_err(|e| e.to_string())?;
+        let group_items = lua.create_table().map_err(|e| e.to_string())?;
+        for (i, item) in g_cfg.items.iter().enumerate() {
+            group_items
+                .set(i + 1, item.clone())
+                .map_err(|e| e.to_string())?;
+        }
+        group_tbl
+            .set("items", group_items)
+            .map_err(|e| e.to_string())?;
+        groups_table
+            .set(g_id.clone(), group_tbl)
+            .map_err(|e| e.to_string())?;
+    }
+    toolbar_table
+        .set("groups", groups_table)
+        .map_err(|e| e.to_string())?;
+
     ui_table
         .set("toolbar", toolbar_table)
         .map_err(|e| e.to_string())?;
@@ -236,6 +263,28 @@ pub fn eval_lua_config_string(
         items = default.toolbar.items;
     }
 
+    let mut groups = default.toolbar.groups;
+    if let Ok(groups_tbl) = toolbar_tbl.get::<Table>("groups") {
+        for (g_name, g_val) in groups_tbl.pairs::<String, Table>().flatten() {
+            let label = g_val.get::<String>("label").unwrap_or_else(|_| g_name.clone());
+            let default_tool = g_val.get::<String>("default").unwrap_or_default();
+            let mut group_items = Vec::new();
+            if let Ok(gitms) = g_val.get::<Table>("items") {
+                for item in gitms.sequence_values::<String>().flatten() {
+                    group_items.push(item);
+                }
+            }
+            groups.insert(
+                g_name,
+                crate::config::ToolGroupConfig {
+                    label,
+                    default: default_tool,
+                    items: group_items,
+                },
+            );
+        }
+    }
+
     // Extract theme
     let mut theme_config = ThemeConfig::default();
     if let Ok(theme_name) = scribl_table.get::<String>("theme") {
@@ -268,7 +317,11 @@ pub fn eval_lua_config_string(
     Ok(ScriblConfig {
         options,
         keymaps,
-        toolbar: ToolbarConfig { position, items },
+        toolbar: ToolbarConfig {
+            position,
+            items,
+            groups,
+        },
         theme: theme_config,
     })
 }
@@ -497,5 +550,30 @@ scribl.keymap.set("n", "<BS>", "selection.delete")
         let config = eval_lua_config_string(script, None).expect("should evaluate");
         assert_eq!(config.theme.name, "catppuccin");
         assert_eq!(config.theme.active.as_ref().unwrap().accent, "#ffffff");
+    }
+
+    #[test]
+    fn test_eval_toolbar_groups_and_items() {
+        let script = r#"
+            local scribl = require("scribl")
+            scribl.ui.toolbar = {
+                position = "top",
+                groups = {
+                    shapes = {
+                        label = "Shapes",
+                        default = "circle",
+                        items = { "circle", "rectangle" },
+                    },
+                },
+                items = { "select", "shapes", "zoom" },
+            }
+        "#;
+        let config = eval_lua_config_string(script, None).expect("should evaluate");
+        assert_eq!(config.toolbar.position, "top");
+        assert_eq!(config.toolbar.items, vec!["select", "shapes", "zoom"]);
+        let shapes_group = config.toolbar.groups.get("shapes").expect("shapes group exists");
+        assert_eq!(shapes_group.label, "Shapes");
+        assert_eq!(shapes_group.default, "circle");
+        assert_eq!(shapes_group.items, vec!["circle", "rectangle"]);
     }
 }
