@@ -38,9 +38,17 @@ export const useToolStore = create<ToolState>((set) => ({
 
   setTool: (tool) => set({ currentTool: tool }),
   setZoomMode: (zoomMode) => set({ zoomMode }),
-  setColor: (color) => set({ color }),
+  setColor: (color) =>
+    set((state) => ({
+      color,
+      editingText: state.editingText ? { ...state.editingText, color } : null,
+    })),
   setStrokeSize: (strokeSize) => set({ strokeSize }),
-  setFontSize: (fontSize) => set({ fontSize }),
+  setFontSize: (fontSize) =>
+    set((state) => ({
+      fontSize,
+      editingText: state.editingText ? { ...state.editingText, fontSize } : null,
+    })),
   startEditingText: (editingText) => set({ editingText }),
   updateEditingTextDraft: (text) =>
     set((state) => ({
