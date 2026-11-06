@@ -12,6 +12,7 @@ import { getFontFamilyId } from '../engine/fontConstants';
 import { hitTestMarquee, hitTestPoint } from '../engine/HitTester';
 import { createStrokeElement } from '../engine/InkingEngine';
 import { ScratchRenderer } from '../engine/ScratchRenderer';
+import { commitEditingText } from '../engine/textCommit';
 import {
   computeSelectionBounds,
   HandleType,
@@ -58,6 +59,11 @@ export class PointerRouter {
   }
 
   handlePointerDown(e: PointerEvent, container: HTMLElement) {
+    if (useToolStore.getState().editingText) {
+      commitEditingText();
+      return;
+    }
+
     // Palm Rejection: If stylus pen is active, drop any finger touch events
     if (this.isPenTouching && e.pointerType === 'touch') {
       return;
@@ -497,6 +503,10 @@ export class PointerRouter {
   }
 
   handleDoubleClick(e: MouseEvent) {
+    if (useToolStore.getState().editingText) {
+      commitEditingText();
+    }
+
     const activeTool = useToolStore.getState().currentTool;
     if (activeTool !== 'select') return;
 

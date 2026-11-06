@@ -1,22 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { worldToScreen } from '../../core/camera/cameraMath';
 import { getFontFamilyString } from '../../core/engine/fontConstants';
-import { measureTextBounds } from '../../core/engine/textMeasurement';
-import {
-  AddElementCommand,
-  DeleteElementsCommand,
-  UpdateTextElementCommand,
-} from '../../core/history/commands';
+import { commitEditingText } from '../../core/engine/textCommit';
 import { useCameraStore } from '../../stores/useCameraStore';
-import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
-import { TextElement } from '../../types/canvas';
 
 export const TextEditorOverlay: React.FC = () => {
   const editingText = useToolStore((s) => s.editingText);
-  const stopEditingText = useToolStore((s) => s.stopEditingText);
   const updateEditingTextDraft = useToolStore((s) => s.updateEditingTextDraft);
-  const setTool = useToolStore((s) => s.setTool);
   const currentTool = useToolStore((s) => s.currentTool);
 
   const camera = useCameraStore((s) => s.camera);
@@ -67,71 +58,8 @@ export const TextEditorOverlay: React.FC = () => {
   const handleCommit = useCallback(() => {
     if (!editingText || isCommittingRef.current) return;
     isCommittingRef.current = true;
-
-    const trimmed = draft.trim();
-    const doc = useDocumentStore.getState();
-
-    if (trimmed.length === 0) {
-      // Discard or delete empty element
-      if (editingText.elementId) {
-        doc.executeCommand(new DeleteElementsCommand([editingText.elementId], doc));
-      }
-      stopEditingText();
-      return;
-    }
-
-    const bounds = measureTextBounds(
-      draft,
-      editingText.fontSize,
-      getFontFamilyString(editingText.fontFamily),
-      1.25,
-    );
-
-    if (editingText.elementId) {
-      const existing = doc.elements[editingText.elementId];
-      if (existing && existing.type === 'text') {
-        const prev = {
-          text: existing.text,
-          width: existing.width,
-          height: existing.height,
-          fontSize: existing.fontSize,
-          fontFamily: existing.fontFamily,
-          color: existing.color,
-        };
-        const next = {
-          text: draft,
-          width: bounds.width,
-          height: bounds.height,
-          fontSize: editingText.fontSize,
-          fontFamily: editingText.fontFamily || existing.fontFamily || 'handwritten',
-          color: editingText.color,
-        };
-        doc.executeCommand(new UpdateTextElementCommand(existing.id, prev, next));
-      }
-    } else {
-      const newId = `text_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-      const newEl: TextElement = {
-        id: newId,
-        type: 'text',
-        x: editingText.x,
-        y: editingText.y,
-        width: bounds.width,
-        height: bounds.height,
-        zIndex: doc.elementIds.length + 1,
-        text: draft,
-        fontSize: editingText.fontSize,
-        fontFamily: editingText.fontFamily || 'handwritten',
-        color: editingText.color,
-        lineHeight: 1.25,
-      };
-
-      doc.executeCommand(new AddElementCommand(newEl));
-      doc.setSelected([newId]);
-      setTool('select');
-    }
-
-    stopEditingText();
-  }, [draft, editingText, setTool, stopEditingText]);
+    commitEditingText(textareaRef.current?.value ?? draft);
+  }, [draft, editingText]);
 
   // Click-outside listener to commit text
   useEffect(() => {
@@ -154,17 +82,14 @@ export const TextEditorOverlay: React.FC = () => {
         return;
       }
 
+      e.stopPropagation();
       handleCommit();
     };
 
-    // Attach after a short delay so the pointerup of the opening click cannot trigger it
-    const timer = setTimeout(() => {
-      window.addEventListener('pointerdown', handlePointerDownOutside);
-    }, 100);
+    window.addEventListener('pointerdown', handlePointerDownOutside, true);
 
     return () => {
-      clearTimeout(timer);
-      window.removeEventListener('pointerdown', handlePointerDownOutside);
+      window.removeEventListener('pointerdown', handlePointerDownOutside, true);
     };
   }, [editingText, handleCommit]);
 
@@ -200,6 +125,7 @@ export const TextEditorOverlay: React.FC = () => {
     >
       <textarea
         ref={textareaRef}
+        data-testid='text-editor-input'
         value={draft}
         autoFocus
         rows={1}

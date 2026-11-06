@@ -181,4 +181,112 @@ describe('Text Tool Integration', () => {
     expect(screen.getByText('Font')).toBeTruthy();
     expect(screen.getByText('Code')).toBeTruthy();
   });
+
+  it('commits and saves typed text when clicking outside on canvas, selects it, and sets tool to select', async () => {
+    render(<App />);
+
+    const canvasContainer = screen.getByTestId('canvas-viewport');
+
+    // Click on canvas with text tool to start typing at (300, 200)
+    fireEvent.pointerDown(canvasContainer, {
+      clientX: 300,
+      clientY: 200,
+      pointerId: 1,
+      buttons: 1,
+    });
+    fireEvent.pointerUp(canvasContainer, { clientX: 300, clientY: 200, pointerId: 1 });
+
+    const textarea = screen.getByTestId('text-editor-input') as HTMLTextAreaElement;
+    expect(textarea).not.toBeNull();
+
+    // Type text
+    fireEvent.change(textarea, { target: { value: 'Saving on outside click' } });
+    expect(textarea.value).toBe('Saving on outside click');
+
+    // Click outside on canvas at (600, 600)
+    fireEvent.pointerDown(canvasContainer, {
+      clientX: 600,
+      clientY: 600,
+      pointerId: 2,
+      buttons: 1,
+    });
+    fireEvent.pointerUp(canvasContainer, { clientX: 600, clientY: 600, pointerId: 2 });
+
+    // Text editor overlay should be closed
+    expect(useToolStore.getState().editingText).toBeNull();
+    expect(screen.queryByTestId('text-editor-input')).toBeNull();
+
+    // Tool should switch to select
+    expect(useToolStore.getState().currentTool).toBe('select');
+
+    // Document store should have saved the text element
+    const doc = useDocumentStore.getState();
+    expect(doc.elementIds.length).toBe(1);
+    const newId = doc.elementIds[0];
+    const textEl = doc.elements[newId] as TextElement;
+    expect(textEl).toBeDefined();
+    expect(textEl.text).toBe('Saving on outside click');
+
+    // Element should be selected
+    expect(doc.selectedIds).toEqual([newId]);
+  });
+
+  it('commits and updates existing text when clicking outside on canvas', async () => {
+    const textEl: TextElement = {
+      id: 'editable_txt',
+      type: 'text',
+      x: 100,
+      y: 100,
+      width: 120,
+      height: 30,
+      zIndex: 1,
+      text: 'Original Text',
+      fontSize: 24,
+      fontFamily: 'normal',
+      color: '#0284c7',
+      lineHeight: 1.25,
+    };
+
+    useDocumentStore.setState({
+      elements: { editable_txt: textEl },
+      elementIds: ['editable_txt'],
+      selectedIds: [],
+    });
+
+    useToolStore.setState({
+      currentTool: 'select',
+      color: '#0284c7',
+      fontSize: 24,
+      fontFamily: 'normal',
+    });
+
+    render(<App />);
+
+    const canvasContainer = screen.getByTestId('canvas-viewport');
+
+    // Double-click on text element at (110, 110)
+    fireEvent.doubleClick(canvasContainer, { clientX: 110, clientY: 110 });
+
+    const textarea = screen.getByTestId('text-editor-input') as HTMLTextAreaElement;
+    expect(textarea).not.toBeNull();
+    expect(useToolStore.getState().editingText?.elementId).toBe('editable_txt');
+
+    // Update text
+    fireEvent.change(textarea, { target: { value: 'Updated Existing Text' } });
+
+    // Click outside on canvas at (500, 500)
+    fireEvent.pointerDown(canvasContainer, {
+      clientX: 500,
+      clientY: 500,
+      pointerId: 1,
+      buttons: 1,
+    });
+
+    // Editor closed and element updated
+    expect(useToolStore.getState().editingText).toBeNull();
+    const doc = useDocumentStore.getState();
+    const updated = doc.elements['editable_txt'] as TextElement;
+    expect(updated.text).toBe('Updated Existing Text');
+    expect(doc.selectedIds).toEqual(['editable_txt']);
+  });
 });
