@@ -202,3 +202,56 @@ export class TransformElementsCommand implements Command {
     return { ...data, elements: next };
   }
 }
+
+export class UpdateTextElementCommand implements Command {
+  id = `update_text_${Date.now()}`;
+  name = 'Edit Text';
+
+  constructor(
+    private elementId: string,
+    private prev: {
+      text: string;
+      width: number;
+      height: number;
+      fontSize: number;
+      color: string;
+    },
+    private next: {
+      text: string;
+      width: number;
+      height: number;
+      fontSize: number;
+      color: string;
+    },
+  ) {}
+
+  execute(data: DocumentData): DocumentData {
+    const el = data.elements[this.elementId];
+    if (!el || el.type !== 'text') return data;
+    return {
+      ...data,
+      elements: {
+        ...data.elements,
+        [this.elementId]: {
+          ...el,
+          ...this.next,
+        },
+      },
+    };
+  }
+
+  undo(data: DocumentData): DocumentData {
+    const el = data.elements[this.elementId];
+    if (!el || el.type !== 'text') return data;
+    return {
+      ...data,
+      elements: {
+        ...data.elements,
+        [this.elementId]: {
+          ...el,
+          ...this.prev,
+        },
+      },
+    };
+  }
+}
