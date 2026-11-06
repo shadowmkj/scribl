@@ -545,7 +545,17 @@ mod tests {
         assert!(toolbar.items.contains(&"text".to_string()));
 
         let config = ScriblConfig::default();
-        assert!(config.keymaps.iter().any(|k| k.rhs == "tool.text" && k.lhs == "t"));
-        assert!(config.keymaps.iter().any(|k| k.rhs == "tool.text" && k.lhs == "5"));
+        assert!(
+            config
+                .keymaps
+                .iter()
+                .any(|k| k.rhs == "tool.text" && k.lhs == "t")
+        );
+        assert!(
+            config
+                .keymaps
+                .iter()
+                .any(|k| k.rhs == "tool.text" && k.lhs == "5")
+        );
     }
 }

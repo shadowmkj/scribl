@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { getFontFamilyId, getFontFamilyString } from '../core/engine/fontConstants';
+import { measureTextBounds } from '../core/engine/textMeasurement';
 import {
   AddElementCommand,
   AddElementsCommand,
@@ -10,6 +12,7 @@ import {
 import { HistoryStack } from '../core/history/HistoryStack';
 import { CanvasElement } from '../types/canvas';
 import { Command, DocumentData } from '../types/commands';
+import { useToolStore } from './useToolStore';
 
 interface DocumentState extends DocumentData {
   history: HistoryStack;
@@ -26,6 +29,12 @@ interface DocumentState extends DocumentData {
     initial: Record<string, CanvasElement>,
     final: Record<string, CanvasElement>,
   ) => void;
+  updateSelectedStyle: (style: {
+    color?: string;
+    fontSize?: number;
+    fontFamily?: string;
+    strokeSize?: number;
+  }) => void;
   setSelected: (ids: string[]) => void;
   undo: () => void;
   redo: () => void;
@@ -136,8 +145,92 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     });
   },
 
+  updateSelectedStyle: (style) => {
+    const { selectedIds, elements, history } = get();
+    if (selectedIds.length === 0) return;
+
+    const initialElements: Record<string, CanvasElement> = {};
+    const finalElements: Record<string, CanvasElement> = {};
+    let hasChanges = false;
+
+    for (const id of selectedIds) {
+      const el = elements[id];
+      if (!el) continue;
+      initialElements[id] = el;
+
+      if (el.type === 'text') {
+        const nextColor = style.color ?? el.color;
+        const nextFontSize = style.fontSize ?? el.fontSize;
+        const nextFontFamily = style.fontFamily ?? el.fontFamily;
+
+        if (
+          nextColor !== el.color
+          || nextFontSize !== el.fontSize
+          || nextFontFamily !== el.fontFamily
+        ) {
+          hasChanges = true;
+          const bounds = measureTextBounds(
+            el.text,
+            nextFontSize,
+            getFontFamilyString(nextFontFamily),
+            el.lineHeight || 1.25,
+          );
+          finalElements[id] = {
+            ...el,
+            color: nextColor,
+            fontSize: nextFontSize,
+            fontFamily: nextFontFamily,
+            width: bounds.width,
+            height: bounds.height,
+          };
+        } else {
+          finalElements[id] = el;
+        }
+      } else if (el.type === 'stroke') {
+        const nextColor = style.color ?? el.color;
+        const nextSize = style.strokeSize ?? el.size;
+
+        if (nextColor !== el.color || nextSize !== el.size) {
+          hasChanges = true;
+          finalElements[id] = {
+            ...el,
+            color: nextColor,
+            size: nextSize,
+            cachedPath2D: undefined,
+          };
+        } else {
+          finalElements[id] = el;
+        }
+      }
+    }
+
+    if (hasChanges) {
+      history.pushExecuted(
+        new TransformElementsCommand([...selectedIds], initialElements, finalElements),
+      );
+      set({
+        elements: { ...elements, ...finalElements },
+        canUndo: history.canUndo(),
+        canRedo: history.canRedo(),
+      });
+    }
+  },
+
   setSelected: (ids: string[]) => {
     set({ selectedIds: ids });
+    if (ids.length > 0) {
+      const firstEl = get().elements[ids[0]];
+      if (firstEl && firstEl.type === 'text') {
+        const toolStore = useToolStore.getState();
+        toolStore.setColor(firstEl.color);
+        toolStore.setFontSize(firstEl.fontSize);
+        toolStore.setFontFamily(getFontFamilyId(firstEl.fontFamily));
+      } else if (firstEl && firstEl.type === 'stroke') {
+        const toolStore = useToolStore.getState();
+        toolStore.setColor(firstEl.color);
+        toolStore.setStrokeSize(firstEl.size);
+      }
+    }
   },
 
   undo: () => {
@@ -149,6 +242,19 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       canUndo: history.canUndo(),
       canRedo: history.canRedo(),
     });
+    if (nextData.selectedIds.length > 0) {
+      const firstEl = nextData.elements[nextData.selectedIds[0]];
+      if (firstEl && firstEl.type === 'text') {
+        const toolStore = useToolStore.getState();
+        toolStore.setColor(firstEl.color);
+        toolStore.setFontSize(firstEl.fontSize);
+        toolStore.setFontFamily(getFontFamilyId(firstEl.fontFamily));
+      } else if (firstEl && firstEl.type === 'stroke') {
+        const toolStore = useToolStore.getState();
+        toolStore.setColor(firstEl.color);
+        toolStore.setStrokeSize(firstEl.size);
+      }
+    }
   },
 
   redo: () => {
@@ -160,6 +266,19 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       canUndo: history.canUndo(),
       canRedo: history.canRedo(),
     });
+    if (nextData.selectedIds.length > 0) {
+      const firstEl = nextData.elements[nextData.selectedIds[0]];
+      if (firstEl && firstEl.type === 'text') {
+        const toolStore = useToolStore.getState();
+        toolStore.setColor(firstEl.color);
+        toolStore.setFontSize(firstEl.fontSize);
+        toolStore.setFontFamily(getFontFamilyId(firstEl.fontFamily));
+      } else if (firstEl && firstEl.type === 'stroke') {
+        const toolStore = useToolStore.getState();
+        toolStore.setColor(firstEl.color);
+        toolStore.setStrokeSize(firstEl.size);
+      }
+    }
   },
 
   loadDocument: (data) => {

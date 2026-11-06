@@ -1,6 +1,6 @@
 import React from 'react';
 import { calculateBoxFitCamera } from '../../core/camera/cameraMath';
-import { FONT_FAMILIES } from '../../core/engine/fontConstants';
+import { FONT_FAMILIES, FontFamilyId } from '../../core/engine/fontConstants';
 import { useCameraStore } from '../../stores/useCameraStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
@@ -44,12 +44,53 @@ export const StyleInspector: React.FC = () => {
   const setFontSize = useToolStore((s) => s.setFontSize);
   const setFontFamily = useToolStore((s) => s.setFontFamily);
 
+  const selectedIds = useDocumentStore((s) => s.selectedIds);
+  const elements = useDocumentStore((s) => s.elements);
+  const updateSelectedStyle = useDocumentStore((s) => s.updateSelectedStyle);
+
   const resetZoom = useCameraStore((s) => s.resetZoom);
   const viewportWidth = useCameraStore((s) => s.viewportWidth);
   const viewportHeight = useCameraStore((s) => s.viewportHeight);
 
-  const isTextMode = currentTool === 'text' || editingText !== null;
-  if (currentTool !== 'pen' && currentTool !== 'zoom' && !isTextMode) return null;
+  const selectedElements = selectedIds.map((id) => elements[id]).filter(Boolean);
+  const hasTextSelected = selectedElements.some((el) => el.type === 'text');
+  const hasStrokeSelected = selectedElements.some((el) => el.type === 'stroke');
+  const hasSelection = selectedElements.length > 0;
+
+  const isTextMode = currentTool === 'text' || editingText !== null
+    || (currentTool === 'select' && hasTextSelected);
+  const isPenMode = currentTool === 'pen'
+    || (currentTool === 'select' && hasStrokeSelected && !hasTextSelected);
+
+  if (currentTool !== 'zoom' && !isTextMode && !isPenMode) return null;
+
+  const handleColorChange = (newColor: string) => {
+    setColor(newColor);
+    if (currentTool === 'select' && hasSelection) {
+      updateSelectedStyle({ color: newColor });
+    }
+  };
+
+  const handleFontFamilyChange = (newFontFamily: FontFamilyId) => {
+    setFontFamily(newFontFamily);
+    if (currentTool === 'select' && hasSelection) {
+      updateSelectedStyle({ fontFamily: newFontFamily });
+    }
+  };
+
+  const handleFontSizeChange = (newFontSize: number) => {
+    setFontSize(newFontSize);
+    if (currentTool === 'select' && hasSelection) {
+      updateSelectedStyle({ fontSize: newFontSize });
+    }
+  };
+
+  const handleStrokeSizeChange = (newStrokeSize: number) => {
+    setStrokeSize(newStrokeSize);
+    if (currentTool === 'select' && hasSelection) {
+      updateSelectedStyle({ strokeSize: newStrokeSize });
+    }
+  };
 
   if (currentTool === 'zoom') {
     const handleFitAll = () => {
@@ -337,7 +378,7 @@ export const StyleInspector: React.FC = () => {
               <button
                 key={swatch.hex}
                 title={swatch.name}
-                onClick={() => setColor(swatch.hex)}
+                onClick={() => handleColorChange(swatch.hex)}
                 style={{
                   width: 26,
                   height: 26,
@@ -391,7 +432,7 @@ export const StyleInspector: React.FC = () => {
                 return (
                   <button
                     key={f.id}
-                    onClick={() => setFontFamily(f.id)}
+                    onClick={() => handleFontFamilyChange(f.id)}
                     style={{
                       background: isSelected
                         ? 'var(--color-accent, #0284c7)'
@@ -457,7 +498,7 @@ export const StyleInspector: React.FC = () => {
               return (
                 <button
                   key={s.value}
-                  onClick={() => setFontSize(s.value)}
+                  onClick={() => handleFontSizeChange(s.value)}
                   style={{
                     background: isSelected
                       ? 'var(--color-accent, #0284c7)'
@@ -497,7 +538,7 @@ export const StyleInspector: React.FC = () => {
               return (
                 <button
                   key={s.value}
-                  onClick={() => setStrokeSize(s.value)}
+                  onClick={() => handleStrokeSizeChange(s.value)}
                   style={{
                     background: isSelected
                       ? 'var(--color-accent, #0284c7)'

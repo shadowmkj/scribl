@@ -25,6 +25,12 @@ html,
   -webkit-user-select: none;
 }
 
+input,
+textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 .scribl-app {
   position: relative;
   width: 100vw;

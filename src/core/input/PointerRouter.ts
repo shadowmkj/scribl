@@ -198,6 +198,18 @@ export class PointerRouter {
       if (hitId) {
         if (!doc.selectedIds.includes(hitId)) {
           doc.setSelected(e.shiftKey ? [...doc.selectedIds, hitId] : [hitId]);
+        } else {
+          const el = doc.elements[hitId];
+          if (el && el.type === 'text') {
+            const toolStore = useToolStore.getState();
+            toolStore.setColor(el.color);
+            toolStore.setFontSize(el.fontSize);
+            toolStore.setFontFamily(getFontFamilyId(el.fontFamily));
+          } else if (el && el.type === 'stroke') {
+            const toolStore = useToolStore.getState();
+            toolStore.setColor(el.color);
+            toolStore.setStrokeSize(el.size);
+          }
         }
         this.state = 'DRAGGING_SELECTION';
         this.lastDragWorld = worldPoint;
@@ -421,6 +433,14 @@ export class PointerRouter {
       this.rotationAngle = null;
       this.onRotationUpdate?.(null);
       this.activeHandle = null;
+
+      const doc = useDocumentStore.getState();
+      if (doc.selectedIds.length === 1) {
+        const el = doc.elements[doc.selectedIds[0]];
+        if (el && el.type === 'text') {
+          useToolStore.getState().setFontSize(el.fontSize);
+        }
+      }
     } else if (this.state === 'ERASING') {
       this.scratchRenderer.stopEraserTrail();
     } else if (this.state === 'SELECTING_MARQUEE') {

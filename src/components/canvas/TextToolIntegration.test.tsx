@@ -129,4 +129,56 @@ describe('Text Tool Integration', () => {
     const textEl = doc.elements[doc.elementIds[0]] as TextElement;
     expect(textEl.fontFamily).toBe('normal');
   });
+
+  it('sets tool settings when selecting an existing text element with select tool', async () => {
+    const textEl: TextElement = {
+      id: 'existing_txt',
+      type: 'text',
+      x: 300,
+      y: 200,
+      width: 150,
+      height: 40,
+      zIndex: 1,
+      text: 'Existing Text',
+      fontSize: 36,
+      fontFamily: 'code',
+      color: '#e11d48',
+      lineHeight: 1.25,
+    };
+
+    useDocumentStore.setState({
+      elements: { existing_txt: textEl },
+      elementIds: ['existing_txt'],
+      selectedIds: [],
+    });
+
+    useToolStore.setState({
+      currentTool: 'select',
+      color: '#000000',
+      fontSize: 16,
+      fontFamily: 'handwritten',
+    });
+
+    render(<App />);
+
+    const canvasContainer = screen.getByTestId('canvas-viewport');
+
+    // Click on the text element at (320, 210)
+    fireEvent.pointerDown(canvasContainer, {
+      clientX: 320,
+      clientY: 210,
+      pointerId: 1,
+      buttons: 1,
+    });
+    fireEvent.pointerUp(canvasContainer, { clientX: 320, clientY: 210, pointerId: 1 });
+
+    expect(useDocumentStore.getState().selectedIds).toEqual(['existing_txt']);
+    expect(useToolStore.getState().fontSize).toBe(36);
+    expect(useToolStore.getState().fontFamily).toBe('code');
+    expect(useToolStore.getState().color).toBe('#e11d48');
+
+    // StyleInspector is visible and displays these settings
+    expect(screen.getByText('Font')).toBeTruthy();
+    expect(screen.getByText('Code')).toBeTruthy();
+  });
 });

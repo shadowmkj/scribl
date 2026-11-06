@@ -1,4 +1,6 @@
 import { CanvasElement, StrokePoint } from '../../types/canvas';
+import { getFontFamilyString } from '../engine/fontConstants';
+import { measureTextBounds } from '../engine/textMeasurement';
 
 export type HandleType = 'nw' | 'ne' | 'se' | 'sw';
 
@@ -116,6 +118,53 @@ export function scaleElement(
       points: newPoints,
       cachedPath2D: undefined,
     };
+  } else if (element.type === 'text') {
+    const scaleMagnitude = Math.sqrt(Math.abs(sx * sy));
+    const newFontSize = Math.max(4, Math.min(500, Math.round(element.fontSize * scaleMagnitude)));
+    const fontStr = getFontFamilyString(element.fontFamily);
+    const bounds = measureTextBounds(
+      element.text,
+      newFontSize,
+      fontStr,
+      element.lineHeight || 1.25,
+    );
+
+    const originX = element.x - anchor.x;
+    const originRight = element.x + element.width - anchor.x;
+    const scaledLeft = anchor.x + originX * sx;
+    const scaledRight = anchor.x + originRight * sx;
+
+    let newX: number;
+    if (sx < 0) {
+      newX = scaledLeft - bounds.width;
+    } else if (Math.abs(originRight) < Math.abs(originX)) {
+      newX = scaledRight - bounds.width;
+    } else {
+      newX = scaledLeft;
+    }
+
+    const originY = element.y - anchor.y;
+    const originBottom = element.y + element.height - anchor.y;
+    const scaledTop = anchor.y + originY * sy;
+    const scaledBottom = anchor.y + originBottom * sy;
+
+    let newY: number;
+    if (sy < 0) {
+      newY = scaledTop - bounds.height;
+    } else if (Math.abs(originBottom) < Math.abs(originY)) {
+      newY = scaledBottom - bounds.height;
+    } else {
+      newY = scaledTop;
+    }
+
+    return {
+      ...element,
+      x: Math.round(newX),
+      y: Math.round(newY),
+      width: bounds.width,
+      height: bounds.height,
+      fontSize: newFontSize,
+    };
   }
 
   return element;
@@ -159,6 +208,20 @@ export function rotateElement(
       height: Math.max(1, maxY - minY),
       points: newPoints,
       cachedPath2D: undefined,
+    };
+  } else if (element.type === 'text') {
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    const elCenterX = element.x + element.width / 2;
+    const elCenterY = element.y + element.height / 2;
+    const dx = elCenterX - center.x;
+    const dy = elCenterY - center.y;
+    const rotatedCenterX = center.x + dx * cos - dy * sin;
+    const rotatedCenterY = center.y + dx * sin + dy * cos;
+    return {
+      ...element,
+      x: Math.round(rotatedCenterX - element.width / 2),
+      y: Math.round(rotatedCenterY - element.height / 2),
     };
   }
 

@@ -217,7 +217,7 @@ export const CanvasViewport: React.FC = () => {
     cursorStyle = 'grab';
   } else if (currentTool === 'eraser') {
     cursorStyle = ERASER_CURSOR;
-  } else if (currentTool === 'text') {
+  } else if (currentTool === 'text' || editingText !== null) {
     cursorStyle = 'text';
   } else if (currentTool === 'pen') {
     cursorStyle = 'crosshair';

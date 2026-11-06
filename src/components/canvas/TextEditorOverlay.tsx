@@ -28,6 +28,16 @@ export const TextEditorOverlay: React.FC = () => {
   const [draft, setDraft] = useState('');
   const isCommittingRef = useRef(false);
 
+  const screenFontSize = editingText ? Math.max(editingText.fontSize * camera.zoom, 8) : 24;
+  const screenLineHeight = screenFontSize * 1.25;
+
+  const adjustTextareaSize = useCallback((el: HTMLTextAreaElement) => {
+    el.style.height = 'auto';
+    const minH = Math.ceil(screenLineHeight);
+    el.style.height = `${Math.max(el.scrollHeight, minH)}px`;
+    el.scrollTop = 0;
+  }, [screenLineHeight]);
+
   // Sync draft when a new editing session starts
   useEffect(() => {
     if (editingText) {
@@ -35,22 +45,24 @@ export const TextEditorOverlay: React.FC = () => {
       isCommittingRef.current = false;
 
       // Focus and position cursor at end
-      const timer = setTimeout(() => {
+      const focusTextarea = () => {
         if (textareaRef.current) {
           textareaRef.current.focus();
           const len = textareaRef.current.value.length;
           textareaRef.current.setSelectionRange(len, len);
           adjustTextareaSize(textareaRef.current);
         }
-      }, 20);
-      return () => clearTimeout(timer);
-    }
-  }, [editingText?.elementId, editingText?.x, editingText?.y]);
+      };
 
-  const adjustTextareaSize = (el: HTMLTextAreaElement) => {
-    el.style.height = 'auto';
-    el.style.height = `${Math.max(el.scrollHeight, 24)}px`;
-  };
+      focusTextarea();
+      const raf = requestAnimationFrame(focusTextarea);
+      const timer = setTimeout(focusTextarea, 20);
+      return () => {
+        cancelAnimationFrame(raf);
+        clearTimeout(timer);
+      };
+    }
+  }, [editingText?.elementId, editingText?.x, editingText?.y, adjustTextareaSize]);
 
   const handleCommit = useCallback(() => {
     if (!editingText || isCommittingRef.current) return;
@@ -172,8 +184,6 @@ export const TextEditorOverlay: React.FC = () => {
     width,
     height,
   );
-  const screenFontSize = Math.max(editingText.fontSize * camera.zoom, 8);
-  const screenLineHeight = screenFontSize * 1.25;
 
   return (
     <div
@@ -184,6 +194,7 @@ export const TextEditorOverlay: React.FC = () => {
         top: screenPos.y,
         zIndex: 40,
         pointerEvents: 'auto',
+        cursor: 'text',
       }}
       onPointerDown={(e) => e.stopPropagation()}
     >
@@ -193,6 +204,7 @@ export const TextEditorOverlay: React.FC = () => {
         autoFocus
         rows={1}
         wrap='off'
+        onPointerDown={(e) => e.stopPropagation()}
         onChange={(e) => {
           setDraft(e.target.value);
           updateEditingTextDraft(e.target.value);
@@ -306,7 +318,7 @@ export const TextEditorOverlay: React.FC = () => {
           background: 'transparent',
           border: '1px dashed var(--color-accent, #0284c7)',
           borderRadius: 4,
-          padding: '2px 4px',
+          padding: '0 4px',
           margin: 0,
           outline: 'none',
           resize: 'none',
@@ -318,9 +330,12 @@ export const TextEditorOverlay: React.FC = () => {
           fontFamily: getFontFamilyString(editingText.fontFamily),
           lineHeight: `${screenLineHeight}px`,
           minWidth: `${Math.max(screenFontSize * 3, 50)}px`,
-          minHeight: `${screenLineHeight}px`,
+          minHeight: `${Math.ceil(screenLineHeight)}px`,
           boxSizing: 'border-box',
-          caretColor: editingText.color,
+          caretColor: 'var(--color-accent, #38bdf8)',
+          cursor: 'text',
+          userSelect: 'text',
+          WebkitUserSelect: 'text',
         }}
       />
     </div>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { StrokeElement } from '../../types/canvas';
+import { StrokeElement, TextElement } from '../../types/canvas';
 import {
   computeSelectionBounds,
   getHandlePositions,
@@ -116,5 +116,57 @@ describe('transformMath', () => {
     // dx = -20, dy = -15 -> x' = 30 - (-15) = 45, y' = 35 + (-20) = 15
     expect(rotated.points[0].x).toBeCloseTo(45, 1);
     expect(rotated.points[0].y).toBeCloseTo(15, 1);
+  });
+
+  it('scales text element and correspondingly updates font size and dimensions', () => {
+    const textEl: TextElement = {
+      id: 't1',
+      type: 'text',
+      x: 100,
+      y: 100,
+      width: 120,
+      height: 40,
+      zIndex: 1,
+      text: 'Scalable text',
+      fontSize: 20,
+      fontFamily: 'normal',
+      color: '#0284c7',
+      lineHeight: 1.25,
+    };
+
+    const anchor = { x: 100, y: 100 };
+    const scaled = scaleElement(textEl, anchor, 2, 2) as TextElement;
+
+    expect(scaled.type).toBe('text');
+    expect(scaled.fontSize).toBe(40); // 20 * 2
+    expect(scaled.x).toBe(100);
+    expect(scaled.y).toBe(100);
+    expect(scaled.width).toBeGreaterThan(textEl.width);
+    expect(scaled.height).toBeGreaterThan(textEl.height);
+  });
+
+  it('rotates text element center around rotation center', () => {
+    const textEl: TextElement = {
+      id: 't1',
+      type: 'text',
+      x: 100,
+      y: 100,
+      width: 100,
+      height: 40,
+      zIndex: 1,
+      text: 'Rotate text',
+      fontSize: 20,
+      fontFamily: 'normal',
+      color: '#0284c7',
+      lineHeight: 1.25,
+    };
+
+    const center = { x: 150, y: 120 }; // Exact center of textEl
+    const rotated = rotateElement(textEl, center, Math.PI / 2) as TextElement;
+
+    expect(rotated.fontSize).toBe(20);
+    // Center was already at rotation center, so x and y should remain centered
+    expect(rotated.x + rotated.width / 2).toBeCloseTo(150, 0);
+    expect(rotated.y + rotated.height / 2).toBeCloseTo(120, 0);
   });
 });
