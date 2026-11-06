@@ -275,5 +275,31 @@ describe('KeybindingEngine', () => {
         'edit.duplicate',
       ]);
     });
+
+    it('dispatches tool commands from visual mode fallback when key is unmapped in visual mode', () => {
+      let isVisual = true;
+      const visualEngine = new KeybindingEngine({
+        executeCommand: (id) => {
+          executedCommands.push(id);
+          return true;
+        },
+        getActiveMode: () => (isVisual ? 'v' : 'n'),
+      });
+
+      visualEngine.registerKeymaps([
+        { mode: 'n', lhs: 's', rhs: 'tool.shapes' },
+        { mode: 'n', lhs: 'r', rhs: 'tool.shape.rectangle' },
+        { mode: 'v', lhs: 'r', rhs: 'selection.rotate' },
+      ]);
+
+      // 'r' in visual mode invokes selection.rotate (visual mode key takes precedence)
+      executedCommands.length = 0;
+      visualEngine.handleKeyDown(new KeyboardEvent('keydown', { key: 'r', cancelable: true }));
+      expect(executedCommands).toEqual(['selection.rotate']);
+
+      // 's' in visual mode invokes tool.shapes (unmapped in visual mode, falls back to tool command)
+      visualEngine.handleKeyDown(new KeyboardEvent('keydown', { key: 's', cancelable: true }));
+      expect(executedCommands).toEqual(['selection.rotate', 'tool.shapes']);
+    });
   });
 });

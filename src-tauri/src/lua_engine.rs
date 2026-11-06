@@ -266,7 +266,9 @@ pub fn eval_lua_config_string(
     let mut groups = default.toolbar.groups;
     if let Ok(groups_tbl) = toolbar_tbl.get::<Table>("groups") {
         for (g_name, g_val) in groups_tbl.pairs::<String, Table>().flatten() {
-            let label = g_val.get::<String>("label").unwrap_or_else(|_| g_name.clone());
+            let label = g_val
+                .get::<String>("label")
+                .unwrap_or_else(|_| g_name.clone());
             let default_tool = g_val.get::<String>("default").unwrap_or_default();
             let mut group_items = Vec::new();
             if let Ok(gitms) = g_val.get::<Table>("items") {
@@ -571,7 +573,11 @@ scribl.keymap.set("n", "<BS>", "selection.delete")
         let config = eval_lua_config_string(script, None).expect("should evaluate");
         assert_eq!(config.toolbar.position, "top");
         assert_eq!(config.toolbar.items, vec!["select", "shapes", "zoom"]);
-        let shapes_group = config.toolbar.groups.get("shapes").expect("shapes group exists");
+        let shapes_group = config
+            .toolbar
+            .groups
+            .get("shapes")
+            .expect("shapes group exists");
         assert_eq!(shapes_group.label, "Shapes");
         assert_eq!(shapes_group.default, "circle");
         assert_eq!(shapes_group.items, vec!["circle", "rectangle"]);

@@ -56,4 +56,37 @@ describe('CommandRegistry', () => {
       expect(cmd?.isActive?.()).toBe(true);
     }
   });
+
+  it('executes tool.shapes: selects last used shape, then pressing twice toggles flyout', () => {
+    useToolStore.setState({
+      currentTool: 'pen',
+      activeShapeTool: 'circle',
+      isShapesFlyoutOpen: false,
+    });
+
+    // 1st press: switches to last-used shape (circle), flyout remains closed
+    commandRegistry.execute('tool.shapes');
+    expect(useToolStore.getState().currentTool).toBe('circle');
+    expect(useToolStore.getState().isShapesFlyoutOpen).toBe(false);
+
+    // 2nd press (already on active shape): opens shapes flyout
+    commandRegistry.execute('tool.shapes');
+    expect(useToolStore.getState().isShapesFlyoutOpen).toBe(true);
+
+    // 3rd press: toggles shapes flyout closed
+    commandRegistry.execute('tool.shapes');
+    expect(useToolStore.getState().isShapesFlyoutOpen).toBe(false);
+  });
+
+  it('supports shape command aliases (tool.rectangle, tool.shape, etc.)', () => {
+    useToolStore.setState({ currentTool: 'pen' });
+    commandRegistry.execute('tool.rectangle');
+    expect(useToolStore.getState().currentTool).toBe('rectangle');
+
+    commandRegistry.execute('tool.arrow');
+    expect(useToolStore.getState().currentTool).toBe('arrow');
+
+    commandRegistry.execute('tool.shape');
+    expect(useToolStore.getState().currentTool).toBe('arrow');
+  });
 });

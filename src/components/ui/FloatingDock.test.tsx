@@ -37,6 +37,7 @@ describe('FloatingDock', () => {
     useToolStore.setState({
       currentTool: 'pen',
       activeShapeTool: 'rectangle',
+      isShapesFlyoutOpen: false,
     });
   });
 
@@ -61,6 +62,25 @@ describe('FloatingDock', () => {
     fireEvent.click(shapesBtn);
 
     expect(useToolStore.getState().currentTool).toBe('rectangle');
+  });
+
+  it('clicking shapes button twice toggles the shapes flyout', () => {
+    render(<FloatingDock />);
+
+    const shapesBtn = screen.getByTitle(/Rectangle \(Shapes\)/);
+    // 1st click: selects rectangle
+    fireEvent.click(shapesBtn);
+    expect(useToolStore.getState().currentTool).toBe('rectangle');
+    expect(useToolStore.getState().isShapesFlyoutOpen).toBe(false);
+
+    // 2nd click (already on rectangle): opens shapes flyout
+    fireEvent.click(shapesBtn);
+    expect(useToolStore.getState().isShapesFlyoutOpen).toBe(true);
+    expect(screen.getByTitle(/Circle/)).toBeTruthy();
+
+    // 3rd click: closes shapes flyout
+    fireEvent.click(shapesBtn);
+    expect(useToolStore.getState().isShapesFlyoutOpen).toBe(false);
   });
 
   it('clicking chevron button opens flyout drawer with all shapes', () => {

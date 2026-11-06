@@ -11,8 +11,11 @@ interface ToolState {
   strokeSize: number;
   strokeStyle: StrokeStyle;
   activeShapeTool: ShapeType;
+  isShapesFlyoutOpen: boolean;
   setTool: (tool: ToolType) => void;
   setActiveShapeTool: (shape: ShapeType) => void;
+  setShapesFlyoutOpen: (open: boolean) => void;
+  toggleShapesFlyout: () => void;
   setZoomMode: (mode: ZoomMode) => void;
   setColor: (color: string) => void;
   setFillColor: (color: string) => void;
@@ -28,6 +31,7 @@ export const useToolStore = create<ToolState>((set) => ({
   strokeSize: 4,
   strokeStyle: 'solid',
   activeShapeTool: 'rectangle',
+  isShapesFlyoutOpen: false,
 
   setTool: (tool) => {
     if (SHAPE_TOOLS.includes(tool)) {
@@ -37,6 +41,8 @@ export const useToolStore = create<ToolState>((set) => ({
     }
   },
   setActiveShapeTool: (activeShapeTool) => set({ activeShapeTool }),
+  setShapesFlyoutOpen: (isShapesFlyoutOpen) => set({ isShapesFlyoutOpen }),
+  toggleShapesFlyout: () => set((state) => ({ isShapesFlyoutOpen: !state.isShapesFlyoutOpen })),
   setZoomMode: (zoomMode) => set({ zoomMode }),
   setColor: (color) => set({ color }),
   setFillColor: (fillColor) => set({ fillColor }),

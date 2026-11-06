@@ -256,6 +256,9 @@ export const FloatingDock: React.FC = () => {
   const setTool = useToolStore((s) => s.setTool);
   const activeShapeTool = useToolStore((s) => s.activeShapeTool);
   const setActiveShapeTool = useToolStore((s) => s.setActiveShapeTool);
+  const isShapesFlyoutOpen = useToolStore((s) => s.isShapesFlyoutOpen);
+  const setShapesFlyoutOpen = useToolStore((s) => s.setShapesFlyoutOpen);
+  const toggleShapesFlyout = useToolStore((s) => s.toggleShapesFlyout);
   const toolbar = useConfigStore((s) => s.config.toolbar);
   const keymaps = useConfigStore((s) => s.config.keymaps);
 
@@ -263,17 +266,26 @@ export const FloatingDock: React.FC = () => {
   const flyoutRef = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
-    if (!openFlyout) return;
+    if (!isShapesFlyoutOpen && !openFlyout) return;
     const handleClickOutside = (e: MouseEvent) => {
       if (flyoutRef.current && !flyoutRef.current.contains(e.target as Node)) {
+        setShapesFlyoutOpen(false);
+        setOpenFlyout(null);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShapesFlyoutOpen(false);
         setOpenFlyout(null);
       }
     };
     document.addEventListener('pointerdown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('pointerdown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [openFlyout]);
+  }, [isShapesFlyoutOpen, openFlyout, setShapesFlyoutOpen]);
 
   const isVertical = toolbar.position === 'left' || toolbar.position === 'right';
   const groups = toolbar.groups || DEFAULT_GROUPS;
@@ -344,7 +356,13 @@ export const FloatingDock: React.FC = () => {
 
   const getShortcut = (actionId?: string): string | undefined => {
     if (!actionId) return undefined;
-    const matching = keymaps.filter((k) => k.rhs === actionId);
+    const matching = keymaps.filter(
+      (k) =>
+        k.rhs === actionId
+        || (actionId.startsWith('tool.shape.')
+          && k.rhs === actionId.replace('tool.shape.', 'tool.'))
+        || (actionId === 'tool.shapes' && k.rhs === 'tool.shape'),
+    );
     if (matching.length === 0) return undefined;
     return formatKeybindForDisplay(matching[0].lhs);
   };
@@ -394,8 +412,10 @@ export const FloatingDock: React.FC = () => {
           if (!def) return null;
 
           const isGroupActive = group.items.includes(currentTool);
-          const isFlyoutOpen = openFlyout === item;
-          const shortcut = getShortcut(def.actionId);
+          const isFlyoutOpen = item === 'shapes' ? isShapesFlyoutOpen : openFlyout === item;
+          const shortcut = (item === 'shapes'
+            ? (getShortcut('tool.shapes') || getShortcut('tool.shape'))
+            : undefined) || getShortcut(def.actionId);
 
           const borderStyle = isGroupActive
             ? '1px solid var(--color-accent-light, color-mix(in srgb, var(--color-accent, #0284c7) 50%, white))'
@@ -403,6 +423,27 @@ export const FloatingDock: React.FC = () => {
           const sepBorder = isGroupActive
             ? '1px solid rgba(255, 255, 255, 0.25)'
             : '1px solid rgba(255, 255, 255, 0.08)';
+
+          const handleGroupMainClick = () => {
+            if (item === 'shapes') {
+              commandRegistry.execute('tool.shapes');
+            } else {
+              if (currentTool === displayedTool) {
+                setOpenFlyout(isFlyoutOpen ? null : item);
+              } else {
+                setTool(displayedTool as ToolType);
+              }
+            }
+          };
+
+          const handleChevronClick = (e: React.MouseEvent) => {
+            e.stopPropagation();
+            if (item === 'shapes') {
+              toggleShapesFlyout();
+            } else {
+              setOpenFlyout(isFlyoutOpen ? null : item);
+            }
+          };
 
           return (
             <div
@@ -417,13 +458,7 @@ export const FloatingDock: React.FC = () => {
             >
               <button
                 type='button'
-                onClick={() => {
-                  if (currentTool === displayedTool) {
-                    setOpenFlyout(isFlyoutOpen ? null : item);
-                  } else {
-                    setTool(displayedTool as ToolType);
-                  }
-                }}
+                onClick={handleGroupMainClick}
                 title={`${def.label} (${group.label})${shortcut ? ` (${shortcut})` : ''}`}
                 style={{
                   background: isGroupActive
@@ -483,10 +518,7 @@ export const FloatingDock: React.FC = () => {
               </button>
               <button
                 type='button'
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setOpenFlyout(isFlyoutOpen ? null : item);
-                }}
+                onClick={handleChevronClick}
                 title={`Browse ${group.label}`}
                 style={{
                   background: isGroupActive
@@ -565,14 +597,19 @@ export const FloatingDock: React.FC = () => {
                     const subDef = KNOWN_ITEMS[subItem];
                     if (!subDef) return null;
                     const isSubActive = currentTool === subDef.toolId;
-                    const subShortcut = getShortcut(subDef.actionId);
+                    const subShortcut = (subDef.toolId
+                      ? (getShortcut(`tool.shape.${subDef.toolId}`)
+                        || getShortcut(`tool.${subDef.toolId}`))
+                      : undefined) || getShortcut(subDef.actionId);
 
                     return (
                       <button
                         key={subItem}
                         type='button'
                         onClick={() => {
-                          if (subDef.toolId) {
+                          if (subDef.actionId) {
+                            commandRegistry.execute(subDef.actionId);
+                          } else if (subDef.toolId) {
                             setTool(subDef.toolId);
                             if (
                               ['rectangle', 'circle', 'diamond', 'line', 'arrow'].includes(
@@ -581,10 +618,12 @@ export const FloatingDock: React.FC = () => {
                             ) {
                               setActiveShapeTool(subDef.toolId as ShapeType);
                             }
-                          } else if (subDef.actionId) {
-                            commandRegistry.execute(subDef.actionId);
                           }
-                          setOpenFlyout(null);
+                          if (item === 'shapes') {
+                            setShapesFlyoutOpen(false);
+                          } else {
+                            setOpenFlyout(null);
+                          }
                         }}
                         title={`${subDef.label}${subShortcut ? ` (${subShortcut})` : ''}`}
                         style={{

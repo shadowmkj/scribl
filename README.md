@@ -110,22 +110,24 @@ scribl.ui.toolbar = {
 
 ## ⌨️ Keyboard Shortcuts
 
-| Shortcut                                 | Action                        |
-| ---------------------------------------- | ----------------------------- |
-| `P` or `2`                               | **Pen Tool**                  |
-| `E` or `3`                               | **Eraser Tool**               |
-| `V` or `1`                               | **Select / Move Tool**        |
-| `Z` or `4`                               | **Zoom Tool**                 |
-| `Space` + Drag                           | **Pan Canvas**                |
-| `Cmd/Ctrl + Z`                           | **Undo**                      |
-| `Cmd/Ctrl + Shift + Z` or `Cmd/Ctrl + Y` | **Redo**                      |
-| `Backspace` or `Delete`                  | **Delete Selected Strokes**   |
-| `+` / `=`                                | **Zoom In**                   |
-| `-`                                      | **Zoom Out**                  |
-| `Shift + 0`                              | **Reset Zoom (100%)**         |
-| `Alt` + Click (Zoom Tool)                | **Zoom Out (Step)**           |
-| `Shift` + Drag (Zoom Tool)               | **Toggle Scrubby / Box Mode** |
-| Mouse Wheel                              | **Cursor-Anchored Zoom**      |
+| Shortcut                                 | Action                                         |
+| ---------------------------------------- | ---------------------------------------------- |
+| `P` or `2`                               | **Pen Tool**                                   |
+| `E` or `3`                               | **Eraser Tool**                                |
+| `V` or `1`                               | **Select / Move Tool**                         |
+| `S` or `5`                               | **Shapes Tool (press twice to browse shapes)** |
+| `R`                                      | **Rectangle Shape Tool**                       |
+| `Z` or `4`                               | **Zoom Tool**                                  |
+| `Space` + Drag                           | **Pan Canvas**                                 |
+| `Cmd/Ctrl + Z`                           | **Undo**                                       |
+| `Cmd/Ctrl + Shift + Z` or `Cmd/Ctrl + Y` | **Redo**                                       |
+| `Backspace` or `Delete`                  | **Delete Selected Strokes**                    |
+| `+` / `=`                                | **Zoom In**                                    |
+| `-`                                      | **Zoom Out**                                   |
+| `Shift + 0`                              | **Reset Zoom (100%)**                          |
+| `Alt` + Click (Zoom Tool)                | **Zoom Out (Step)**                            |
+| `Shift` + Drag (Zoom Tool)               | **Toggle Scrubby / Box Mode**                  |
+| Mouse Wheel                              | **Cursor-Anchored Zoom**                       |
 
 ---
 

@@ -316,6 +316,24 @@ impl Default for ScriblConfig {
                 },
                 KeymapEntry {
                     mode: "n".into(),
+                    lhs: "s".into(),
+                    rhs: "tool.shapes".into(),
+                    desc: Some("Shapes Tool (Browse on double-press)".into()),
+                },
+                KeymapEntry {
+                    mode: "n".into(),
+                    lhs: "5".into(),
+                    rhs: "tool.shapes".into(),
+                    desc: Some("Shapes Tool".into()),
+                },
+                KeymapEntry {
+                    mode: "n".into(),
+                    lhs: "r".into(),
+                    rhs: "tool.shape.rectangle".into(),
+                    desc: Some("Rectangle Shape".into()),
+                },
+                KeymapEntry {
+                    mode: "n".into(),
                     lhs: "z".into(),
                     rhs: "tool.zoom".into(),
                     desc: Some("Zoom Tool".into()),

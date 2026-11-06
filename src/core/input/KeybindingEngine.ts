@@ -223,12 +223,20 @@ export class KeybindingEngine {
       }
     }
 
-    // 2. Fallback to normal mode for global shortcuts (e.g. Cmd+Z, Cmd+S)
+    // 2. Fallback to normal mode for global shortcuts and tool/navigation actions
     if (currentMode !== 'n') {
       for (const km of this.keymaps) {
         if (km.mode === 'n' && matchesStroke(e, km.stroke)) {
-          // Do not leak single-character drawing tools into visual mode
-          if (km.stroke.ctrl || km.stroke.meta) {
+          // Allow modified shortcuts (Cmd/Ctrl) and tool/zoom/canvas/file actions
+          if (
+            km.stroke.ctrl
+            || km.stroke.meta
+            || km.commandId.startsWith('tool.')
+            || km.commandId.startsWith('zoom.')
+            || km.commandId.startsWith('canvas.')
+            || km.commandId.startsWith('file.')
+            || km.commandId.startsWith('app.')
+          ) {
             e.preventDefault();
             this.executeCommand(km.commandId);
             return true;
