@@ -54,6 +54,7 @@ impl Default for ToolbarConfig {
                 "select".to_string(),
                 "pen".to_string(),
                 "eraser".to_string(),
+                "text".to_string(),
                 "zoom".to_string(),
                 "|".to_string(),
                 "undo".to_string(),
@@ -298,6 +299,18 @@ impl Default for ScriblConfig {
                 },
                 KeymapEntry {
                     mode: "n".into(),
+                    lhs: "t".into(),
+                    rhs: "tool.text".into(),
+                    desc: Some("Text Tool".into()),
+                },
+                KeymapEntry {
+                    mode: "n".into(),
+                    lhs: "5".into(),
+                    rhs: "tool.text".into(),
+                    desc: Some("Text Tool".into()),
+                },
+                KeymapEntry {
+                    mode: "n".into(),
                     lhs: "<S-0>".into(),
                     rhs: "zoom.reset".into(),
                     desc: Some("Reset Zoom (100%)".into()),
@@ -524,5 +537,25 @@ mod tests {
             .insert("accent_hover".to_string(), "#123456".to_string());
         let resolved2 = resolve_theme(&theme);
         assert_eq!(resolved2.accent_hover, "#123456");
+    }
+
+    #[test]
+    fn test_default_toolbar_and_keymaps_include_text_tool() {
+        let toolbar = ToolbarConfig::default();
+        assert!(toolbar.items.contains(&"text".to_string()));
+
+        let config = ScriblConfig::default();
+        assert!(
+            config
+                .keymaps
+                .iter()
+                .any(|k| k.rhs == "tool.text" && k.lhs == "t")
+        );
+        assert!(
+            config
+                .keymaps
+                .iter()
+                .any(|k| k.rhs == "tool.text" && k.lhs == "5")
+        );
     }
 }

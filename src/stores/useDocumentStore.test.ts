@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { StrokeElement } from '../types/canvas';
+import { StrokeElement, TextElement } from '../types/canvas';
 import { useDocumentStore } from './useDocumentStore';
+import { useToolStore } from './useToolStore';
 
 describe('useDocumentStore - movement and atomic undo/redo', () => {
   const dummyStroke: StrokeElement = {
@@ -66,8 +67,8 @@ describe('useDocumentStore - movement and atomic undo/redo', () => {
     const afterUndo = useDocumentStore.getState();
     expect(afterUndo.elements['s1'].x).toBe(10);
     expect(afterUndo.elements['s1'].y).toBe(20);
-    expect(afterUndo.elements['s1'].points[0].x).toBe(10);
-    expect(afterUndo.elements['s1'].points[0].y).toBe(20);
+    expect((afterUndo.elements['s1'] as StrokeElement).points[0].x).toBe(10);
+    expect((afterUndo.elements['s1'] as StrokeElement).points[0].y).toBe(20);
 
     // Exactly ONE redo moves it forward to place B (60, 50)
     afterUndo.redo();
@@ -108,12 +109,12 @@ describe('useDocumentStore - movement and atomic undo/redo', () => {
     // One undo restores original dimensions
     store.undo();
     expect(useDocumentStore.getState().elements['s1'].width).toBe(30);
-    expect(useDocumentStore.getState().elements['s1'].size).toBe(2);
+    expect((useDocumentStore.getState().elements['s1'] as StrokeElement).size).toBe(2);
 
     // One redo restores transformed dimensions
     store.redo();
     expect(useDocumentStore.getState().elements['s1'].width).toBe(60);
-    expect(useDocumentStore.getState().elements['s1'].size).toBe(4);
+    expect((useDocumentStore.getState().elements['s1'] as StrokeElement).size).toBe(4);
   });
 
   it('adds multiple elements at once and selects them with atomic undo', () => {
@@ -139,5 +140,88 @@ describe('useDocumentStore - movement and atomic undo/redo', () => {
     const stateAfterRedo = useDocumentStore.getState();
     expect(stateAfterRedo.elementIds).toEqual(['s1', 's2', 's3']);
     expect(stateAfterRedo.selectedIds).toEqual(['s2', 's3']);
+  });
+
+  it('syncs text element settings to useToolStore when selected', () => {
+    const textEl: TextElement = {
+      id: 't_sync',
+      type: 'text',
+      x: 10,
+      y: 20,
+      width: 100,
+      height: 30,
+      zIndex: 2,
+      text: 'Sync text',
+      fontSize: 36,
+      fontFamily: 'code',
+      color: '#e11d48',
+      lineHeight: 1.25,
+    };
+
+    const store = useDocumentStore.getState();
+    store.addElement(textEl);
+
+    // Initial tool store state
+    useToolStore.setState({
+      fontSize: 16,
+      fontFamily: 'handwritten',
+      color: '#000000',
+    });
+
+    // Selecting the text element syncs settings
+    store.setSelected(['t_sync']);
+
+    const toolState = useToolStore.getState();
+    expect(toolState.fontSize).toBe(36);
+    expect(toolState.fontFamily).toBe('code');
+    expect(toolState.color).toBe('#e11d48');
+  });
+
+  it('updates selected text element styles with atomic undo and redo', () => {
+    const textEl: TextElement = {
+      id: 't_style',
+      type: 'text',
+      x: 50,
+      y: 50,
+      width: 80,
+      height: 25,
+      zIndex: 2,
+      text: 'Stylable',
+      fontSize: 24,
+      fontFamily: 'normal',
+      color: '#0284c7',
+      lineHeight: 1.25,
+    };
+
+    const store = useDocumentStore.getState();
+    store.addElement(textEl);
+    store.setSelected(['t_style']);
+
+    // Update style
+    store.updateSelectedStyle({
+      color: '#7c3aed',
+      fontSize: 48,
+      fontFamily: 'code',
+    });
+
+    const updated = useDocumentStore.getState().elements['t_style'] as TextElement;
+    expect(updated.color).toBe('#7c3aed');
+    expect(updated.fontSize).toBe(48);
+    expect(updated.fontFamily).toBe('code');
+    expect(updated.width).toBeGreaterThan(80);
+
+    // Undo reverts back to original
+    store.undo();
+    const reverted = useDocumentStore.getState().elements['t_style'] as TextElement;
+    expect(reverted.color).toBe('#0284c7');
+    expect(reverted.fontSize).toBe(24);
+    expect(reverted.fontFamily).toBe('normal');
+
+    // Redo applies updated style again
+    store.redo();
+    const reapplied = useDocumentStore.getState().elements['t_style'] as TextElement;
+    expect(reapplied.color).toBe('#7c3aed');
+    expect(reapplied.fontSize).toBe(48);
+    expect(reapplied.fontFamily).toBe('code');
   });
 });

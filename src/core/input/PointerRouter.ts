@@ -8,9 +8,11 @@ import {
   screenToWorld,
   worldToScreen,
 } from '../camera/cameraMath';
+import { getFontFamilyId } from '../engine/fontConstants';
 import { hitTestMarquee, hitTestPoint } from '../engine/HitTester';
 import { createStrokeElement } from '../engine/InkingEngine';
 import { ScratchRenderer } from '../engine/ScratchRenderer';
+import { commitEditingText } from '../engine/textCommit';
 import {
   computeSelectionBounds,
   HandleType,
@@ -57,6 +59,11 @@ export class PointerRouter {
   }
 
   handlePointerDown(e: PointerEvent, container: HTMLElement) {
+    if (useToolStore.getState().editingText) {
+      commitEditingText();
+      return;
+    }
+
     // Palm Rejection: If stylus pen is active, drop any finger touch events
     if (this.isPenTouching && e.pointerType === 'touch') {
       return;
@@ -65,9 +72,6 @@ export class PointerRouter {
     if (e.pointerType === 'pen') {
       this.isPenTouching = true;
     }
-
-    container.setPointerCapture(e.pointerId);
-    this.activePointerId = e.pointerId;
 
     const camera = useCameraStore.getState().camera;
     const width = useCameraStore.getState().viewportWidth;
@@ -81,11 +85,49 @@ export class PointerRouter {
     const isSpacePressed = useCameraStore.getState().isSpacePressed;
     // Spacebar held, Middle Click, or Shift+LeftClick = Pan
     if (isSpacePressed || e.buttons === 4 || (e.shiftKey && e.buttons === 1)) {
+      container.setPointerCapture(e.pointerId);
+      this.activePointerId = e.pointerId;
       this.state = 'PANNING';
       useCameraStore.getState().setIsPanning(true);
       this.lastDragWorld = { x: e.clientX, y: e.clientY };
       return;
     }
+
+    if (activeTool === 'text') {
+      const toolStore = useToolStore.getState();
+      const doc = useDocumentStore.getState();
+      const hitId = hitTestPoint(doc.elements, doc.elementIds, worldPoint);
+      const hitEl = hitId ? doc.elements[hitId] : null;
+      if (hitEl && hitEl.type === 'text') {
+        doc.setSelected([]);
+        const fontId = getFontFamilyId(hitEl.fontFamily);
+        toolStore.setFontFamily(fontId);
+        toolStore.startEditingText({
+          elementId: hitEl.id,
+          x: hitEl.x,
+          y: hitEl.y,
+          text: hitEl.text,
+          fontSize: hitEl.fontSize,
+          fontFamily: fontId,
+          color: hitEl.color,
+        });
+        return;
+      }
+
+      doc.setSelected([]);
+      toolStore.startEditingText({
+        x: worldPoint.x,
+        y: worldPoint.y,
+        text: '',
+        fontSize: toolStore.fontSize || 24,
+        fontFamily: toolStore.fontFamily || 'handwritten',
+        color: toolStore.color,
+      });
+      return;
+    }
+
+    container.setPointerCapture(e.pointerId);
+    this.activePointerId = e.pointerId;
 
     if (activeTool === 'pen') {
       this.state = 'DRAWING';
@@ -180,6 +222,18 @@ export class PointerRouter {
       if (hitId) {
         if (!doc.selectedIds.includes(hitId)) {
           doc.setSelected(e.shiftKey ? [...doc.selectedIds, hitId] : [hitId]);
+        } else {
+          const el = doc.elements[hitId];
+          if (el && el.type === 'text') {
+            const toolStore = useToolStore.getState();
+            toolStore.setColor(el.color);
+            toolStore.setFontSize(el.fontSize);
+            toolStore.setFontFamily(getFontFamilyId(el.fontFamily));
+          } else if (el && el.type === 'stroke') {
+            const toolStore = useToolStore.getState();
+            toolStore.setColor(el.color);
+            toolStore.setStrokeSize(el.size);
+          }
         }
         this.state = 'DRAGGING_SELECTION';
         this.lastDragWorld = worldPoint;
@@ -403,6 +457,14 @@ export class PointerRouter {
       this.rotationAngle = null;
       this.onRotationUpdate?.(null);
       this.activeHandle = null;
+
+      const doc = useDocumentStore.getState();
+      if (doc.selectedIds.length === 1) {
+        const el = doc.elements[doc.selectedIds[0]];
+        if (el && el.type === 'text') {
+          useToolStore.getState().setFontSize(el.fontSize);
+        }
+      }
     } else if (this.state === 'ERASING') {
       this.scratchRenderer.stopEraserTrail();
     } else if (this.state === 'SELECTING_MARQUEE') {
@@ -456,6 +518,40 @@ export class PointerRouter {
     }
 
     this.state = 'IDLE';
+  }
+
+  handleDoubleClick(e: MouseEvent) {
+    if (useToolStore.getState().editingText) {
+      commitEditingText();
+    }
+
+    const activeTool = useToolStore.getState().currentTool;
+    if (activeTool !== 'select') return;
+
+    const camera = useCameraStore.getState().camera;
+    const width = useCameraStore.getState().viewportWidth;
+    const height = useCameraStore.getState().viewportHeight;
+    const worldPoint = screenToWorld(e.clientX, e.clientY, camera, width, height);
+
+    const doc = useDocumentStore.getState();
+    const hitId = hitTestPoint(doc.elements, doc.elementIds, worldPoint);
+    if (!hitId) return;
+
+    const el = doc.elements[hitId];
+    if (el && el.type === 'text') {
+      doc.setSelected([]);
+      const fontId = getFontFamilyId(el.fontFamily);
+      useToolStore.getState().setFontFamily(fontId);
+      useToolStore.getState().startEditingText({
+        elementId: el.id,
+        x: el.x,
+        y: el.y,
+        text: el.text,
+        fontSize: el.fontSize,
+        fontFamily: fontId,
+        color: el.color,
+      });
+    }
   }
 
   private performEraseAt(worldPoint: { x: number; y: number; }) {

@@ -30,9 +30,18 @@ export interface StrokeElement extends BaseElement {
   cachedPath2D?: Path2D;
 }
 
-export type CanvasElement = StrokeElement;
+export interface TextElement extends BaseElement {
+  type: 'text';
+  text: string;
+  fontSize: number;
+  fontFamily: string;
+  color: string;
+  lineHeight: number;
+}
 
-export type ToolType = 'select' | 'pen' | 'eraser' | 'zoom';
+export type CanvasElement = StrokeElement | TextElement;
+
+export type ToolType = 'select' | 'pen' | 'eraser' | 'zoom' | 'text';
 
 export type ZoomMode = 'scrubby' | 'selection';
 

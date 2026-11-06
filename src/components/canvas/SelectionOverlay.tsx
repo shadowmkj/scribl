@@ -12,6 +12,7 @@ interface SelectionOverlayProps {
   height: number;
   marqueeBox: MarqueeBox | null;
   rotationAngle?: number | null;
+  editingTextElementId?: string | null;
 }
 
 export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
@@ -22,8 +23,12 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
   height,
   marqueeBox,
   rotationAngle,
+  editingTextElementId,
 }) => {
-  const bounds = computeSelectionBounds(elements, selectedIds);
+  const activeSelectedIds = editingTextElementId
+    ? selectedIds.filter((id) => id !== editingTextElementId)
+    : selectedIds;
+  const bounds = computeSelectionBounds(elements, activeSelectedIds);
 
   return (
     <svg

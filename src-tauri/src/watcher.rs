@@ -28,7 +28,7 @@ local scribl = require("scribl")
 -- 1. General Options
 --------------------------------------------------------------------------------
 scribl.opt.dot_grid = true             -- Show dot-grid canvas background
-scribl.opt.default_tool = "pen"        -- Active tool on startup: "pen", "select", "eraser", "zoom"
+scribl.opt.default_tool = "pen"        -- Active tool on startup: "pen", "select", "eraser", "text", "zoom"
 scribl.opt.default_pen_color = "#0284c7" -- Initial pen drawing color
 scribl.opt.zoom_mode = "scrubby"       -- "scrubby" or "selection"
 scribl.opt.stroke_smoothing = 0.5      -- Perfect-freehand smoothing
@@ -50,6 +50,8 @@ scribl.keymap.set("n", "v", "tool.select", { desc = "Activate Select" })
 scribl.keymap.set("n", "1", "tool.select", { desc = "Activate Select" })
 scribl.keymap.set("n", "z", "tool.zoom", { desc = "Activate Zoom" })
 scribl.keymap.set("n", "4", "tool.zoom", { desc = "Activate Zoom" })
+scribl.keymap.set("n", "t", "tool.text", { desc = "Activate Text Tool" })
+scribl.keymap.set("n", "5", "tool.text", { desc = "Activate Text Tool" })
 
 -- Zoom & Viewport Navigation
 scribl.keymap.set("n", "<S-0>", "zoom.reset", { desc = "Reset Zoom (100%)" })
@@ -95,7 +97,7 @@ scribl.keymap.set("v", "<D-d>", "edit.duplicate", { desc = "Duplicate" })
 --------------------------------------------------------------------------------
 -- 3. Floating Toolbar Layout
 -- Position: "bottom", "top", "left", "right"
--- Items: "select", "pen", "eraser", "zoom", "|", "undo", "redo", "|", "clear"
+-- Items: "select", "pen", "eraser", "text", "zoom", "|", "undo", "redo", "|", "clear"
 --------------------------------------------------------------------------------
 scribl.ui.toolbar = {
   position = "bottom",
@@ -104,6 +106,7 @@ scribl.ui.toolbar = {
     "pen",
     "eraser",
     "zoom",
+    "text",
     "|",
     "undo",
     "redo",

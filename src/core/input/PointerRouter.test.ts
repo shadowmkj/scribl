@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCameraStore } from '../../stores/useCameraStore';
+import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
+import { StrokeElement } from '../../types/canvas';
 import { ScratchRenderer } from '../engine/ScratchRenderer';
 import { PointerRouter } from './PointerRouter';
 
@@ -344,14 +346,14 @@ describe('PointerRouter - Zoom Tool', () => {
     const scaled = useDocumentStore.getState();
     expect(scaled.elements['scale-stroke-1'].width).toBe(80);
     expect(scaled.elements['scale-stroke-1'].height).toBe(80);
-    expect(scaled.elements['scale-stroke-1'].size).toBe(8); // Scaled proportionally
+    expect((scaled.elements['scale-stroke-1'] as StrokeElement).size).toBe(8); // Scaled proportionally
 
     // Exactly 1 undo restores original dimensions
     scaled.undo();
     const undone = useDocumentStore.getState();
     expect(undone.elements['scale-stroke-1'].width).toBe(40);
     expect(undone.elements['scale-stroke-1'].height).toBe(40);
-    expect(undone.elements['scale-stroke-1'].size).toBe(4);
+    expect((undone.elements['scale-stroke-1'] as StrokeElement).size).toBe(4);
   });
 
   it('rotates selection around center when r is held with single undo step', async () => {
@@ -421,13 +423,133 @@ describe('PointerRouter - Zoom Tool', () => {
 
     const rotated = useDocumentStore.getState();
     // After 90 deg rotation, horizontal line (10, 20)->(30, 20) becomes vertical line
-    expect(rotated.elements['rotate-stroke-1'].points[0].x).toBeCloseTo(20, 1);
-    expect(rotated.elements['rotate-stroke-1'].points[1].x).toBeCloseTo(20, 1);
+    expect((rotated.elements['rotate-stroke-1'] as StrokeElement).points[0].x).toBeCloseTo(20, 1);
+    expect((rotated.elements['rotate-stroke-1'] as StrokeElement).points[1].x).toBeCloseTo(20, 1);
 
     // Exactly 1 undo restores original horizontal line
     rotated.undo();
     const undone = useDocumentStore.getState();
-    expect(undone.elements['rotate-stroke-1'].points[0].y).toBeCloseTo(20, 1);
-    expect(undone.elements['rotate-stroke-1'].points[1].y).toBeCloseTo(20, 1);
+    expect((undone.elements['rotate-stroke-1'] as StrokeElement).points[0].y).toBeCloseTo(20, 1);
+    expect((undone.elements['rotate-stroke-1'] as StrokeElement).points[1].y).toBeCloseTo(20, 1);
+  });
+
+  it('triggers startEditingText when pointer down occurs with active text tool', () => {
+    useToolStore.setState({
+      currentTool: 'text',
+      color: '#e11d48',
+      fontSize: 36,
+      editingText: null,
+    });
+
+    // Click at screen (500, 400) -> world (0, 0) since camera is at (0, 0)
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 500,
+        clientY: 400,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+      container,
+    );
+
+    const editing = useToolStore.getState().editingText;
+    expect(editing).toBeTruthy();
+    expect(editing?.x).toBe(0);
+    expect(editing?.y).toBe(0);
+    expect(editing?.fontSize).toBe(36);
+    expect(editing?.color).toBe('#e11d48');
+    expect(editing?.text).toBe('');
+  });
+
+  it('triggers startEditingText when double-clicking a text element in select mode', () => {
+    const textEl = {
+      id: 'text-1',
+      type: 'text' as const,
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 40,
+      zIndex: 1,
+      text: 'Existing Note',
+      fontSize: 24,
+      fontFamily: 'system-ui, sans-serif',
+      color: '#ffffff',
+      lineHeight: 1.25,
+    };
+
+    useDocumentStore.setState({
+      elements: { 'text-1': textEl },
+      elementIds: ['text-1'],
+      selectedIds: ['text-1'],
+    });
+
+    useToolStore.setState({
+      currentTool: 'select',
+      editingText: null,
+    });
+
+    // Double-click at screen (520, 420) -> world (20, 20) which is inside text-1 [0, 0, 100, 40]
+    router.handleDoubleClick(
+      new MouseEvent('dblclick', {
+        clientX: 520,
+        clientY: 420,
+        button: 0,
+      }),
+    );
+
+    const editing = useToolStore.getState().editingText;
+    expect(editing).toBeTruthy();
+    expect(editing?.elementId).toBe('text-1');
+    expect(editing?.text).toBe('Existing Note');
+    expect(editing?.fontSize).toBe(24);
+    expect(useDocumentStore.getState().selectedIds).toEqual([]);
+  });
+
+  it('triggers startEditingText for existing element when clicked with active text tool', () => {
+    const textEl = {
+      id: 'text-2',
+      type: 'text' as const,
+      x: 50,
+      y: 50,
+      width: 100,
+      height: 40,
+      zIndex: 1,
+      text: 'Click to Edit Note',
+      fontSize: 20,
+      fontFamily: 'normal',
+      color: '#0284c7',
+      lineHeight: 1.25,
+    };
+
+    useDocumentStore.setState({
+      elements: { 'text-2': textEl },
+      elementIds: ['text-2'],
+      selectedIds: [],
+    });
+
+    useToolStore.setState({
+      currentTool: 'text',
+      editingText: null,
+    });
+
+    // Single click at screen (560, 460) -> world (60, 60), inside text-2
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 560,
+        clientY: 460,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+      container,
+    );
+
+    const editing = useToolStore.getState().editingText;
+    expect(editing).toBeTruthy();
+    expect(editing?.elementId).toBe('text-2');
+    expect(editing?.text).toBe('Click to Edit Note');
+    expect(editing?.fontSize).toBe(20);
+    expect(editing?.color).toBe('#0284c7');
   });
 });

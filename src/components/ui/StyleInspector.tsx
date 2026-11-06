@@ -1,5 +1,6 @@
 import React from 'react';
 import { calculateBoxFitCamera } from '../../core/camera/cameraMath';
+import { FONT_FAMILIES, FontFamilyId } from '../../core/engine/fontConstants';
 import { useCameraStore } from '../../stores/useCameraStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
@@ -22,20 +23,74 @@ const STROKE_SIZES = [
   { label: 'Thick', value: 16 },
 ];
 
+const FONT_SIZES = [
+  { label: 'S', value: 16 },
+  { label: 'M', value: 24 },
+  { label: 'L', value: 36 },
+  { label: 'XL', value: 48 },
+];
+
 export const StyleInspector: React.FC = () => {
   const currentTool = useToolStore((s) => s.currentTool);
   const zoomMode = useToolStore((s) => s.zoomMode);
   const setZoomMode = useToolStore((s) => s.setZoomMode);
   const color = useToolStore((s) => s.color);
   const strokeSize = useToolStore((s) => s.strokeSize);
+  const fontSize = useToolStore((s) => s.fontSize);
+  const fontFamily = useToolStore((s) => s.fontFamily);
+  const editingText = useToolStore((s) => s.editingText);
   const setColor = useToolStore((s) => s.setColor);
   const setStrokeSize = useToolStore((s) => s.setStrokeSize);
+  const setFontSize = useToolStore((s) => s.setFontSize);
+  const setFontFamily = useToolStore((s) => s.setFontFamily);
+
+  const selectedIds = useDocumentStore((s) => s.selectedIds);
+  const elements = useDocumentStore((s) => s.elements);
+  const updateSelectedStyle = useDocumentStore((s) => s.updateSelectedStyle);
 
   const resetZoom = useCameraStore((s) => s.resetZoom);
   const viewportWidth = useCameraStore((s) => s.viewportWidth);
   const viewportHeight = useCameraStore((s) => s.viewportHeight);
 
-  if (currentTool !== 'pen' && currentTool !== 'zoom') return null;
+  const selectedElements = selectedIds.map((id) => elements[id]).filter(Boolean);
+  const hasTextSelected = selectedElements.some((el) => el.type === 'text');
+  const hasStrokeSelected = selectedElements.some((el) => el.type === 'stroke');
+  const hasSelection = selectedElements.length > 0;
+
+  const isTextMode = currentTool === 'text' || editingText !== null
+    || (currentTool === 'select' && hasTextSelected);
+  const isPenMode = currentTool === 'pen'
+    || (currentTool === 'select' && hasStrokeSelected && !hasTextSelected);
+
+  if (currentTool !== 'zoom' && !isTextMode && !isPenMode) return null;
+
+  const handleColorChange = (newColor: string) => {
+    setColor(newColor);
+    if (currentTool === 'select' && hasSelection) {
+      updateSelectedStyle({ color: newColor });
+    }
+  };
+
+  const handleFontFamilyChange = (newFontFamily: FontFamilyId) => {
+    setFontFamily(newFontFamily);
+    if (currentTool === 'select' && hasSelection) {
+      updateSelectedStyle({ fontFamily: newFontFamily });
+    }
+  };
+
+  const handleFontSizeChange = (newFontSize: number) => {
+    setFontSize(newFontSize);
+    if (currentTool === 'select' && hasSelection) {
+      updateSelectedStyle({ fontSize: newFontSize });
+    }
+  };
+
+  const handleStrokeSizeChange = (newStrokeSize: number) => {
+    setStrokeSize(newStrokeSize);
+    if (currentTool === 'select' && hasSelection) {
+      updateSelectedStyle({ strokeSize: newStrokeSize });
+    }
+  };
 
   if (currentTool === 'zoom') {
     const handleFitAll = () => {
@@ -323,7 +378,7 @@ export const StyleInspector: React.FC = () => {
               <button
                 key={swatch.hex}
                 title={swatch.name}
-                onClick={() => setColor(swatch.hex)}
+                onClick={() => handleColorChange(swatch.hex)}
                 style={{
                   width: 26,
                   height: 26,
@@ -349,6 +404,76 @@ export const StyleInspector: React.FC = () => {
         </div>
       </div>
 
+      {isTextMode && (
+        <>
+          <div
+            style={{
+              height: 1,
+              background: 'var(--color-panel-border, rgba(255, 255, 255, 0.08))',
+            }}
+          />
+
+          <div>
+            <div
+              style={{
+                fontSize: 10,
+                textTransform: 'uppercase',
+                color: 'var(--color-text-secondary, #64748b)',
+                fontWeight: 700,
+                letterSpacing: '0.05em',
+                marginBottom: 8,
+              }}
+            >
+              Font
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {FONT_FAMILIES.map((f) => {
+                const isSelected = fontFamily === f.id;
+                return (
+                  <button
+                    key={f.id}
+                    onClick={() => handleFontFamilyChange(f.id)}
+                    style={{
+                      background: isSelected
+                        ? 'var(--color-accent, #0284c7)'
+                        : 'transparent',
+                      color: isSelected
+                        ? '#ffffff'
+                        : 'var(--color-text-secondary, #94a3b8)',
+                      border: isSelected
+                        ? '1px solid var(--color-accent, #0284c7)'
+                        : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
+                      borderRadius: 6,
+                      padding: '4px 8px',
+                      fontSize: 11,
+                      fontWeight: isSelected ? 600 : 500,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      fontFamily: f.family,
+                      transition: 'all 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.background = 'rgba(125, 125, 125, 0.12)';
+                        e.currentTarget.style.color = 'var(--color-text-primary, #f1f5f9)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--color-text-secondary, #94a3b8)';
+                      }
+                    }}
+                  >
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+
       <div
         style={{ height: 1, background: 'var(--color-panel-border, rgba(255, 255, 255, 0.08))' }}
       />
@@ -364,49 +489,90 @@ export const StyleInspector: React.FC = () => {
             marginBottom: 8,
           }}
         >
-          Thickness
+          {isTextMode ? 'Font Size' : 'Thickness'}
         </div>
         <div style={{ display: 'flex', gap: 5 }}>
-          {STROKE_SIZES.map((s) => {
-            const isSelected = strokeSize === s.value;
-            return (
-              <button
-                key={s.value}
-                onClick={() => setStrokeSize(s.value)}
-                style={{
-                  background: isSelected
-                    ? 'var(--color-accent, #0284c7)'
-                    : 'transparent',
-                  color: isSelected
-                    ? '#ffffff'
-                    : 'var(--color-text-secondary, #94a3b8)',
-                  border: isSelected
-                    ? '1px solid var(--color-accent, #0284c7)'
-                    : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
-                  borderRadius: 6,
-                  padding: '4px 7px',
-                  fontSize: 11,
-                  fontWeight: isSelected ? 600 : 500,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isSelected) {
-                    e.currentTarget.style.background = 'rgba(125, 125, 125, 0.12)';
-                    e.currentTarget.style.color = 'var(--color-text-primary, #f1f5f9)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isSelected) {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = 'var(--color-text-secondary, #94a3b8)';
-                  }
-                }}
-              >
-                {s.label}
-              </button>
-            );
-          })}
+          {isTextMode
+            ? FONT_SIZES.map((s) => {
+              const isSelected = fontSize === s.value;
+              return (
+                <button
+                  key={s.value}
+                  onClick={() => handleFontSizeChange(s.value)}
+                  style={{
+                    background: isSelected
+                      ? 'var(--color-accent, #0284c7)'
+                      : 'transparent',
+                    color: isSelected
+                      ? '#ffffff'
+                      : 'var(--color-text-secondary, #94a3b8)',
+                    border: isSelected
+                      ? '1px solid var(--color-accent, #0284c7)'
+                      : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
+                    borderRadius: 6,
+                    padding: '4px 7px',
+                    fontSize: 11,
+                    fontWeight: isSelected ? 600 : 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.background = 'rgba(125, 125, 125, 0.12)';
+                      e.currentTarget.style.color = 'var(--color-text-primary, #f1f5f9)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = 'var(--color-text-secondary, #94a3b8)';
+                    }
+                  }}
+                >
+                  {s.label}
+                </button>
+              );
+            })
+            : STROKE_SIZES.map((s) => {
+              const isSelected = strokeSize === s.value;
+              return (
+                <button
+                  key={s.value}
+                  onClick={() => handleStrokeSizeChange(s.value)}
+                  style={{
+                    background: isSelected
+                      ? 'var(--color-accent, #0284c7)'
+                      : 'transparent',
+                    color: isSelected
+                      ? '#ffffff'
+                      : 'var(--color-text-secondary, #94a3b8)',
+                    border: isSelected
+                      ? '1px solid var(--color-accent, #0284c7)'
+                      : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
+                    borderRadius: 6,
+                    padding: '4px 7px',
+                    fontSize: 11,
+                    fontWeight: isSelected ? 600 : 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.background = 'rgba(125, 125, 125, 0.12)';
+                      e.currentTarget.style.color = 'var(--color-text-primary, #f1f5f9)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = 'var(--color-text-secondary, #94a3b8)';
+                    }
+                  }}
+                >
+                  {s.label}
+                </button>
+              );
+            })}
         </div>
       </div>
     </aside>

@@ -1,4 +1,5 @@
 import { Camera, CanvasElement } from '../../types/canvas';
+import { renderText } from '../engine/CanvasRenderer';
 import { getStrokeOutline, getSvgPathFromStroke } from '../engine/InkingEngine';
 
 export interface ScriblFileData {
@@ -23,8 +24,12 @@ export function serializeScriblDoc(
   for (const id of elementIds) {
     const el = elements[id];
     if (el) {
-      const { cachedPath2D: _cached, ...rest } = el;
-      cleanElements[id] = rest;
+      if (el.type === 'stroke') {
+        const { cachedPath2D: _cached, ...rest } = el;
+        cleanElements[id] = rest;
+      } else {
+        cleanElements[id] = { ...el };
+      }
     }
   }
 
@@ -110,13 +115,16 @@ export function exportToPng(
 
     for (const id of elementIds) {
       const el = elements[id];
-      if (el && el.type === 'stroke') {
+      if (!el) continue;
+      if (el.type === 'stroke') {
         ctx.fillStyle = el.color;
         const outline = getStrokeOutline(el.points, el.size, el.thinning, el.smoothing);
         const path = getSvgPathFromStroke(outline);
         if (path && typeof Path2D !== 'undefined') {
           ctx.fill(new Path2D(path));
         }
+      } else if (el.type === 'text') {
+        renderText(ctx, el);
       }
     }
 

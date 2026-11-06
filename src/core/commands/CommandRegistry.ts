@@ -80,6 +80,15 @@ export function registerDefaultCommands(handlers?: {
   });
 
   commandRegistry.register({
+    id: 'tool.text',
+    label: 'Text',
+    category: 'tool',
+    description: 'Add and edit multiline text elements on the canvas',
+    execute: () => useToolStore.getState().setTool('text'),
+    isActive: () => useToolStore.getState().currentTool === 'text',
+  });
+
+  commandRegistry.register({
     id: 'tool.zoom',
     label: 'Zoom',
     category: 'tool',

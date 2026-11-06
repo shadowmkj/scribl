@@ -22,6 +22,7 @@ const ALL_ACTIONS: ActionDefinition[] = [
   { id: 'tool.pen', label: 'Pen Tool', category: 'Tools', defaultLhs: 'p', mode: 'n' },
   { id: 'tool.eraser', label: 'Eraser Tool', category: 'Tools', defaultLhs: 'e', mode: 'n' },
   { id: 'tool.select', label: 'Select Tool', category: 'Tools', defaultLhs: 'v', mode: 'n' },
+  { id: 'tool.text', label: 'Text Tool', category: 'Tools', defaultLhs: 't', mode: 'n' },
   { id: 'tool.zoom', label: 'Zoom Tool', category: 'Tools', defaultLhs: 'z', mode: 'n' },
 
   // Edit & Clipboard

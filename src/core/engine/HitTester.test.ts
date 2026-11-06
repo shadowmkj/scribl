@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { StrokeElement } from '../../types/canvas';
+import { StrokeElement, TextElement } from '../../types/canvas';
 import { hitTestMarquee, hitTestPoint } from './HitTester';
 
 describe('HitTester', () => {
@@ -43,5 +43,53 @@ describe('HitTester', () => {
       maxY: 100,
     });
     expect(selected).toEqual(['s1']);
+  });
+
+  describe('TextElement hit testing', () => {
+    const textEl: TextElement = {
+      id: 't1',
+      type: 'text',
+      x: 100,
+      y: 100,
+      width: 150,
+      height: 40,
+      zIndex: 2,
+      text: 'Sample Heading',
+      fontSize: 24,
+      fontFamily: 'system-ui, sans-serif',
+      color: '#f8fafc',
+      lineHeight: 1.25,
+    };
+
+    const textElements = { t1: textEl };
+    const textIds = ['t1'];
+
+    it('detects point hit inside text element bounding box', () => {
+      // Middle of text box
+      const hit = hitTestPoint(textElements, textIds, { x: 150, y: 120 });
+      expect(hit).toBe('t1');
+    });
+
+    it('detects point hit within threshold edge margin', () => {
+      // 5px to the left of x:100 (inside default threshold of 8)
+      const hit = hitTestPoint(textElements, textIds, { x: 95, y: 120 });
+      expect(hit).toBe('t1');
+    });
+
+    it('returns null when point is beyond threshold from text box', () => {
+      // 20px above y:100
+      const hit = hitTestPoint(textElements, textIds, { x: 150, y: 80 });
+      expect(hit).toBeNull();
+    });
+
+    it('selects text element in marquee intersection', () => {
+      const selected = hitTestMarquee(textElements, textIds, {
+        minX: 50,
+        minY: 50,
+        maxX: 120,
+        maxY: 120,
+      });
+      expect(selected).toEqual(['t1']);
+    });
   });
 });

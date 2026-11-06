@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { StrokeElement } from '../../types/canvas';
+import { StrokeElement, TextElement } from '../../types/canvas';
 import { DocumentData } from '../../types/commands';
 import {
   AddElementCommand,
@@ -7,6 +7,7 @@ import {
   DeleteElementsCommand,
   MoveElementsCommand,
   TransformElementsCommand,
+  UpdateTextElementCommand,
 } from './commands';
 import { HistoryStack } from './HistoryStack';
 
@@ -68,11 +69,11 @@ describe('HistoryStack and Commands', () => {
 
     data = history.execute(new MoveElementsCommand(['s1'], 20, 30), data);
     expect(data.elements['s1'].x).toBe(20);
-    expect(data.elements['s1'].points[0].x).toBe(20);
+    expect((data.elements['s1'] as StrokeElement).points[0].x).toBe(20);
 
     data = history.undo(data);
     expect(data.elements['s1'].x).toBe(0);
-    expect(data.elements['s1'].points[0].x).toBe(0);
+    expect((data.elements['s1'] as StrokeElement).points[0].x).toBe(0);
   });
 
   it('records already-executed commands with pushExecuted without re-executing', () => {
@@ -115,12 +116,12 @@ describe('HistoryStack and Commands', () => {
     // Undo returns to initial
     data = history.undo(data);
     expect(data.elements['s1'].x).toBe(0);
-    expect(data.elements['s1'].size).toBe(2);
+    expect((data.elements['s1'] as StrokeElement).size).toBe(2);
 
     // Redo returns to final
     data = history.redo(data);
     expect(data.elements['s1'].x).toBe(100);
-    expect(data.elements['s1'].size).toBe(6);
+    expect((data.elements['s1'] as StrokeElement).size).toBe(6);
   });
 
   it('executes AddElementsCommand and allows 1-step undo/redo for multiple elements', () => {
@@ -144,5 +145,80 @@ describe('HistoryStack and Commands', () => {
     data = history.redo(data);
     expect(data.elementIds).toEqual(['s1', 's2', 's3']);
     expect(data.selectedIds).toEqual(['s2', 's3']);
+  });
+
+  it('handles TextElement creation, movement, and content updates with undo/redo', () => {
+    const history = new HistoryStack();
+    const dummyText: TextElement = {
+      id: 't1',
+      type: 'text',
+      x: 50,
+      y: 60,
+      width: 120,
+      height: 30,
+      zIndex: 2,
+      text: 'Original Text',
+      fontSize: 24,
+      fontFamily: 'system-ui, sans-serif',
+      color: '#ffffff',
+      lineHeight: 1.25,
+    };
+
+    let data: DocumentData = { elements: {}, elementIds: [], selectedIds: [] };
+
+    // 1. Add Text Element
+    data = history.execute(new AddElementCommand(dummyText), data);
+    expect(data.elementIds).toContain('t1');
+    expect((data.elements['t1'] as TextElement).text).toBe('Original Text');
+
+    // 2. Move Text Element
+    data = history.execute(new MoveElementsCommand(['t1'], 15, -10), data);
+    expect(data.elements['t1'].x).toBe(65);
+    expect(data.elements['t1'].y).toBe(50);
+
+    data = history.undo(data);
+    expect(data.elements['t1'].x).toBe(50);
+    expect(data.elements['t1'].y).toBe(60);
+
+    data = history.redo(data);
+    expect(data.elements['t1'].x).toBe(65);
+    expect(data.elements['t1'].y).toBe(50);
+
+    // 3. Update Text Content
+    const prevMetrics = {
+      text: 'Original Text',
+      width: 120,
+      height: 30,
+      fontSize: 24,
+      color: '#ffffff',
+    };
+    const nextMetrics = {
+      text: 'Updated Text\nSecond Line',
+      width: 180,
+      height: 60,
+      fontSize: 24,
+      color: '#0284c7',
+    };
+
+    data = history.execute(new UpdateTextElementCommand('t1', prevMetrics, nextMetrics), data);
+    const updatedEl = data.elements['t1'] as TextElement;
+    expect(updatedEl.text).toBe('Updated Text\nSecond Line');
+    expect(updatedEl.width).toBe(180);
+    expect(updatedEl.height).toBe(60);
+    expect(updatedEl.color).toBe('#0284c7');
+
+    // Undo restores previous text
+    data = history.undo(data);
+    const undoneEl = data.elements['t1'] as TextElement;
+    expect(undoneEl.text).toBe('Original Text');
+    expect(undoneEl.width).toBe(120);
+    expect(undoneEl.height).toBe(30);
+    expect(undoneEl.color).toBe('#ffffff');
+
+    // Redo restores updated text
+    data = history.redo(data);
+    const redoneEl = data.elements['t1'] as TextElement;
+    expect(redoneEl.text).toBe('Updated Text\nSecond Line');
+    expect(redoneEl.width).toBe(180);
   });
 });
