@@ -3,6 +3,7 @@ import { calculateBoxFitCamera } from '../../core/camera/cameraMath';
 import { useCameraStore } from '../../stores/useCameraStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
+import { CanvasElement, StrokeStyle } from '../../types/canvas';
 
 const COLOR_SWATCHES = [
   { name: 'Obsidian', hex: '#1e293b' },
@@ -22,20 +23,114 @@ const STROKE_SIZES = [
   { label: 'Thick', value: 16 },
 ];
 
+const STROKE_STYLES: Array<{ label: string; value: StrokeStyle; }> = [
+  { label: 'Solid', value: 'solid' },
+  { label: 'Dashed', value: 'dashed' },
+  { label: 'Dotted', value: 'dotted' },
+];
+
 export const StyleInspector: React.FC = () => {
   const currentTool = useToolStore((s) => s.currentTool);
   const zoomMode = useToolStore((s) => s.zoomMode);
   const setZoomMode = useToolStore((s) => s.setZoomMode);
   const color = useToolStore((s) => s.color);
+  const fillColor = useToolStore((s) => s.fillColor);
   const strokeSize = useToolStore((s) => s.strokeSize);
+  const strokeStyle = useToolStore((s) => s.strokeStyle);
   const setColor = useToolStore((s) => s.setColor);
+  const setFillColor = useToolStore((s) => s.setFillColor);
   const setStrokeSize = useToolStore((s) => s.setStrokeSize);
+  const setStrokeStyle = useToolStore((s) => s.setStrokeStyle);
 
   const resetZoom = useCameraStore((s) => s.resetZoom);
   const viewportWidth = useCameraStore((s) => s.viewportWidth);
   const viewportHeight = useCameraStore((s) => s.viewportHeight);
 
-  if (currentTool !== 'pen' && currentTool !== 'zoom') return null;
+  const selectedIds = useDocumentStore((s) => s.selectedIds);
+  const elements = useDocumentStore((s) => s.elements);
+  const transformSelectedLive = useDocumentStore((s) => s.transformSelectedLive);
+
+  const isShapeTool = [
+    'rectangle',
+    'circle',
+    'diamond',
+    'line',
+    'arrow',
+  ].includes(currentTool);
+
+  const hasSelectedShapes = selectedIds.some((id) => elements[id]?.type === 'shape');
+  const hasSelectedStrokes = selectedIds.some((id) => elements[id]?.type === 'stroke');
+  const showShapeStyles = isShapeTool || hasSelectedShapes;
+
+  if (
+    currentTool !== 'pen'
+    && currentTool !== 'zoom'
+    && !isShapeTool
+    && !hasSelectedShapes
+    && !hasSelectedStrokes
+  ) {
+    return null;
+  }
+
+  const handleStrokeColorChange = (newColor: string) => {
+    setColor(newColor);
+    if (selectedIds.length > 0) {
+      const updated: Record<string, CanvasElement> = {};
+      for (const id of selectedIds) {
+        const el = elements[id];
+        if (el?.type === 'shape') {
+          updated[id] = { ...el, strokeColor: newColor, cachedPath2D: undefined };
+        } else if (el?.type === 'stroke') {
+          updated[id] = { ...el, color: newColor, cachedPath2D: undefined };
+        }
+      }
+      transformSelectedLive(updated);
+    }
+  };
+
+  const handleFillColorChange = (newFill: string) => {
+    setFillColor(newFill);
+    if (selectedIds.length > 0) {
+      const updated: Record<string, CanvasElement> = {};
+      for (const id of selectedIds) {
+        const el = elements[id];
+        if (el?.type === 'shape') {
+          updated[id] = { ...el, fillColor: newFill, cachedPath2D: undefined };
+        }
+      }
+      transformSelectedLive(updated);
+    }
+  };
+
+  const handleStrokeStyleChange = (newStyle: StrokeStyle) => {
+    setStrokeStyle(newStyle);
+    if (selectedIds.length > 0) {
+      const updated: Record<string, CanvasElement> = {};
+      for (const id of selectedIds) {
+        const el = elements[id];
+        if (el?.type === 'shape') {
+          updated[id] = { ...el, strokeStyle: newStyle, cachedPath2D: undefined };
+        }
+      }
+      transformSelectedLive(updated);
+    }
+  };
+
+  const handleStrokeSizeChange = (newSize: number) => {
+    setStrokeSize(newSize);
+    if (selectedIds.length > 0) {
+      const updated: Record<string, CanvasElement> = {};
+      for (const id of selectedIds) {
+        const el = elements[id];
+        if (el?.type === 'shape') {
+          updated[id] = { ...el, strokeWidth: newSize, cachedPath2D: undefined };
+        } else if (el?.type === 'stroke') {
+          updated[id] = { ...el, size: newSize, cachedPath2D: undefined };
+        }
+      }
+      transformSelectedLive(updated);
+    }
+  };
 
   if (currentTool === 'zoom') {
     const handleFitAll = () => {
@@ -314,7 +409,7 @@ export const StyleInspector: React.FC = () => {
             marginBottom: 8,
           }}
         >
-          Color
+          {showShapeStyles ? 'Stroke Color' : 'Color'}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 26px)', gap: 6 }}>
           {COLOR_SWATCHES.map((swatch) => {
@@ -323,7 +418,8 @@ export const StyleInspector: React.FC = () => {
               <button
                 key={swatch.hex}
                 title={swatch.name}
-                onClick={() => setColor(swatch.hex)}
+                data-testid={`stroke-swatch-${swatch.hex}`}
+                onClick={() => handleStrokeColorChange(swatch.hex)}
                 style={{
                   width: 26,
                   height: 26,
@@ -349,6 +445,163 @@ export const StyleInspector: React.FC = () => {
         </div>
       </div>
 
+      {showShapeStyles && (
+        <>
+          <div
+            style={{
+              height: 1,
+              background: 'var(--color-panel-border, rgba(255, 255, 255, 0.08))',
+            }}
+          />
+          <div>
+            <div
+              style={{
+                fontSize: 10,
+                textTransform: 'uppercase',
+                color: 'var(--color-text-secondary, #64748b)',
+                fontWeight: 700,
+                letterSpacing: '0.05em',
+                marginBottom: 8,
+              }}
+            >
+              Fill Color
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 26px)', gap: 6 }}>
+              <button
+                title='Transparent / None'
+                data-testid='fill-swatch-transparent'
+                onClick={() => handleFillColorChange('transparent')}
+                style={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: 7,
+                  background: 'rgba(125, 125, 125, 0.1)',
+                  border: fillColor === 'transparent'
+                    ? '2px solid var(--color-accent, #38bdf8)'
+                    : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.12))',
+                  boxShadow: fillColor === 'transparent'
+                    ? '0 0 8px rgba(56, 189, 248, 0.5)'
+                    : 'none',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#ef4444',
+                  transition: 'transform 0.1s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                <svg
+                  width='14'
+                  height='14'
+                  viewBox='0 0 24 24'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='2'
+                >
+                  <circle cx='12' cy='12' r='8' />
+                  <line x1='6' y1='18' x2='18' y2='6' />
+                </svg>
+              </button>
+
+              {COLOR_SWATCHES.map((swatch) => {
+                const isSelected = fillColor === swatch.hex;
+                return (
+                  <button
+                    key={swatch.hex}
+                    title={swatch.name}
+                    data-testid={`fill-swatch-${swatch.hex}`}
+                    onClick={() => handleFillColorChange(swatch.hex)}
+                    style={{
+                      width: 26,
+                      height: 26,
+                      borderRadius: 7,
+                      background: swatch.hex,
+                      border: isSelected
+                        ? '2px solid var(--color-accent, #38bdf8)'
+                        : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.12))',
+                      boxShadow: isSelected ? '0 0 8px rgba(56, 189, 248, 0.5)' : 'none',
+                      cursor: 'pointer',
+                      outline: 'none',
+                      transition: 'transform 0.1s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+
+      {showShapeStyles && (
+        <>
+          <div
+            style={{
+              height: 1,
+              background: 'var(--color-panel-border, rgba(255, 255, 255, 0.08))',
+            }}
+          />
+          <div>
+            <div
+              style={{
+                fontSize: 10,
+                textTransform: 'uppercase',
+                color: 'var(--color-text-secondary, #64748b)',
+                fontWeight: 700,
+                letterSpacing: '0.05em',
+                marginBottom: 8,
+              }}
+            >
+              Stroke Style
+            </div>
+            <div style={{ display: 'flex', gap: 5 }}>
+              {STROKE_STYLES.map((st) => {
+                const isSelected = strokeStyle === st.value;
+                return (
+                  <button
+                    key={st.value}
+                    onClick={() => handleStrokeStyleChange(st.value)}
+                    style={{
+                      flex: 1,
+                      background: isSelected
+                        ? 'var(--color-accent, #0284c7)'
+                        : 'transparent',
+                      color: isSelected
+                        ? '#ffffff'
+                        : 'var(--color-text-secondary, #94a3b8)',
+                      border: isSelected
+                        ? '1px solid var(--color-accent, #0284c7)'
+                        : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
+                      borderRadius: 6,
+                      padding: '4px 6px',
+                      fontSize: 11,
+                      fontWeight: isSelected ? 600 : 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {st.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+
       <div
         style={{ height: 1, background: 'var(--color-panel-border, rgba(255, 255, 255, 0.08))' }}
       />
@@ -372,7 +625,7 @@ export const StyleInspector: React.FC = () => {
             return (
               <button
                 key={s.value}
-                onClick={() => setStrokeSize(s.value)}
+                onClick={() => handleStrokeSizeChange(s.value)}
                 style={{
                   background: isSelected
                     ? 'var(--color-accent, #0284c7)'

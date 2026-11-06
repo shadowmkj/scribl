@@ -95,6 +95,102 @@ const KNOWN_ITEMS: Record<string, ItemDef> = {
       </svg>
     ),
   },
+  rectangle: {
+    label: 'Rectangle',
+    toolId: 'rectangle',
+    actionId: 'tool.shape.rectangle',
+    icon: (
+      <svg
+        width='15'
+        height='15'
+        viewBox='0 0 24 24'
+        fill='none'
+        stroke='currentColor'
+        strokeWidth='2'
+        strokeLinecap='round'
+        strokeLinejoin='round'
+      >
+        <rect x='3' y='3' width='18' height='18' rx='2' />
+      </svg>
+    ),
+  },
+  circle: {
+    label: 'Circle',
+    toolId: 'circle',
+    actionId: 'tool.shape.circle',
+    icon: (
+      <svg
+        width='15'
+        height='15'
+        viewBox='0 0 24 24'
+        fill='none'
+        stroke='currentColor'
+        strokeWidth='2'
+        strokeLinecap='round'
+        strokeLinejoin='round'
+      >
+        <circle cx='12' cy='12' r='9' />
+      </svg>
+    ),
+  },
+  diamond: {
+    label: 'Diamond',
+    toolId: 'diamond',
+    actionId: 'tool.shape.diamond',
+    icon: (
+      <svg
+        width='15'
+        height='15'
+        viewBox='0 0 24 24'
+        fill='none'
+        stroke='currentColor'
+        strokeWidth='2'
+        strokeLinecap='round'
+        strokeLinejoin='round'
+      >
+        <polygon points='12 2, 22 12, 12 22, 2 12' />
+      </svg>
+    ),
+  },
+  line: {
+    label: 'Line',
+    toolId: 'line',
+    actionId: 'tool.shape.line',
+    icon: (
+      <svg
+        width='15'
+        height='15'
+        viewBox='0 0 24 24'
+        fill='none'
+        stroke='currentColor'
+        strokeWidth='2'
+        strokeLinecap='round'
+        strokeLinejoin='round'
+      >
+        <line x1='5' y1='19' x2='19' y2='5' />
+      </svg>
+    ),
+  },
+  arrow: {
+    label: 'Arrow',
+    toolId: 'arrow',
+    actionId: 'tool.shape.arrow',
+    icon: (
+      <svg
+        width='15'
+        height='15'
+        viewBox='0 0 24 24'
+        fill='none'
+        stroke='currentColor'
+        strokeWidth='2'
+        strokeLinecap='round'
+        strokeLinejoin='round'
+      >
+        <line x1='5' y1='19' x2='19' y2='5' />
+        <polyline points='10 5 19 5 19 14' />
+      </svg>
+    ),
+  },
   undo: {
     label: 'Undo',
     actionId: 'history.undo',
