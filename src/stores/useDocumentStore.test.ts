@@ -66,8 +66,8 @@ describe('useDocumentStore - movement and atomic undo/redo', () => {
     const afterUndo = useDocumentStore.getState();
     expect(afterUndo.elements['s1'].x).toBe(10);
     expect(afterUndo.elements['s1'].y).toBe(20);
-    expect(afterUndo.elements['s1'].points[0].x).toBe(10);
-    expect(afterUndo.elements['s1'].points[0].y).toBe(20);
+    expect((afterUndo.elements['s1'] as StrokeElement).points[0].x).toBe(10);
+    expect((afterUndo.elements['s1'] as StrokeElement).points[0].y).toBe(20);
 
     // Exactly ONE redo moves it forward to place B (60, 50)
     afterUndo.redo();
@@ -108,12 +108,12 @@ describe('useDocumentStore - movement and atomic undo/redo', () => {
     // One undo restores original dimensions
     store.undo();
     expect(useDocumentStore.getState().elements['s1'].width).toBe(30);
-    expect(useDocumentStore.getState().elements['s1'].size).toBe(2);
+    expect((useDocumentStore.getState().elements['s1'] as StrokeElement).size).toBe(2);
 
     // One redo restores transformed dimensions
     store.redo();
     expect(useDocumentStore.getState().elements['s1'].width).toBe(60);
-    expect(useDocumentStore.getState().elements['s1'].size).toBe(4);
+    expect((useDocumentStore.getState().elements['s1'] as StrokeElement).size).toBe(4);
   });
 
   it('adds multiple elements at once and selects them with atomic undo', () => {

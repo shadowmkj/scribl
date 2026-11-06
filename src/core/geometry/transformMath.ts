@@ -1,4 +1,4 @@
-import { CanvasElement, StrokePoint } from '../../types/canvas';
+import { CanvasElement, ShapeElement, StrokePoint } from '../../types/canvas';
 
 export type HandleType = 'nw' | 'ne' | 'se' | 'sw';
 
@@ -79,6 +79,130 @@ export function hitTestHandles(
   return null;
 }
 
+export function scaleShape(
+  element: ShapeElement,
+  anchor: { x: number; y: number; },
+  sx: number,
+  sy: number,
+): ShapeElement {
+  const scaleMagnitude = Math.sqrt(Math.abs(sx * sy));
+  const newStrokeWidth = Math.max(0.5, Math.min(256, element.strokeWidth * scaleMagnitude));
+
+  if (element.startPoint && element.endPoint) {
+    const newStart = {
+      x: anchor.x + (element.startPoint.x - anchor.x) * sx,
+      y: anchor.y + (element.startPoint.y - anchor.y) * sy,
+    };
+    const newEnd = {
+      x: anchor.x + (element.endPoint.x - anchor.x) * sx,
+      y: anchor.y + (element.endPoint.y - anchor.y) * sy,
+    };
+    const minX = Math.min(newStart.x, newEnd.x);
+    const minY = Math.min(newStart.y, newEnd.y);
+    const maxX = Math.max(newStart.x, newEnd.x);
+    const maxY = Math.max(newStart.y, newEnd.y);
+
+    return {
+      ...element,
+      x: minX,
+      y: minY,
+      width: Math.max(1, maxX - minX),
+      height: Math.max(1, maxY - minY),
+      strokeWidth: newStrokeWidth,
+      startPoint: newStart,
+      endPoint: newEnd,
+      cachedPath2D: undefined,
+    };
+  }
+
+  const p1x = anchor.x + (element.x - anchor.x) * sx;
+  const p1y = anchor.y + (element.y - anchor.y) * sy;
+  const p2x = anchor.x + (element.x + element.width - anchor.x) * sx;
+  const p2y = anchor.y + (element.y + element.height - anchor.y) * sy;
+
+  const minX = Math.min(p1x, p2x);
+  const minY = Math.min(p1y, p2y);
+  const maxX = Math.max(p1x, p2x);
+  const maxY = Math.max(p1y, p2y);
+
+  return {
+    ...element,
+    x: minX,
+    y: minY,
+    width: Math.max(1, maxX - minX),
+    height: Math.max(1, maxY - minY),
+    strokeWidth: newStrokeWidth,
+    cachedPath2D: undefined,
+  };
+}
+
+export function rotateShape(
+  element: ShapeElement,
+  center: { x: number; y: number; },
+  rad: number,
+): ShapeElement {
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+
+  const rotatePt = (pt: { x: number; y: number; }) => {
+    const dx = pt.x - center.x;
+    const dy = pt.y - center.y;
+    return {
+      x: center.x + dx * cos - dy * sin,
+      y: center.y + dx * sin + dy * cos,
+    };
+  };
+
+  if (element.startPoint && element.endPoint) {
+    const newStart = rotatePt(element.startPoint);
+    const newEnd = rotatePt(element.endPoint);
+    const minX = Math.min(newStart.x, newEnd.x);
+    const minY = Math.min(newStart.y, newEnd.y);
+    const maxX = Math.max(newStart.x, newEnd.x);
+    const maxY = Math.max(newStart.y, newEnd.y);
+
+    return {
+      ...element,
+      x: minX,
+      y: minY,
+      width: Math.max(1, maxX - minX),
+      height: Math.max(1, maxY - minY),
+      startPoint: newStart,
+      endPoint: newEnd,
+      cachedPath2D: undefined,
+    };
+  }
+
+  const corners = [
+    { x: element.x, y: element.y },
+    { x: element.x + element.width, y: element.y },
+    { x: element.x + element.width, y: element.y + element.height },
+    { x: element.x, y: element.y + element.height },
+  ];
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  for (const c of corners) {
+    const rc = rotatePt(c);
+    if (rc.x < minX) minX = rc.x;
+    if (rc.y < minY) minY = rc.y;
+    if (rc.x > maxX) maxX = rc.x;
+    if (rc.y > maxY) maxY = rc.y;
+  }
+
+  return {
+    ...element,
+    x: minX,
+    y: minY,
+    width: Math.max(1, maxX - minX),
+    height: Math.max(1, maxY - minY),
+    cachedPath2D: undefined,
+  };
+}
+
 export function scaleElement(
   element: CanvasElement,
   anchor: { x: number; y: number; },
@@ -116,6 +240,10 @@ export function scaleElement(
       points: newPoints,
       cachedPath2D: undefined,
     };
+  }
+
+  if (element.type === 'shape') {
+    return scaleShape(element, anchor, sx, sy);
   }
 
   return element;
@@ -160,6 +288,10 @@ export function rotateElement(
       points: newPoints,
       cachedPath2D: undefined,
     };
+  }
+
+  if (element.type === 'shape') {
+    return rotateShape(element, center, rad);
   }
 
   return element;

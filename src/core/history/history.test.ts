@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { StrokeElement } from '../../types/canvas';
+import { ShapeElement, StrokeElement } from '../../types/canvas';
 import { DocumentData } from '../../types/commands';
 import {
   AddElementCommand,
   AddElementsCommand,
+  applyElementDelta,
   DeleteElementsCommand,
   MoveElementsCommand,
   TransformElementsCommand,
@@ -68,11 +69,11 @@ describe('HistoryStack and Commands', () => {
 
     data = history.execute(new MoveElementsCommand(['s1'], 20, 30), data);
     expect(data.elements['s1'].x).toBe(20);
-    expect(data.elements['s1'].points[0].x).toBe(20);
+    expect((data.elements['s1'] as StrokeElement).points[0].x).toBe(20);
 
     data = history.undo(data);
     expect(data.elements['s1'].x).toBe(0);
-    expect(data.elements['s1'].points[0].x).toBe(0);
+    expect((data.elements['s1'] as StrokeElement).points[0].x).toBe(0);
   });
 
   it('records already-executed commands with pushExecuted without re-executing', () => {
@@ -115,12 +116,12 @@ describe('HistoryStack and Commands', () => {
     // Undo returns to initial
     data = history.undo(data);
     expect(data.elements['s1'].x).toBe(0);
-    expect(data.elements['s1'].size).toBe(2);
+    expect((data.elements['s1'] as StrokeElement).size).toBe(2);
 
     // Redo returns to final
     data = history.redo(data);
     expect(data.elements['s1'].x).toBe(100);
-    expect(data.elements['s1'].size).toBe(6);
+    expect((data.elements['s1'] as StrokeElement).size).toBe(6);
   });
 
   it('executes AddElementsCommand and allows 1-step undo/redo for multiple elements', () => {
@@ -144,5 +145,58 @@ describe('HistoryStack and Commands', () => {
     data = history.redo(data);
     expect(data.elementIds).toEqual(['s1', 's2', 's3']);
     expect(data.selectedIds).toEqual(['s2', 's3']);
+  });
+
+  it('translates line and arrow start/end points with applyElementDelta', () => {
+    const arrow: ShapeElement = {
+      id: 'a1',
+      type: 'shape',
+      shapeType: 'arrow',
+      x: 0,
+      y: 0,
+      width: 50,
+      height: 50,
+      zIndex: 1,
+      strokeColor: '#000',
+      strokeWidth: 2,
+      strokeStyle: 'solid',
+      startPoint: { x: 0, y: 0 },
+      endPoint: { x: 50, y: 50 },
+    };
+    const shifted = applyElementDelta(arrow, 10, 20);
+    expect(shifted.x).toBe(10);
+    expect(shifted.y).toBe(20);
+    expect(shifted.startPoint).toEqual({ x: 10, y: 20 });
+    expect(shifted.endPoint).toEqual({ x: 60, y: 70 });
+  });
+
+  it('moves shapes with MoveElementsCommand and reverses on undo', () => {
+    const history = new HistoryStack();
+    const rect: ShapeElement = {
+      id: 'r1',
+      type: 'shape',
+      shapeType: 'rectangle',
+      x: 10,
+      y: 20,
+      width: 100,
+      height: 50,
+      zIndex: 1,
+      strokeColor: '#000',
+      strokeWidth: 2,
+      strokeStyle: 'solid',
+    };
+    let data: DocumentData = {
+      elements: { r1: rect },
+      elementIds: ['r1'],
+      selectedIds: ['r1'],
+    };
+
+    data = history.execute(new MoveElementsCommand(['r1'], 15, 25), data);
+    expect(data.elements['r1'].x).toBe(25);
+    expect(data.elements['r1'].y).toBe(45);
+
+    data = history.undo(data);
+    expect(data.elements['r1'].x).toBe(10);
+    expect(data.elements['r1'].y).toBe(20);
   });
 });
