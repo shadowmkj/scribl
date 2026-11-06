@@ -214,6 +214,7 @@ export class UpdateTextElementCommand implements Command {
       width: number;
       height: number;
       fontSize: number;
+      fontFamily?: string;
       color: string;
     },
     private next: {
@@ -221,6 +222,7 @@ export class UpdateTextElementCommand implements Command {
       width: number;
       height: number;
       fontSize: number;
+      fontFamily?: string;
       color: string;
     },
   ) {}

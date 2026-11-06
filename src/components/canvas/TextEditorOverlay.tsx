@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { worldToScreen } from '../../core/camera/cameraMath';
+import { getFontFamilyString } from '../../core/engine/fontConstants';
 import { measureTextBounds } from '../../core/engine/textMeasurement';
 import {
   AddElementCommand,
@@ -70,7 +71,7 @@ export const TextEditorOverlay: React.FC = () => {
     const bounds = measureTextBounds(
       draft,
       editingText.fontSize,
-      'system-ui, -apple-system, sans-serif',
+      getFontFamilyString(editingText.fontFamily),
       1.25,
     );
 
@@ -82,6 +83,7 @@ export const TextEditorOverlay: React.FC = () => {
           width: existing.width,
           height: existing.height,
           fontSize: existing.fontSize,
+          fontFamily: existing.fontFamily,
           color: existing.color,
         };
         const next = {
@@ -89,6 +91,7 @@ export const TextEditorOverlay: React.FC = () => {
           width: bounds.width,
           height: bounds.height,
           fontSize: editingText.fontSize,
+          fontFamily: editingText.fontFamily || existing.fontFamily || 'handwritten',
           color: editingText.color,
         };
         doc.executeCommand(new UpdateTextElementCommand(existing.id, prev, next));
@@ -105,7 +108,7 @@ export const TextEditorOverlay: React.FC = () => {
         zIndex: doc.elementIds.length + 1,
         text: draft,
         fontSize: editingText.fontSize,
-        fontFamily: 'system-ui, -apple-system, sans-serif',
+        fontFamily: editingText.fontFamily || 'handwritten',
         color: editingText.color,
         lineHeight: 1.25,
       };
@@ -214,7 +217,7 @@ export const TextEditorOverlay: React.FC = () => {
           whiteSpace: 'pre',
           color: editingText.color,
           fontSize: `${screenFontSize}px`,
-          fontFamily: 'system-ui, -apple-system, sans-serif',
+          fontFamily: getFontFamilyString(editingText.fontFamily),
           lineHeight: `${screenLineHeight}px`,
           minWidth: `${Math.max(screenFontSize * 3, 50)}px`,
           minHeight: `${screenLineHeight}px`,

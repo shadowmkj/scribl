@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { FontFamilyId } from '../core/engine/fontConstants';
 import { ToolType, ZoomMode } from '../types/canvas';
 
 export interface EditingTextState {
@@ -8,6 +9,7 @@ export interface EditingTextState {
   text: string;
   fontSize: number;
   color: string;
+  fontFamily?: FontFamilyId | string;
 }
 
 interface ToolState {
@@ -16,6 +18,7 @@ interface ToolState {
   color: string;
   strokeSize: number;
   fontSize: number;
+  fontFamily: FontFamilyId;
   editingText: EditingTextState | null;
 
   setTool: (tool: ToolType) => void;
@@ -23,6 +26,7 @@ interface ToolState {
   setColor: (color: string) => void;
   setStrokeSize: (size: number) => void;
   setFontSize: (size: number) => void;
+  setFontFamily: (fontFamily: FontFamilyId) => void;
   startEditingText: (editingText: EditingTextState) => void;
   updateEditingTextDraft: (text: string) => void;
   stopEditingText: () => void;
@@ -34,6 +38,7 @@ export const useToolStore = create<ToolState>((set) => ({
   color: '#0284c7', // Sky Blue
   strokeSize: 4,
   fontSize: 24,
+  fontFamily: 'handwritten',
   editingText: null,
 
   setTool: (tool) => set({ currentTool: tool }),
@@ -48,6 +53,11 @@ export const useToolStore = create<ToolState>((set) => ({
     set((state) => ({
       fontSize,
       editingText: state.editingText ? { ...state.editingText, fontSize } : null,
+    })),
+  setFontFamily: (fontFamily) =>
+    set((state) => ({
+      fontFamily,
+      editingText: state.editingText ? { ...state.editingText, fontFamily } : null,
     })),
   startEditingText: (editingText) => set({ editingText }),
   updateEditingTextDraft: (text) =>

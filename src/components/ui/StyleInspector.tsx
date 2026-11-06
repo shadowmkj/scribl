@@ -1,5 +1,6 @@
 import React from 'react';
 import { calculateBoxFitCamera } from '../../core/camera/cameraMath';
+import { FONT_FAMILIES } from '../../core/engine/fontConstants';
 import { useCameraStore } from '../../stores/useCameraStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
@@ -36,15 +37,19 @@ export const StyleInspector: React.FC = () => {
   const color = useToolStore((s) => s.color);
   const strokeSize = useToolStore((s) => s.strokeSize);
   const fontSize = useToolStore((s) => s.fontSize);
+  const fontFamily = useToolStore((s) => s.fontFamily);
+  const editingText = useToolStore((s) => s.editingText);
   const setColor = useToolStore((s) => s.setColor);
   const setStrokeSize = useToolStore((s) => s.setStrokeSize);
   const setFontSize = useToolStore((s) => s.setFontSize);
+  const setFontFamily = useToolStore((s) => s.setFontFamily);
 
   const resetZoom = useCameraStore((s) => s.resetZoom);
   const viewportWidth = useCameraStore((s) => s.viewportWidth);
   const viewportHeight = useCameraStore((s) => s.viewportHeight);
 
-  if (currentTool !== 'pen' && currentTool !== 'zoom' && currentTool !== 'text') return null;
+  const isTextMode = currentTool === 'text' || editingText !== null;
+  if (currentTool !== 'pen' && currentTool !== 'zoom' && !isTextMode) return null;
 
   if (currentTool === 'zoom') {
     const handleFitAll = () => {
@@ -358,6 +363,76 @@ export const StyleInspector: React.FC = () => {
         </div>
       </div>
 
+      {isTextMode && (
+        <>
+          <div
+            style={{
+              height: 1,
+              background: 'var(--color-panel-border, rgba(255, 255, 255, 0.08))',
+            }}
+          />
+
+          <div>
+            <div
+              style={{
+                fontSize: 10,
+                textTransform: 'uppercase',
+                color: 'var(--color-text-secondary, #64748b)',
+                fontWeight: 700,
+                letterSpacing: '0.05em',
+                marginBottom: 8,
+              }}
+            >
+              Font
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {FONT_FAMILIES.map((f) => {
+                const isSelected = fontFamily === f.id;
+                return (
+                  <button
+                    key={f.id}
+                    onClick={() => setFontFamily(f.id)}
+                    style={{
+                      background: isSelected
+                        ? 'var(--color-accent, #0284c7)'
+                        : 'transparent',
+                      color: isSelected
+                        ? '#ffffff'
+                        : 'var(--color-text-secondary, #94a3b8)',
+                      border: isSelected
+                        ? '1px solid var(--color-accent, #0284c7)'
+                        : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
+                      borderRadius: 6,
+                      padding: '4px 8px',
+                      fontSize: 11,
+                      fontWeight: isSelected ? 600 : 500,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      fontFamily: f.family,
+                      transition: 'all 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.background = 'rgba(125, 125, 125, 0.12)';
+                        e.currentTarget.style.color = 'var(--color-text-primary, #f1f5f9)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--color-text-secondary, #94a3b8)';
+                      }
+                    }}
+                  >
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+
       <div
         style={{ height: 1, background: 'var(--color-panel-border, rgba(255, 255, 255, 0.08))' }}
       />
@@ -373,10 +448,10 @@ export const StyleInspector: React.FC = () => {
             marginBottom: 8,
           }}
         >
-          {currentTool === 'text' ? 'Font Size' : 'Thickness'}
+          {isTextMode ? 'Font Size' : 'Thickness'}
         </div>
         <div style={{ display: 'flex', gap: 5 }}>
-          {currentTool === 'text'
+          {isTextMode
             ? FONT_SIZES.map((s) => {
               const isSelected = fontSize === s.value;
               return (

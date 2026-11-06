@@ -9,18 +9,40 @@ describe('StyleInspector - Text Tool Styling', () => {
       currentTool: 'text',
       color: '#0284c7',
       fontSize: 24,
+      fontFamily: 'handwritten',
     });
   });
 
-  it('renders color swatches and font size buttons when text tool is active', () => {
+  it('renders color swatches, font family, and font size buttons when text tool is active', () => {
     render(<StyleInspector />);
 
     expect(screen.getByText('Color')).toBeTruthy();
+    expect(screen.getByText('Font')).toBeTruthy();
+    expect(screen.getByText('Hand-Written')).toBeTruthy();
+    expect(screen.getByText('Normal')).toBeTruthy();
+    expect(screen.getByText('Code')).toBeTruthy();
+
     expect(screen.getByText('Font Size')).toBeTruthy();
     expect(screen.getByText('S')).toBeTruthy();
     expect(screen.getByText('M')).toBeTruthy();
     expect(screen.getByText('L')).toBeTruthy();
     expect(screen.getByText('XL')).toBeTruthy();
+  });
+
+  it('changes font family when clicking font family buttons', () => {
+    render(<StyleInspector />);
+
+    const codeBtn = screen.getByText('Code');
+    fireEvent.click(codeBtn);
+    expect(useToolStore.getState().fontFamily).toBe('code');
+
+    const normalBtn = screen.getByText('Normal');
+    fireEvent.click(normalBtn);
+    expect(useToolStore.getState().fontFamily).toBe('normal');
+
+    const handBtn = screen.getByText('Hand-Written');
+    fireEvent.click(handBtn);
+    expect(useToolStore.getState().fontFamily).toBe('handwritten');
   });
 
   it('changes font size when clicking font size buttons', () => {

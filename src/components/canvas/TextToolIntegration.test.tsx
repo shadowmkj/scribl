@@ -66,5 +66,67 @@ describe('Text Tool Integration', () => {
     const textEl = doc.elements[doc.elementIds[0]] as TextElement;
     expect(textEl.type).toBe('text');
     expect(textEl.text).toBe('Typing on canvas works!');
+    expect(textEl.fontFamily).toBe('handwritten');
+  });
+
+  it('allows user to select Code font family before typing and saves it on commit', async () => {
+    render(<App />);
+
+    // Click 'Code' button in StyleInspector
+    const codeBtn = screen.getByText('Code');
+    fireEvent.click(codeBtn);
+    expect(useToolStore.getState().fontFamily).toBe('code');
+
+    const canvasContainer = screen.getByTestId('canvas-viewport');
+
+    fireEvent.pointerDown(canvasContainer, {
+      clientX: 250,
+      clientY: 150,
+      pointerId: 1,
+      buttons: 1,
+    });
+    fireEvent.pointerUp(canvasContainer, { clientX: 250, clientY: 150, pointerId: 1 });
+
+    const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
+    expect(textarea).not.toBeNull();
+    expect(textarea.style.fontFamily).toContain('monospace');
+
+    fireEvent.change(textarea, { target: { value: 'const x = 42;' } });
+    fireEvent.keyDown(textarea, { key: 'Escape' });
+
+    const doc = useDocumentStore.getState();
+    expect(doc.elementIds.length).toBe(1);
+    const textEl = doc.elements[doc.elementIds[0]] as TextElement;
+    expect(textEl.text).toBe('const x = 42;');
+    expect(textEl.fontFamily).toBe('code');
+  });
+
+  it('allows user to switch font family while editing text draft', async () => {
+    render(<App />);
+
+    const canvasContainer = screen.getByTestId('canvas-viewport');
+
+    fireEvent.pointerDown(canvasContainer, {
+      clientX: 200,
+      clientY: 100,
+      pointerId: 1,
+      buttons: 1,
+    });
+    fireEvent.pointerUp(canvasContainer, { clientX: 200, clientY: 100, pointerId: 1 });
+
+    const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: 'Draft with normal font' } });
+
+    // Click 'Normal' font button while editing
+    const normalBtn = screen.getByText('Normal');
+    fireEvent.click(normalBtn);
+    expect(useToolStore.getState().fontFamily).toBe('normal');
+    expect(textarea.style.fontFamily).toContain('system-ui');
+
+    fireEvent.keyDown(textarea, { key: 'Escape' });
+
+    const doc = useDocumentStore.getState();
+    const textEl = doc.elements[doc.elementIds[0]] as TextElement;
+    expect(textEl.fontFamily).toBe('normal');
   });
 });

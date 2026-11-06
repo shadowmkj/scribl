@@ -8,6 +8,7 @@ import {
   screenToWorld,
   worldToScreen,
 } from '../camera/cameraMath';
+import { getFontFamilyId } from '../engine/fontConstants';
 import { hitTestMarquee, hitTestPoint } from '../engine/HitTester';
 import { createStrokeElement } from '../engine/InkingEngine';
 import { ScratchRenderer } from '../engine/ScratchRenderer';
@@ -95,6 +96,7 @@ export class PointerRouter {
         y: worldPoint.y,
         text: '',
         fontSize: toolStore.fontSize || 24,
+        fontFamily: toolStore.fontFamily || 'handwritten',
         color: toolStore.color,
       });
       return;
@@ -490,12 +492,15 @@ export class PointerRouter {
     const el = doc.elements[hitId];
     if (el && el.type === 'text') {
       doc.setSelected([]);
+      const fontId = getFontFamilyId(el.fontFamily);
+      useToolStore.getState().setFontFamily(fontId);
       useToolStore.getState().startEditingText({
         elementId: el.id,
         x: el.x,
         y: el.y,
         text: el.text,
         fontSize: el.fontSize,
+        fontFamily: fontId,
         color: el.color,
       });
     }

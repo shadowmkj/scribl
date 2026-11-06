@@ -1,4 +1,5 @@
 import { Camera, CanvasElement, StrokeElement, TextElement } from '../../types/canvas';
+import { getFontFamilyString } from './fontConstants';
 import { getStrokeOutline, getSvgPathFromStroke } from './InkingEngine';
 
 export function renderCommittedCanvas(
@@ -66,7 +67,7 @@ export function renderCommittedCanvas(
 
 export function renderText(ctx: CanvasRenderingContext2D, textEl: TextElement) {
   ctx.save();
-  ctx.font = `${textEl.fontSize}px ${textEl.fontFamily || 'system-ui, -apple-system, sans-serif'}`;
+  ctx.font = `${textEl.fontSize}px ${getFontFamilyString(textEl.fontFamily)}`;
   ctx.fillStyle = textEl.color;
   ctx.textBaseline = 'top';
 

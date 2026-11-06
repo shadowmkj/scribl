@@ -51,6 +51,24 @@ describe('CanvasRenderer with TextElement', () => {
     expect(mockCtx.fillText).toHaveBeenNthCalledWith(2, 'Second Line', 100, 150 + 24 * 1.25);
   });
 
+  it('resolves handwritten and code font family IDs to appropriate CSS font strings', () => {
+    const handwrittenEl: TextElement = {
+      ...dummyText,
+      id: 't_hand',
+      fontFamily: 'handwritten',
+    };
+    renderText(mockCtx, handwrittenEl);
+    expect(mockCtx.font).toContain('Excalifont');
+
+    const codeEl: TextElement = {
+      ...dummyText,
+      id: 't_code',
+      fontFamily: 'code',
+    };
+    renderText(mockCtx, codeEl);
+    expect(mockCtx.font).toContain('monospace');
+  });
+
   it('renders text in renderCommittedCanvas alongside strokes', () => {
     const stroke: StrokeElement = {
       id: 's1',
