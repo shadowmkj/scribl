@@ -133,24 +133,17 @@ export function applyElementDelta<T extends CanvasElement>(el: T, dx: number, dy
       cachedPath2D: undefined, // Will be recomputed on render
     };
   }
-  if (el.type === 'shape') {
-    const updated: ShapeElement = {
-      ...el,
-      x: el.x + dx,
-      y: el.y + dy,
-      cachedPath2D: undefined,
-    };
-    if (el.startPoint && el.endPoint) {
-      updated.startPoint = { x: el.startPoint.x + dx, y: el.startPoint.y + dy };
-      updated.endPoint = { x: el.endPoint.x + dx, y: el.endPoint.y + dy };
-    }
-    return updated as T;
-  }
-  return {
+  const updated: ShapeElement = {
     ...el,
     x: el.x + dx,
     y: el.y + dy,
+    cachedPath2D: undefined,
   };
+  if (el.startPoint && el.endPoint) {
+    updated.startPoint = { x: el.startPoint.x + dx, y: el.startPoint.y + dy };
+    updated.endPoint = { x: el.endPoint.x + dx, y: el.endPoint.y + dy };
+  }
+  return updated as T;
 }
 
 export class MoveElementsCommand implements Command {
