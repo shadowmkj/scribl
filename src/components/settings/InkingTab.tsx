@@ -39,7 +39,7 @@ export const InkingTab: React.FC = () => {
           Inking & Stroke Dynamics
         </h3>
         <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-secondary, #94a3b8)' }}>
-          Fine-tune the perfect-freehand brush physics and pressure response.
+          Fine-tune the perfect-freehand brush physics and stroke dynamics.
         </p>
       </div>
 
@@ -110,7 +110,7 @@ export const InkingTab: React.FC = () => {
             <span
               style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary, #e2e8f0)' }}
             >
-              Pressure Thinning
+              Stroke Thinning
             </span>
             <span
               style={{
@@ -126,8 +126,8 @@ export const InkingTab: React.FC = () => {
             </span>
           </div>
           <p style={{ margin: 0, fontSize: 11, color: 'var(--color-text-secondary, #64748b)' }}>
-            How much pressure and velocity thin out strokes. Higher values create sharp calligraphy
-            tapers.
+            How much stroke velocity and motion thin out lines. Higher values create sharp
+            calligraphy tapers.
           </p>
           <input
             type='range'

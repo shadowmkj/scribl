@@ -18,7 +18,7 @@
 
 **Scribl** combines the diagramming flexibility of Excalidraw and Tldraw with the organic, low-latency feel of native tablet note-taking applications (Apple Notes, Concepts, Goodnotes).
 
-Engineered from the ground up to support high-refresh-rate displays (120Hz–240Hz), Scribl decouples high-frequency stylus events from React's state lifecycle to deliver sub-8ms inking latency, pressure sensitivity, and strict palm rejection.
+Engineered from the ground up to support high-refresh-rate displays (120Hz–240Hz), Scribl decouples high-frequency stylus events from React's state lifecycle to deliver sub-8ms inking latency, coalesced event routing, and strict palm rejection.
 
 ---
 
@@ -28,7 +28,7 @@ Engineered from the ground up to support high-refresh-rate displays (120Hz–240
   - **Active Scratch Layer**: Initialized with `{ desynchronized: true, alpha: true }` bypassing window compositor double-buffering for immediate front-buffer drawing.
   - **Committed Layer**: Frustum-culled batch vector rendering of cached `Path2D` strokes to maintain 60–120+ FPS across thousands of elements.
 - 🖊️ **Tablet & Stylus Native**:
-  - Pressure-sensitive stroke thickness using `perfect-freehand`.
+  - Organic stroke outline smoothing and tapers using `perfect-freehand`.
   - Event coalescing via `getCoalescedEvents()` preventing angular stepping during fast scribbling.
   - Hardware stylus eraser flip recognition (`e.buttons === 32`).
   - Strict palm rejection (touch inputs pan/zoom without leaving accidental pen marks).
@@ -233,6 +233,15 @@ src/
     ├── canvas.ts                    # Core element, stroke point & camera interfaces
     └── commands.ts                  # Command interfaces
 ```
+
+---
+
+## 🗺️ Roadmap (Post-v0.1.0)
+
+- 🖊️ **Hardware Stylus Pressure Sensitivity**: Native pen pressure curves and dynamic stylus thickness.
+- 📥 **Application Imports**: Import support for Excalidraw (`.excalidraw`) and tldraw (`.tldr`) files.
+- 📐 **Shape Primitives & Connectors**: Rectangles, ellipses, diamonds, and smart arrows.
+- 🔤 **Canvas Text & Sticky Notes**: Rich text cards and sticky notes.
 
 ---
 

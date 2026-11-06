@@ -32,7 +32,7 @@ scribl.opt.default_tool = "pen"        -- Active tool on startup: "pen", "select
 scribl.opt.default_pen_color = "#0284c7" -- Initial pen drawing color
 scribl.opt.zoom_mode = "scrubby"       -- "scrubby" or "selection"
 scribl.opt.stroke_smoothing = 0.5      -- Perfect-freehand smoothing
-scribl.opt.stroke_thinning = 0.6       -- Pressure thinning effect
+scribl.opt.stroke_thinning = 0.6       -- Velocity thinning & taper effect
 scribl.opt.auto_save = true            -- Automatically save drawings to local storage
 
 --------------------------------------------------------------------------------
