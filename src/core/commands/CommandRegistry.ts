@@ -88,6 +88,51 @@ export function registerDefaultCommands(handlers?: {
     isActive: () => useToolStore.getState().currentTool === 'zoom',
   });
 
+  commandRegistry.register({
+    id: 'tool.shape.rectangle',
+    label: 'Rectangle',
+    category: 'tool',
+    description: 'Draw rectangles or squares',
+    execute: () => useToolStore.getState().setTool('rectangle'),
+    isActive: () => useToolStore.getState().currentTool === 'rectangle',
+  });
+
+  commandRegistry.register({
+    id: 'tool.shape.circle',
+    label: 'Circle',
+    category: 'tool',
+    description: 'Draw circles or ellipses',
+    execute: () => useToolStore.getState().setTool('circle'),
+    isActive: () => useToolStore.getState().currentTool === 'circle',
+  });
+
+  commandRegistry.register({
+    id: 'tool.shape.diamond',
+    label: 'Diamond',
+    category: 'tool',
+    description: 'Draw diamonds / rhombuses',
+    execute: () => useToolStore.getState().setTool('diamond'),
+    isActive: () => useToolStore.getState().currentTool === 'diamond',
+  });
+
+  commandRegistry.register({
+    id: 'tool.shape.line',
+    label: 'Line',
+    category: 'tool',
+    description: 'Draw straight lines',
+    execute: () => useToolStore.getState().setTool('line'),
+    isActive: () => useToolStore.getState().currentTool === 'line',
+  });
+
+  commandRegistry.register({
+    id: 'tool.shape.arrow',
+    label: 'Arrow',
+    category: 'tool',
+    description: 'Draw directional arrows',
+    execute: () => useToolStore.getState().setTool('arrow'),
+    isActive: () => useToolStore.getState().currentTool === 'arrow',
+  });
+
   // Zoom actions
   commandRegistry.register({
     id: 'zoom.in',

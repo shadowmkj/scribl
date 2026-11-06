@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Command, CommandRegistry } from './CommandRegistry';
+import { useToolStore } from '../../stores/useToolStore';
+import { Command, CommandRegistry, commandRegistry } from './CommandRegistry';
 
 describe('CommandRegistry', () => {
   let registry: CommandRegistry;
@@ -40,5 +41,19 @@ describe('CommandRegistry', () => {
     const tools = registry.getByCategory('tool');
     expect(tools.length).toBe(2);
     expect(tools.map((t) => t.id)).toEqual(['tool.pen', 'tool.eraser']);
+  });
+
+  it('registers default shape commands and executes them', () => {
+    const shapeTools = ['rectangle', 'circle', 'diamond', 'line', 'arrow'] as const;
+    for (const tool of shapeTools) {
+      const cmdId = `tool.shape.${tool}`;
+      const cmd = commandRegistry.get(cmdId);
+      expect(cmd).toBeDefined();
+      expect(cmd?.category).toBe('tool');
+
+      commandRegistry.execute(cmdId);
+      expect(useToolStore.getState().currentTool).toBe(tool);
+      expect(cmd?.isActive?.()).toBe(true);
+    }
   });
 });
