@@ -34,6 +34,7 @@ export const CanvasViewport: React.FC = () => {
   const elementIds = useDocumentStore((s) => s.elementIds);
   const selectedIds = useDocumentStore((s) => s.selectedIds);
   const currentTool = useToolStore((s) => s.currentTool);
+  const editingText = useToolStore((s) => s.editingText);
   const isSpacePressed = useCameraStore((s) => s.isSpacePressed);
   const isPanning = useCameraStore((s) => s.isPanning);
   const dotGrid = useConfigStore((s) => s.config.options.dot_grid);
@@ -153,8 +154,17 @@ export const CanvasViewport: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    renderCommittedCanvas(ctx, elements, elementIds, camera, width, height);
-  }, [elements, elementIds, camera, width, height]);
+    renderCommittedCanvas(
+      ctx,
+      elements,
+      elementIds,
+      camera,
+      width,
+      height,
+      dpr,
+      editingText?.elementId,
+    );
+  }, [elements, elementIds, camera, width, height, editingText?.elementId]);
 
   // Mouse wheel zoom
   const handleWheel = (e: React.WheelEvent) => {
@@ -207,6 +217,8 @@ export const CanvasViewport: React.FC = () => {
     cursorStyle = 'grab';
   } else if (currentTool === 'eraser') {
     cursorStyle = ERASER_CURSOR;
+  } else if (currentTool === 'text') {
+    cursorStyle = 'text';
   } else if (currentTool === 'pen') {
     cursorStyle = 'crosshair';
   } else if (currentTool === 'zoom') {
@@ -248,6 +260,7 @@ export const CanvasViewport: React.FC = () => {
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerLeave}
+      onDoubleClick={(e) => pointerRouterRef.current?.handleDoubleClick(e.nativeEvent)}
     >
       {dotGrid && <InfiniteGrid camera={camera} width={width} height={height} />}
 

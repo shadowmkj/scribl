@@ -87,6 +87,18 @@ export class PointerRouter {
       return;
     }
 
+    if (activeTool === 'text') {
+      const toolStore = useToolStore.getState();
+      toolStore.startEditingText({
+        x: worldPoint.x,
+        y: worldPoint.y,
+        text: '',
+        fontSize: toolStore.fontSize || 24,
+        color: toolStore.color,
+      });
+      return;
+    }
+
     if (activeTool === 'pen') {
       this.state = 'DRAWING';
       const pressure = e.pointerType === 'pen' ? e.pressure : 0.5;
@@ -456,6 +468,32 @@ export class PointerRouter {
     }
 
     this.state = 'IDLE';
+  }
+
+  handleDoubleClick(e: MouseEvent) {
+    const activeTool = useToolStore.getState().currentTool;
+    if (activeTool !== 'select') return;
+
+    const camera = useCameraStore.getState().camera;
+    const width = useCameraStore.getState().viewportWidth;
+    const height = useCameraStore.getState().viewportHeight;
+    const worldPoint = screenToWorld(e.clientX, e.clientY, camera, width, height);
+
+    const doc = useDocumentStore.getState();
+    const hitId = hitTestPoint(doc.elements, doc.elementIds, worldPoint);
+    if (!hitId) return;
+
+    const el = doc.elements[hitId];
+    if (el && el.type === 'text') {
+      useToolStore.getState().startEditingText({
+        elementId: el.id,
+        x: el.x,
+        y: el.y,
+        text: el.text,
+        fontSize: el.fontSize,
+        color: el.color,
+      });
+    }
   }
 
   private performEraseAt(worldPoint: { x: number; y: number; }) {

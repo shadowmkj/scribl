@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCameraStore } from '../../stores/useCameraStore';
+import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
 import { ScratchRenderer } from '../engine/ScratchRenderer';
 import { PointerRouter } from './PointerRouter';
@@ -429,5 +430,77 @@ describe('PointerRouter - Zoom Tool', () => {
     const undone = useDocumentStore.getState();
     expect(undone.elements['rotate-stroke-1'].points[0].y).toBeCloseTo(20, 1);
     expect(undone.elements['rotate-stroke-1'].points[1].y).toBeCloseTo(20, 1);
+  });
+
+  it('triggers startEditingText when pointer down occurs with active text tool', () => {
+    useToolStore.setState({
+      currentTool: 'text',
+      color: '#e11d48',
+      fontSize: 36,
+      editingText: null,
+    });
+
+    // Click at screen (500, 400) -> world (0, 0) since camera is at (0, 0)
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 500,
+        clientY: 400,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+      container,
+    );
+
+    const editing = useToolStore.getState().editingText;
+    expect(editing).toBeTruthy();
+    expect(editing?.x).toBe(0);
+    expect(editing?.y).toBe(0);
+    expect(editing?.fontSize).toBe(36);
+    expect(editing?.color).toBe('#e11d48');
+    expect(editing?.text).toBe('');
+  });
+
+  it('triggers startEditingText when double-clicking a text element in select mode', () => {
+    const textEl = {
+      id: 'text-1',
+      type: 'text' as const,
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 40,
+      zIndex: 1,
+      text: 'Existing Note',
+      fontSize: 24,
+      fontFamily: 'system-ui, sans-serif',
+      color: '#ffffff',
+      lineHeight: 1.25,
+    };
+
+    useDocumentStore.setState({
+      elements: { 'text-1': textEl },
+      elementIds: ['text-1'],
+      selectedIds: ['text-1'],
+    });
+
+    useToolStore.setState({
+      currentTool: 'select',
+      editingText: null,
+    });
+
+    // Double-click at screen (520, 420) -> world (20, 20) which is inside text-1 [0, 0, 100, 40]
+    router.handleDoubleClick(
+      new MouseEvent('dblclick', {
+        clientX: 520,
+        clientY: 420,
+        button: 0,
+      }),
+    );
+
+    const editing = useToolStore.getState().editingText;
+    expect(editing).toBeTruthy();
+    expect(editing?.elementId).toBe('text-1');
+    expect(editing?.text).toBe('Existing Note');
+    expect(editing?.fontSize).toBe(24);
   });
 });
