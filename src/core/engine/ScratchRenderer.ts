@@ -1,5 +1,6 @@
 import { useCameraStore } from '../../stores/useCameraStore';
-import { Camera, StrokePoint } from '../../types/canvas';
+import { Camera, ShapeElement, StrokePoint } from '../../types/canvas';
+import { renderShape } from './CanvasRenderer';
 import { getStrokeOutline, getSvgPathFromStroke } from './InkingEngine';
 
 export interface TrailPoint {
@@ -15,6 +16,7 @@ export class ScratchRenderer {
   private color: string = '#0284c7';
   private strokeSize: number = 4;
   private isDrawing: boolean = false;
+  private activeShapePreview: ShapeElement | null = null;
 
   // Eraser trail animation state
   private eraserTrail: TrailPoint[] = [];
@@ -70,6 +72,14 @@ export class ScratchRenderer {
     this.isErasing = false;
   }
 
+  setShapePreview(shape: ShapeElement | null) {
+    this.activeShapePreview = shape;
+  }
+
+  getShapePreview(): ShapeElement | null {
+    return this.activeShapePreview;
+  }
+
   private startAnimLoop() {
     if (this.animFrameId !== null) return;
 
@@ -123,7 +133,24 @@ export class ScratchRenderer {
       this.ctx.restore();
     }
 
-    // 2. Render animated eraser trail
+    // 2. Render shape preview
+    if (this.activeShapePreview) {
+      this.ctx.save();
+      this.ctx.setTransform(
+        camera.zoom * dpr,
+        0,
+        0,
+        camera.zoom * dpr,
+        (width / 2 - camera.x * camera.zoom) * dpr,
+        (height / 2 - camera.y * camera.zoom) * dpr,
+      );
+
+      renderShape(this.ctx, this.activeShapePreview);
+
+      this.ctx.restore();
+    }
+
+    // 3. Render animated eraser trail
     const now = performance.now();
     this.eraserTrail = this.eraserTrail.filter((p) => now - p.timestamp < this.TRAIL_DURATION);
 
@@ -171,6 +198,7 @@ export class ScratchRenderer {
   }
 
   clear(width: number, height: number, dpr: number = window.devicePixelRatio || 1) {
+    this.activeShapePreview = null;
     if (this.ctx && this.canvas) {
       this.ctx.save();
       this.ctx.setTransform(1, 0, 0, 1, 0, 0);

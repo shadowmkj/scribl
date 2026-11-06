@@ -1,6 +1,7 @@
 export type FSMState =
   | 'IDLE'
   | 'DRAWING'
+  | 'DRAWING_SHAPE'
   | 'ERASING'
   | 'SELECTING_MARQUEE'
   | 'DRAGGING_SELECTION'

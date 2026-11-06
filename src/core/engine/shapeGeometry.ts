@@ -45,8 +45,10 @@ export function generateShapePath(shape: ShapeElement): Path2D {
       path.lineTo(p2.x, p2.y);
 
       // Arrowhead geometry
+      const totalLength = Math.hypot(p2.x - p1.x, p2.y - p1.y);
       const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-      const arrowLength = Math.max(10, Math.min(24, shape.strokeWidth * 4));
+      const baseLength = Math.max(10, Math.min(24, shape.strokeWidth * 4));
+      const arrowLength = totalLength < baseLength * 2 ? totalLength * 0.5 : baseLength;
       const arrowAngle = Math.PI / 6; // 30 degrees
 
       const a1X = p2.x - arrowLength * Math.cos(angle - arrowAngle);
