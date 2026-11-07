@@ -75,6 +75,70 @@ describe('themeManager', () => {
     expect(resolved.accent_hover).toBe('#990000');
   });
 
+  it('resolves custom theme if registered in customThemes', () => {
+    const customNord = {
+      mode: 'dark' as const,
+      canvas_bg: '#2e3440',
+      grid_dot: '#434c5e',
+      panel_bg: 'rgba(46, 52, 64, 0.88)',
+      panel_border: 'rgba(216, 222, 233, 0.12)',
+      panel_shadow: '0 12px 36px rgba(0, 0, 0, 0.45)',
+      text_primary: '#eceff4',
+      text_secondary: '#d8dee9',
+      text_disabled: '#4c566a',
+      accent: '#88c0d0',
+      accent_hover: '#81a1c1',
+      accent_light: '#8fbcbb',
+      selection_stroke: '#88c0d0',
+      selection_fill: 'rgba(136, 192, 208, 0.15)',
+      danger: '#bf616a',
+    };
+
+    const resolved = resolveTheme(
+      {
+        name: 'nord',
+        overrides: {},
+      },
+      { nord: customNord },
+    );
+
+    expect(resolved.canvas_bg).toBe('#2e3440');
+    expect(resolved.accent).toBe('#88c0d0');
+    expect(resolved.mode).toBe('dark');
+  });
+
+  it('applies overrides on top of custom themes', () => {
+    const customNord = {
+      mode: 'dark' as const,
+      canvas_bg: '#2e3440',
+      grid_dot: '#434c5e',
+      panel_bg: 'rgba(46, 52, 64, 0.88)',
+      panel_border: 'rgba(216, 222, 233, 0.12)',
+      panel_shadow: '0 12px 36px rgba(0, 0, 0, 0.45)',
+      text_primary: '#eceff4',
+      text_secondary: '#d8dee9',
+      text_disabled: '#4c566a',
+      accent: '#88c0d0',
+      accent_hover: '#81a1c1',
+      accent_light: '#8fbcbb',
+      selection_stroke: '#88c0d0',
+      selection_fill: 'rgba(136, 192, 208, 0.15)',
+      danger: '#bf616a',
+    };
+
+    const resolved = resolveTheme(
+      {
+        name: 'nord',
+        overrides: { canvas_bg: '#ffffff' },
+      },
+      { nord: customNord },
+    );
+
+    expect(resolved.canvas_bg).toBe('#ffffff');
+    expect(resolved.accent).toBe('#88c0d0');
+    expect(resolved.mode).toBe('light'); // Derived from #ffffff canvas_bg
+  });
+
   it('darkens hex colors correctly', () => {
     expect(darkenHex('#ffffff', 0.5)).toBe('#808080');
     expect(darkenHex('#000000', 0.5)).toBe('#000000');

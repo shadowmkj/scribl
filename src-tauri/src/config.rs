@@ -248,7 +248,7 @@ impl Default for ThemeConfig {
             overrides: HashMap::new(),
             active: None,
         };
-        cfg.active = Some(resolve_theme(&cfg));
+        cfg.active = Some(resolve_theme(&cfg, &HashMap::new()));
         cfg
     }
 }
@@ -280,8 +280,15 @@ pub fn darken_hex(hex: &str, factor: f64) -> String {
     hex.to_string()
 }
 
-pub fn resolve_theme(config: &ThemeConfig) -> ThemeColors {
-    let mut base = get_preset_theme(&config.name);
+pub fn resolve_theme(
+    config: &ThemeConfig,
+    custom_themes: &HashMap<String, ThemeColors>,
+) -> ThemeColors {
+    let mut base = if let Some(custom) = custom_themes.get(&config.name) {
+        custom.clone()
+    } else {
+        get_preset_theme(&config.name)
+    };
     for (k, v) in &config.overrides {
         match k.as_str() {
             "mode" => base.mode = v.clone(),
@@ -319,6 +326,8 @@ pub struct ScriblConfig {
     pub keymaps: Vec<KeymapEntry>,
     pub toolbar: ToolbarConfig,
     pub theme: ThemeConfig,
+    #[serde(default)]
+    pub custom_themes: HashMap<String, ThemeColors>,
 }
 
 impl Default for ScriblConfig {
@@ -581,6 +590,7 @@ impl Default for ScriblConfig {
             ],
             toolbar: ToolbarConfig::default(),
             theme: ThemeConfig::default(),
+            custom_themes: HashMap::new(),
         }
     }
 }
@@ -593,7 +603,7 @@ mod tests {
     fn test_default_theme_is_default_dark() {
         let config = ScriblConfig::default();
         assert_eq!(config.theme.name, "default-dark");
-        let active = resolve_theme(&config.theme);
+        let active = resolve_theme(&config.theme, &HashMap::new());
         assert_eq!(active.canvas_bg, "#090d16");
         assert_eq!(active.grid_dot, "#334155");
         assert_eq!(active.accent, "#0284c7");
@@ -626,13 +636,13 @@ mod tests {
         theme
             .overrides
             .insert("canvas_bg".to_string(), "#ffffff".to_string());
-        let resolved = resolve_theme(&theme);
+        let resolved = resolve_theme(&theme, &HashMap::new());
         assert_eq!(resolved.mode, "light"); // Derived from white canvas_bg
 
         theme
             .overrides
             .insert("mode".to_string(), "dark".to_string());
-        let resolved_explicit = resolve_theme(&theme);
+        let resolved_explicit = resolve_theme(&theme, &HashMap::new());
         assert_eq!(resolved_explicit.mode, "dark"); // Explicit override takes precedence
     }
 
@@ -649,7 +659,7 @@ mod tests {
             .overrides
             .insert("accent".to_string(), "#ff0000".to_string());
 
-        let resolved = resolve_theme(&theme);
+        let resolved = resolve_theme(&theme, &HashMap::new());
         assert_eq!(resolved.canvas_bg, "#000000");
         assert_eq!(resolved.accent, "#ff0000");
         assert_eq!(resolved.accent_hover, "#d10000"); // Auto-derived gradient stop
@@ -659,8 +669,80 @@ mod tests {
         theme
             .overrides
             .insert("accent_hover".to_string(), "#123456".to_string());
-        let resolved2 = resolve_theme(&theme);
+        let resolved2 = resolve_theme(&theme, &HashMap::new());
         assert_eq!(resolved2.accent_hover, "#123456");
+    }
+
+    #[test]
+    fn test_resolve_theme_prefers_custom_theme() {
+        let mut custom_themes = HashMap::new();
+        custom_themes.insert(
+            "nord".to_string(),
+            ThemeColors {
+                mode: "dark".into(),
+                canvas_bg: "#2e3440".into(),
+                grid_dot: "#434c5e".into(),
+                panel_bg: "rgba(46, 52, 64, 0.85)".into(),
+                panel_border: "rgba(236, 239, 244, 0.08)".into(),
+                panel_shadow: "0 12px 36px rgba(0, 0, 0, 0.45)".into(),
+                text_primary: "#eceff4".into(),
+                text_secondary: "#d8dee9".into(),
+                text_disabled: "#4c566a".into(),
+                accent: "#88c0d0".into(),
+                accent_hover: "#81a1c1".into(),
+                accent_light: "#8fbcbb".into(),
+                selection_stroke: "#88c0d0".into(),
+                selection_fill: "rgba(136, 192, 208, 0.12)".into(),
+                danger: "#bf616a".into(),
+            },
+        );
+
+        let config = ThemeConfig {
+            name: "nord".to_string(),
+            ..Default::default()
+        };
+        let resolved = resolve_theme(&config, &custom_themes);
+        assert_eq!(resolved.canvas_bg, "#2e3440");
+        assert_eq!(resolved.accent, "#88c0d0");
+        assert_eq!(resolved.mode, "dark");
+    }
+
+    #[test]
+    fn test_resolve_theme_applies_overrides_to_custom_theme() {
+        let mut custom_themes = HashMap::new();
+        custom_themes.insert(
+            "solarized-light".to_string(),
+            ThemeColors {
+                mode: "light".into(),
+                canvas_bg: "#fdf6e3".into(),
+                grid_dot: "#eee8d5".into(),
+                panel_bg: "#fdf6e3".into(),
+                panel_border: "#93a1a1".into(),
+                panel_shadow: "none".into(),
+                text_primary: "#657b83".into(),
+                text_secondary: "#93a1a1".into(),
+                text_disabled: "#eee8d5".into(),
+                accent: "#268bd2".into(),
+                accent_hover: "#2aa198".into(),
+                accent_light: "#b58900".into(),
+                selection_stroke: "#268bd2".into(),
+                selection_fill: "rgba(38, 139, 210, 0.1)".into(),
+                danger: "#dc322f".into(),
+            },
+        );
+
+        let mut config = ThemeConfig {
+            name: "solarized-light".to_string(),
+            ..Default::default()
+        };
+        config
+            .overrides
+            .insert("accent".to_string(), "#d33682".to_string());
+
+        let resolved = resolve_theme(&config, &custom_themes);
+        assert_eq!(resolved.canvas_bg, "#fdf6e3");
+        assert_eq!(resolved.accent, "#d33682");
+        assert_eq!(resolved.mode, "light");
     }
 
     #[test]

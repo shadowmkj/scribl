@@ -61,6 +61,16 @@ fn reveal_config_file(app: tauri::AppHandle) -> Result<(), String> {
         .map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+fn reveal_themes_folder(app: tauri::AppHandle) -> Result<(), String> {
+    use tauri_plugin_opener::OpenerExt;
+    let themes_dir = watcher::get_themes_dir();
+    let _ = watcher::ensure_default_config_exists();
+    app.opener()
+        .reveal_item_in_dir(themes_dir)
+        .map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -135,6 +145,7 @@ pub fn run() {
             save_config,
             open_config_file,
             reveal_config_file,
+            reveal_themes_folder,
             get_app_version
         ])
         .run(tauri::generate_context!())

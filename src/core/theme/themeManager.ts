@@ -147,8 +147,12 @@ export function calculateLuminanceMode(canvasBg: string): ThemeMode {
   return 'dark';
 }
 
-export function resolveTheme(config: ThemeConfig): ThemeColors {
-  const base = THEME_PRESETS[config.name] || THEME_PRESETS['default-dark'];
+export function resolveTheme(
+  config: ThemeConfig,
+  customThemes?: Record<string, ThemeColors>,
+): ThemeColors {
+  const base = customThemes?.[config.name] || THEME_PRESETS[config.name]
+    || THEME_PRESETS['default-dark'];
   const overrides = config.overrides || {};
   const resolved: ThemeColors = {
     ...base,
