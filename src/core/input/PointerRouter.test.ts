@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCameraStore } from '../../stores/useCameraStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
-import { StrokeElement } from '../../types/canvas';
+import { ShapeElement, StrokeElement } from '../../types/canvas';
 import { ScratchRenderer } from '../engine/ScratchRenderer';
 import { PointerRouter } from './PointerRouter';
 
@@ -29,6 +29,7 @@ describe('PointerRouter - Zoom Tool', () => {
     useToolStore.setState({
       currentTool: 'zoom',
       zoomMode: 'scrubby',
+      editingText: null,
     });
   });
 
@@ -551,5 +552,348 @@ describe('PointerRouter - Zoom Tool', () => {
     expect(editing?.text).toBe('Click to Edit Note');
     expect(editing?.fontSize).toBe(20);
     expect(editing?.color).toBe('#0284c7');
+  });
+});
+
+describe('PointerRouter - Shape Drawing', () => {
+  let router: PointerRouter;
+  let container: HTMLDivElement;
+  let scratch: ScratchRenderer;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    container.setPointerCapture = vi.fn();
+    container.releasePointerCapture = vi.fn();
+
+    scratch = new ScratchRenderer();
+    router = new PointerRouter(scratch);
+
+    useDocumentStore.getState().clearDocument();
+
+    useCameraStore.setState({
+      camera: { x: 0, y: 0, zoom: 1.0 },
+      viewportWidth: 1000,
+      viewportHeight: 800,
+      isSpacePressed: false,
+      isPanning: false,
+    });
+
+    useToolStore.setState({
+      currentTool: 'rectangle',
+      color: '#0284c7',
+      fillColor: 'transparent',
+      strokeSize: 4,
+      strokeStyle: 'solid',
+      editingText: null,
+    });
+  });
+
+  it('draws a rectangle and commits to document store on pointer up', () => {
+    // Screen (600, 500) at camera (0,0) with 1000x800 viewport -> world (100, 100)
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 600,
+        clientY: 500,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+      container,
+    );
+
+    // Screen (750, 600) -> world (250, 200)
+    router.handlePointerMove(
+      new PointerEvent('pointermove', {
+        clientX: 750,
+        clientY: 600,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+    );
+
+    // Check preview during drag
+    expect(scratch.getShapePreview()).toBeDefined();
+    expect(scratch.getShapePreview()?.width).toBe(150);
+    expect(scratch.getShapePreview()?.height).toBe(100);
+
+    router.handlePointerUp(
+      new PointerEvent('pointerup', {
+        clientX: 750,
+        clientY: 600,
+        pointerId: 1,
+        pointerType: 'mouse',
+      }),
+      container,
+    );
+
+    const doc = useDocumentStore.getState();
+    expect(doc.elementIds.length).toBe(1);
+    const element = doc.elements[doc.elementIds[0]] as ShapeElement;
+    expect(element.type).toBe('shape');
+    expect(element.shapeType).toBe('rectangle');
+    expect(element.x).toBe(100);
+    expect(element.y).toBe(100);
+    expect(element.width).toBe(150);
+    expect(element.height).toBe(100);
+    expect(element.strokeColor).toBe('#0284c7');
+    expect(element.strokeWidth).toBe(4);
+    expect(element.strokeStyle).toBe('solid');
+
+    // Scratch preview should be cleared on pointer up
+    expect(scratch.getShapePreview()).toBeNull();
+
+    // Shape should be selected and tool transitioned to select (visual mode)
+    expect(doc.selectedIds).toEqual([element.id]);
+    expect(useToolStore.getState().currentTool).toBe('select');
+  });
+
+  it('constrains rectangle to square when Shift is held', () => {
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 600,
+        clientY: 500,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+        shiftKey: true,
+      }),
+      container,
+    );
+
+    router.handlePointerMove(
+      new PointerEvent('pointermove', {
+        clientX: 750,
+        clientY: 580,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+        shiftKey: true,
+      }),
+    );
+
+    router.handlePointerUp(
+      new PointerEvent('pointerup', {
+        clientX: 750,
+        clientY: 580,
+        pointerId: 1,
+        pointerType: 'mouse',
+        shiftKey: true,
+      }),
+      container,
+    );
+
+    const element = useDocumentStore.getState()
+      .elements[useDocumentStore.getState().elementIds[0]] as ShapeElement;
+    expect(element.width).toBe(element.height);
+    expect(element.width).toBe(150);
+  });
+
+  it('expands from center when Alt is held', () => {
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 600,
+        clientY: 500,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+        altKey: true,
+      }),
+      container,
+    );
+
+    router.handlePointerMove(
+      new PointerEvent('pointermove', {
+        clientX: 700,
+        clientY: 550,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+        altKey: true,
+      }),
+    );
+
+    router.handlePointerUp(
+      new PointerEvent('pointerup', {
+        clientX: 700,
+        clientY: 550,
+        pointerId: 1,
+        pointerType: 'mouse',
+        altKey: true,
+      }),
+      container,
+    );
+
+    const element = useDocumentStore.getState()
+      .elements[useDocumentStore.getState().elementIds[0]] as ShapeElement;
+    // Start was world (100, 100). Cursor was world (200, 150), dx = 100, dy = 50.
+    // Center is (100, 100), width = 200, height = 100, top-left x = 0, y = 50.
+    expect(element.x).toBe(0);
+    expect(element.y).toBe(50);
+    expect(element.width).toBe(200);
+    expect(element.height).toBe(100);
+  });
+
+  it('draws an arrow with startPoint and endPoint', () => {
+    useToolStore.setState({ currentTool: 'arrow' });
+
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 500,
+        clientY: 400,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+      container,
+    );
+
+    router.handlePointerMove(
+      new PointerEvent('pointermove', {
+        clientX: 600,
+        clientY: 500,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+    );
+
+    router.handlePointerUp(
+      new PointerEvent('pointerup', {
+        clientX: 600,
+        clientY: 500,
+        pointerId: 1,
+        pointerType: 'mouse',
+      }),
+      container,
+    );
+
+    const doc = useDocumentStore.getState();
+    expect(doc.elementIds.length).toBe(1);
+    const element = doc.elements[doc.elementIds[0]] as ShapeElement;
+    expect(element.shapeType).toBe('arrow');
+    expect(element.startPoint).toEqual({ x: 0, y: 0 });
+    expect(element.endPoint).toEqual({ x: 100, y: 100 });
+  });
+
+  it('snaps line angle to 15-degree increments when Shift is held', () => {
+    useToolStore.setState({ currentTool: 'line' });
+
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 500,
+        clientY: 400,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+        shiftKey: true,
+      }),
+      container,
+    );
+
+    // Vector is (100, 10) -> angle ~5.7 degrees (< 7.5 deg), should snap to 0 degrees (horizontal)
+    router.handlePointerMove(
+      new PointerEvent('pointermove', {
+        clientX: 600,
+        clientY: 410,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+        shiftKey: true,
+      }),
+    );
+
+    router.handlePointerUp(
+      new PointerEvent('pointerup', {
+        clientX: 600,
+        clientY: 410,
+        pointerId: 1,
+        pointerType: 'mouse',
+        shiftKey: true,
+      }),
+      container,
+    );
+
+    const element = useDocumentStore.getState()
+      .elements[useDocumentStore.getState().elementIds[0]] as ShapeElement;
+    expect(element.endPoint?.y).toBeCloseTo(0, 1);
+  });
+
+  it('selects newly drawn shape and allows moving it immediately in visual mode', () => {
+    // 1. Draw a rectangle
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 600,
+        clientY: 500,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+      container,
+    );
+
+    router.handlePointerMove(
+      new PointerEvent('pointermove', {
+        clientX: 700,
+        clientY: 580,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+    );
+
+    router.handlePointerUp(
+      new PointerEvent('pointerup', {
+        clientX: 700,
+        clientY: 580,
+        pointerId: 1,
+        pointerType: 'mouse',
+      }),
+      container,
+    );
+
+    const doc = useDocumentStore.getState();
+    const shapeId = doc.elementIds[0];
+    expect(doc.selectedIds).toEqual([shapeId]);
+    expect(useToolStore.getState().currentTool).toBe('select');
+
+    // 2. Immediately drag to move the shape
+    // Pointer down on the shape at world (120, 120) -> screen (620, 520)
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 620,
+        clientY: 520,
+        pointerId: 2,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+      container,
+    );
+    expect(router.getState()).toBe('DRAGGING_SELECTION');
+
+    // Drag by +40px X and +30px Y to screen (660, 550)
+    router.handlePointerMove(
+      new PointerEvent('pointermove', {
+        clientX: 660,
+        clientY: 550,
+        pointerId: 2,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+    );
+
+    router.handlePointerUp(
+      new PointerEvent('pointerup', {
+        clientX: 660,
+        clientY: 550,
+        pointerId: 2,
+        pointerType: 'mouse',
+      }),
+      container,
+    );
+
+    const movedElement = useDocumentStore.getState().elements[shapeId] as ShapeElement;
+    expect(movedElement.x).toBe(140); // 100 + 40
+    expect(movedElement.y).toBe(130); // 100 + 30
   });
 });

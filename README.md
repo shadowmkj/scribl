@@ -40,7 +40,7 @@ Engineered from the ground up to support high-refresh-rate displays (120Hz–240
   - Clean slate-gray trailing streak that tapers and smoothly dissolves over ~180ms.
   - Circular reticle cursor matching the eraser's hit-detection footprint.
 - 🎨 **Glassmorphic Floating HUD**:
-  - Bottom-docked floating island toolbar (`Select`, `Pen`, `Eraser`, `Zoom`).
+  - Bottom-docked floating island toolbar (`Select`, `Pen`, `Eraser`, `Shapes`, `Zoom`).
   - Dedicated **Zoom Tool** featuring **Scrubby Zoom** (horizontal drag scaling) and **Selection Zoom** (box framing).
   - Contextual color palette (8 curated swatches) and 4 discrete stroke thicknesses.
   - Zoom HUD with quick presets (`100% / Shift+0`, `+`, `-`).
@@ -84,10 +84,18 @@ scribl.keymap.set("n", "f", "zoom.fit_all", { desc = "Fit Drawing" })
 -- Dynamic Toolbar Layout
 scribl.ui.toolbar = {
   position = "bottom", -- "bottom", "top", "left", "right"
+  groups = {
+    shapes = {
+      label = "Shapes",
+      default = "rectangle",
+      items = { "rectangle", "circle", "diamond", "line", "arrow" },
+    },
+  },
   items = {
     "select",
     "pen",
     "eraser",
+    "shapes",
     "zoom",
     "|",
     "undo",
@@ -102,22 +110,24 @@ scribl.ui.toolbar = {
 
 ## ⌨️ Keyboard Shortcuts
 
-| Shortcut                                 | Action                        |
-| ---------------------------------------- | ----------------------------- |
-| `P` or `2`                               | **Pen Tool**                  |
-| `E` or `3`                               | **Eraser Tool**               |
-| `V` or `1`                               | **Select / Move Tool**        |
-| `Z` or `4`                               | **Zoom Tool**                 |
-| `Space` + Drag                           | **Pan Canvas**                |
-| `Cmd/Ctrl + Z`                           | **Undo**                      |
-| `Cmd/Ctrl + Shift + Z` or `Cmd/Ctrl + Y` | **Redo**                      |
-| `Backspace` or `Delete`                  | **Delete Selected Strokes**   |
-| `+` / `=`                                | **Zoom In**                   |
-| `-`                                      | **Zoom Out**                  |
-| `Shift + 0`                              | **Reset Zoom (100%)**         |
-| `Alt` + Click (Zoom Tool)                | **Zoom Out (Step)**           |
-| `Shift` + Drag (Zoom Tool)               | **Toggle Scrubby / Box Mode** |
-| Mouse Wheel                              | **Cursor-Anchored Zoom**      |
+| Shortcut                                 | Action                                         |
+| ---------------------------------------- | ---------------------------------------------- |
+| `P` or `2`                               | **Pen Tool**                                   |
+| `E` or `3`                               | **Eraser Tool**                                |
+| `V` or `1`                               | **Select / Move Tool**                         |
+| `S` or `5`                               | **Shapes Tool (press twice to browse shapes)** |
+| `R`                                      | **Rectangle Shape Tool**                       |
+| `Z` or `4`                               | **Zoom Tool**                                  |
+| `Space` + Drag                           | **Pan Canvas**                                 |
+| `Cmd/Ctrl + Z`                           | **Undo**                                       |
+| `Cmd/Ctrl + Shift + Z` or `Cmd/Ctrl + Y` | **Redo**                                       |
+| `Backspace` or `Delete`                  | **Delete Selected Strokes**                    |
+| `+` / `=`                                | **Zoom In**                                    |
+| `-`                                      | **Zoom Out**                                   |
+| `Shift + 0`                              | **Reset Zoom (100%)**                          |
+| `Alt` + Click (Zoom Tool)                | **Zoom Out (Step)**                            |
+| `Shift` + Drag (Zoom Tool)               | **Toggle Scrubby / Box Mode**                  |
+| Mouse Wheel                              | **Cursor-Anchored Zoom**                       |
 
 ---
 

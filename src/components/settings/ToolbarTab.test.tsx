@@ -6,7 +6,20 @@ import { ToolbarTab } from './ToolbarTab';
 describe('ToolbarTab', () => {
   beforeEach(() => {
     useConfigStore.setState({
-      config: JSON.parse(JSON.stringify(DEFAULT_CONFIG)),
+      config: {
+        ...DEFAULT_CONFIG,
+        toolbar: {
+          position: 'bottom',
+          groups: {
+            shapes: {
+              label: 'Shapes',
+              default: 'rectangle',
+              items: ['rectangle', 'circle', 'diamond', 'line', 'arrow'],
+            },
+          },
+          items: ['select', 'pen', 'shapes', 'text', 'zoom'],
+        },
+      },
     });
   });
 
@@ -19,7 +32,7 @@ describe('ToolbarTab', () => {
     render(<ToolbarTab />);
     const textToggle = screen.getByText('Text Tool');
 
-    // Currently included in DEFAULT_CONFIG
+    // Currently included in config
     expect(useConfigStore.getState().config.toolbar.items).toContain('text');
 
     // Toggle off
@@ -29,5 +42,36 @@ describe('ToolbarTab', () => {
     // Toggle back on
     fireEvent.click(textToggle);
     expect(useConfigStore.getState().config.toolbar.items).toContain('text');
+  });
+
+  it('renders all tool categories and descriptions', () => {
+    render(<ToolbarTab />);
+
+    expect(screen.getByText('Primary Tools')).toBeTruthy();
+    expect(screen.getByText('Tool Groups & Flyouts')).toBeTruthy();
+    expect(screen.getByText('Standalone Shapes')).toBeTruthy();
+    expect(screen.getByText('Quick Actions')).toBeTruthy();
+
+    expect(screen.getByText('Shapes Flyout')).toBeTruthy();
+  });
+
+  it('toggles item inclusion in toolbar.items', () => {
+    render(<ToolbarTab />);
+
+    const undoCheckbox = screen.getByLabelText(/Undo Action/);
+    expect((undoCheckbox as HTMLInputElement).checked).toBe(false);
+
+    fireEvent.click(undoCheckbox);
+
+    expect(useConfigStore.getState().config.toolbar.items).toContain('undo');
+  });
+
+  it('changes dock position', () => {
+    render(<ToolbarTab />);
+
+    const topButton = screen.getByText('Top');
+    fireEvent.click(topButton);
+
+    expect(useConfigStore.getState().config.toolbar.position).toBe('top');
   });
 });

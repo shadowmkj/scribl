@@ -20,10 +20,25 @@ export interface KeymapEntry {
   desc?: string;
 }
 
+export interface ToolGroupConfig {
+  label: string;
+  default: string;
+  items: string[];
+}
+
 export interface ToolbarConfig {
   position: 'bottom' | 'top' | 'left' | 'right';
   items: string[];
+  groups?: Record<string, ToolGroupConfig>;
 }
+
+export const DEFAULT_GROUPS: Record<string, ToolGroupConfig> = {
+  shapes: {
+    label: 'Shapes',
+    default: 'rectangle',
+    items: ['rectangle', 'circle', 'diamond', 'line', 'arrow'],
+  },
+};
 
 export interface ScriblConfig {
   options: AppOptions;
@@ -49,6 +64,9 @@ export const DEFAULT_CONFIG: ScriblConfig = {
     { mode: 'n', lhs: '3', rhs: 'tool.eraser', desc: 'Eraser Tool' },
     { mode: 'n', lhs: 'v', rhs: 'tool.select', desc: 'Select Tool' },
     { mode: 'n', lhs: '1', rhs: 'tool.select', desc: 'Select Tool' },
+    { mode: 'n', lhs: 's', rhs: 'tool.shapes', desc: 'Shapes Tool (Browse on double-press)' },
+    { mode: 'n', lhs: '6', rhs: 'tool.shapes', desc: 'Shapes Tool' },
+    { mode: 'n', lhs: 'r', rhs: 'tool.shape.rectangle', desc: 'Rectangle Shape' },
     { mode: 'n', lhs: 'z', rhs: 'tool.zoom', desc: 'Zoom Tool' },
     { mode: 'n', lhs: '4', rhs: 'tool.zoom', desc: 'Zoom Tool' },
     { mode: 'n', lhs: 't', rhs: 'tool.text', desc: 'Text Tool' },
@@ -85,10 +103,12 @@ export const DEFAULT_CONFIG: ScriblConfig = {
   ],
   toolbar: {
     position: 'bottom',
+    groups: DEFAULT_GROUPS,
     items: [
       'select',
       'pen',
       'eraser',
+      'shapes',
       'text',
       'zoom',
       '|',

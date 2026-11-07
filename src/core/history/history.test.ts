@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { StrokeElement, TextElement } from '../../types/canvas';
+import { ShapeElement, StrokeElement, TextElement } from '../../types/canvas';
 import { DocumentData } from '../../types/commands';
 import {
   AddElementCommand,
   AddElementsCommand,
+  applyElementDelta,
   DeleteElementsCommand,
   MoveElementsCommand,
   TransformElementsCommand,
@@ -220,5 +221,58 @@ describe('HistoryStack and Commands', () => {
     const redoneEl = data.elements['t1'] as TextElement;
     expect(redoneEl.text).toBe('Updated Text\nSecond Line');
     expect(redoneEl.width).toBe(180);
+  });
+
+  it('translates line and arrow start/end points with applyElementDelta', () => {
+    const arrow: ShapeElement = {
+      id: 'a1',
+      type: 'shape',
+      shapeType: 'arrow',
+      x: 0,
+      y: 0,
+      width: 50,
+      height: 50,
+      zIndex: 1,
+      strokeColor: '#000',
+      strokeWidth: 2,
+      strokeStyle: 'solid',
+      startPoint: { x: 0, y: 0 },
+      endPoint: { x: 50, y: 50 },
+    };
+    const shifted = applyElementDelta(arrow, 10, 20);
+    expect(shifted.x).toBe(10);
+    expect(shifted.y).toBe(20);
+    expect(shifted.startPoint).toEqual({ x: 10, y: 20 });
+    expect(shifted.endPoint).toEqual({ x: 60, y: 70 });
+  });
+
+  it('moves shapes with MoveElementsCommand and reverses on undo', () => {
+    const history = new HistoryStack();
+    const rect: ShapeElement = {
+      id: 'r1',
+      type: 'shape',
+      shapeType: 'rectangle',
+      x: 10,
+      y: 20,
+      width: 100,
+      height: 50,
+      zIndex: 1,
+      strokeColor: '#000',
+      strokeWidth: 2,
+      strokeStyle: 'solid',
+    };
+    let data: DocumentData = {
+      elements: { r1: rect },
+      elementIds: ['r1'],
+      selectedIds: ['r1'],
+    };
+
+    data = history.execute(new MoveElementsCommand(['r1'], 15, 25), data);
+    expect(data.elements['r1'].x).toBe(25);
+    expect(data.elements['r1'].y).toBe(45);
+
+    data = history.undo(data);
+    expect(data.elements['r1'].x).toBe(10);
+    expect(data.elements['r1'].y).toBe(20);
   });
 });

@@ -1,6 +1,7 @@
-import { Camera, CanvasElement, StrokeElement, TextElement } from '../../types/canvas';
+import { Camera, CanvasElement, ShapeElement, StrokeElement, TextElement } from '../../types/canvas';
 import { getFontFamilyString } from './fontConstants';
 import { getStrokeOutline, getSvgPathFromStroke } from './InkingEngine';
+import { generateShapePath } from './shapeGeometry';
 
 export function renderCommittedCanvas(
   ctx: CanvasRenderingContext2D,
@@ -54,6 +55,8 @@ export function renderCommittedCanvas(
 
     if (el.type === 'stroke') {
       renderStroke(ctx, el);
+    } else if (el.type === 'shape') {
+      renderShape(ctx, el);
     } else if (el.type === 'text') {
       if (editingTextElementId && editingTextElementId === el.id) {
         continue;
@@ -77,6 +80,38 @@ export function renderText(ctx: CanvasRenderingContext2D, textEl: TextElement) {
     const line = lines[i].replace(/\t/g, '  ');
     ctx.fillText(line, textEl.x, textEl.y + i * lineHeightPx);
   }
+  ctx.restore();
+}
+
+export function renderShape(ctx: CanvasRenderingContext2D, el: ShapeElement) {
+  if (!el.cachedPath2D) {
+    el.cachedPath2D = generateShapePath(el);
+  }
+
+  ctx.save();
+
+  // Apply Line Style
+  if (el.strokeStyle === 'dashed') {
+    ctx.setLineDash([el.strokeWidth * 2, el.strokeWidth * 2]);
+  } else if (el.strokeStyle === 'dotted') {
+    ctx.setLineDash([el.strokeWidth, el.strokeWidth]);
+  } else {
+    ctx.setLineDash([]);
+  }
+
+  // Fill
+  if (el.fillColor && el.fillColor !== 'transparent') {
+    ctx.fillStyle = el.fillColor;
+    ctx.fill(el.cachedPath2D);
+  }
+
+  // Stroke
+  ctx.strokeStyle = el.strokeColor;
+  ctx.lineWidth = el.strokeWidth;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.stroke(el.cachedPath2D);
+
   ctx.restore();
 }
 

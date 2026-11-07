@@ -48,6 +48,9 @@ scribl.keymap.set("n", "e", "tool.eraser", { desc = "Activate Eraser" })
 scribl.keymap.set("n", "3", "tool.eraser", { desc = "Activate Eraser" })
 scribl.keymap.set("n", "v", "tool.select", { desc = "Activate Select" })
 scribl.keymap.set("n", "1", "tool.select", { desc = "Activate Select" })
+scribl.keymap.set("n", "s", "tool.shapes", { desc = "Shapes Tool (Browse on double-press)" })
+scribl.keymap.set("n", "6", "tool.shapes", { desc = "Shapes Tool" })
+scribl.keymap.set("n", "r", "tool.shape.rectangle", { desc = "Rectangle Shape" })
 scribl.keymap.set("n", "z", "tool.zoom", { desc = "Activate Zoom" })
 scribl.keymap.set("n", "4", "tool.zoom", { desc = "Activate Zoom" })
 scribl.keymap.set("n", "t", "tool.text", { desc = "Activate Text Tool" })
@@ -97,14 +100,29 @@ scribl.keymap.set("v", "<D-d>", "edit.duplicate", { desc = "Duplicate" })
 --------------------------------------------------------------------------------
 -- 3. Floating Toolbar Layout
 -- Position: "bottom", "top", "left", "right"
--- Items: "select", "pen", "eraser", "text", "zoom", "|", "undo", "redo", "|", "clear"
+-- Groups: Custom tool flyouts/drawers (e.g. shapes)
+-- Items: Tools ("select", "pen", "eraser", "text", "zoom"), groups ("shapes"), or actions ("undo", "redo", "clear")
 --------------------------------------------------------------------------------
 scribl.ui.toolbar = {
   position = "bottom",
+  groups = {
+    shapes = {
+      label = "Shapes",
+      default = "rectangle",
+      items = {
+        "rectangle",
+        "circle",
+        "diamond",
+        "line",
+        "arrow",
+      },
+    },
+  },
   items = {
     "select",
     "pen",
     "eraser",
+    "shapes",
     "zoom",
     "text",
     "|",

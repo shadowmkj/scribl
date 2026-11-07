@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Command, CommandRegistry } from './CommandRegistry';
+import { useToolStore } from '../../stores/useToolStore';
+import { Command, CommandRegistry, commandRegistry } from './CommandRegistry';
 
 describe('CommandRegistry', () => {
   let registry: CommandRegistry;
@@ -40,5 +41,52 @@ describe('CommandRegistry', () => {
     const tools = registry.getByCategory('tool');
     expect(tools.length).toBe(2);
     expect(tools.map((t) => t.id)).toEqual(['tool.pen', 'tool.eraser']);
+  });
+
+  it('registers default shape commands and executes them', () => {
+    const shapeTools = ['rectangle', 'circle', 'diamond', 'line', 'arrow'] as const;
+    for (const tool of shapeTools) {
+      const cmdId = `tool.shape.${tool}`;
+      const cmd = commandRegistry.get(cmdId);
+      expect(cmd).toBeDefined();
+      expect(cmd?.category).toBe('tool');
+
+      commandRegistry.execute(cmdId);
+      expect(useToolStore.getState().currentTool).toBe(tool);
+      expect(cmd?.isActive?.()).toBe(true);
+    }
+  });
+
+  it('executes tool.shapes: selects last used shape, then pressing twice toggles flyout', () => {
+    useToolStore.setState({
+      currentTool: 'pen',
+      activeShapeTool: 'circle',
+      isShapesFlyoutOpen: false,
+    });
+
+    // 1st press: switches to last-used shape (circle), flyout remains closed
+    commandRegistry.execute('tool.shapes');
+    expect(useToolStore.getState().currentTool).toBe('circle');
+    expect(useToolStore.getState().isShapesFlyoutOpen).toBe(false);
+
+    // 2nd press (already on active shape): opens shapes flyout
+    commandRegistry.execute('tool.shapes');
+    expect(useToolStore.getState().isShapesFlyoutOpen).toBe(true);
+
+    // 3rd press: toggles shapes flyout closed
+    commandRegistry.execute('tool.shapes');
+    expect(useToolStore.getState().isShapesFlyoutOpen).toBe(false);
+  });
+
+  it('supports shape command aliases (tool.rectangle, tool.shape, etc.)', () => {
+    useToolStore.setState({ currentTool: 'pen' });
+    commandRegistry.execute('tool.rectangle');
+    expect(useToolStore.getState().currentTool).toBe('rectangle');
+
+    commandRegistry.execute('tool.arrow');
+    expect(useToolStore.getState().currentTool).toBe('arrow');
+
+    commandRegistry.execute('tool.shape');
+    expect(useToolStore.getState().currentTool).toBe('arrow');
   });
 });

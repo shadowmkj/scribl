@@ -66,7 +66,12 @@ export function registerDefaultCommands(handlers?: {
     label: 'Pen',
     category: 'tool',
     description: 'Freehand vector inking tool',
-    execute: () => useToolStore.getState().setTool('pen'),
+    execute: () => {
+      useToolStore.getState().setTool('pen');
+      if (useDocumentStore.getState().selectedIds.length > 0) {
+        useDocumentStore.getState().setSelected([]);
+      }
+    },
     isActive: () => useToolStore.getState().currentTool === 'pen',
   });
 
@@ -75,7 +80,12 @@ export function registerDefaultCommands(handlers?: {
     label: 'Eraser',
     category: 'tool',
     description: 'Stroke eraser tool',
-    execute: () => useToolStore.getState().setTool('eraser'),
+    execute: () => {
+      useToolStore.getState().setTool('eraser');
+      if (useDocumentStore.getState().selectedIds.length > 0) {
+        useDocumentStore.getState().setSelected([]);
+      }
+    },
     isActive: () => useToolStore.getState().currentTool === 'eraser',
   });
 
@@ -95,6 +105,185 @@ export function registerDefaultCommands(handlers?: {
     description: 'Scrubby or marquee selection zoom tool',
     execute: () => useToolStore.getState().setTool('zoom'),
     isActive: () => useToolStore.getState().currentTool === 'zoom',
+  });
+
+  commandRegistry.register({
+    id: 'tool.shapes',
+    label: 'Shapes Tool',
+    category: 'tool',
+    description: 'Activate last-used shape tool (press twice to browse shapes)',
+    execute: () => {
+      const toolStore = useToolStore.getState();
+      const currentTool = toolStore.currentTool;
+      const activeShape = toolStore.activeShapeTool || 'rectangle';
+      const isFlyoutOpen = toolStore.isShapesFlyoutOpen;
+
+      if (currentTool !== activeShape) {
+        toolStore.setTool(activeShape);
+        toolStore.setShapesFlyoutOpen(false);
+      } else {
+        toolStore.setShapesFlyoutOpen(!isFlyoutOpen);
+      }
+
+      if (useDocumentStore.getState().selectedIds.length > 0) {
+        useDocumentStore.getState().setSelected([]);
+      }
+    },
+    isActive: () => {
+      const tool = useToolStore.getState().currentTool;
+      return ['rectangle', 'circle', 'diamond', 'line', 'arrow'].includes(tool);
+    },
+  });
+
+  commandRegistry.register({
+    id: 'tool.shape',
+    label: 'Shapes Tool',
+    category: 'tool',
+    description: 'Activate last-used shape tool (alias for tool.shapes)',
+    execute: () => {
+      commandRegistry.execute('tool.shapes');
+    },
+    isActive: () => commandRegistry.get('tool.shapes')?.isActive?.() ?? false,
+  });
+
+  commandRegistry.register({
+    id: 'tool.shape.rectangle',
+    label: 'Rectangle',
+    category: 'tool',
+    description: 'Draw rectangles or squares',
+    execute: () => {
+      const toolStore = useToolStore.getState();
+      toolStore.setTool('rectangle');
+      toolStore.setActiveShapeTool('rectangle');
+      toolStore.setShapesFlyoutOpen(false);
+      if (useDocumentStore.getState().selectedIds.length > 0) {
+        useDocumentStore.getState().setSelected([]);
+      }
+    },
+    isActive: () => useToolStore.getState().currentTool === 'rectangle',
+  });
+
+  commandRegistry.register({
+    id: 'tool.rectangle',
+    label: 'Rectangle',
+    category: 'tool',
+    description: 'Draw rectangles or squares (alias)',
+    execute: () => {
+      commandRegistry.execute('tool.shape.rectangle');
+    },
+    isActive: () => useToolStore.getState().currentTool === 'rectangle',
+  });
+
+  commandRegistry.register({
+    id: 'tool.shape.circle',
+    label: 'Circle',
+    category: 'tool',
+    description: 'Draw circles or ellipses',
+    execute: () => {
+      const toolStore = useToolStore.getState();
+      toolStore.setTool('circle');
+      toolStore.setActiveShapeTool('circle');
+      toolStore.setShapesFlyoutOpen(false);
+      if (useDocumentStore.getState().selectedIds.length > 0) {
+        useDocumentStore.getState().setSelected([]);
+      }
+    },
+    isActive: () => useToolStore.getState().currentTool === 'circle',
+  });
+
+  commandRegistry.register({
+    id: 'tool.circle',
+    label: 'Circle',
+    category: 'tool',
+    description: 'Draw circles or ellipses (alias)',
+    execute: () => {
+      commandRegistry.execute('tool.shape.circle');
+    },
+    isActive: () => useToolStore.getState().currentTool === 'circle',
+  });
+
+  commandRegistry.register({
+    id: 'tool.shape.diamond',
+    label: 'Diamond',
+    category: 'tool',
+    description: 'Draw diamonds / rhombuses',
+    execute: () => {
+      const toolStore = useToolStore.getState();
+      toolStore.setTool('diamond');
+      toolStore.setActiveShapeTool('diamond');
+      toolStore.setShapesFlyoutOpen(false);
+      if (useDocumentStore.getState().selectedIds.length > 0) {
+        useDocumentStore.getState().setSelected([]);
+      }
+    },
+    isActive: () => useToolStore.getState().currentTool === 'diamond',
+  });
+
+  commandRegistry.register({
+    id: 'tool.diamond',
+    label: 'Diamond',
+    category: 'tool',
+    description: 'Draw diamonds / rhombuses (alias)',
+    execute: () => {
+      commandRegistry.execute('tool.shape.diamond');
+    },
+    isActive: () => useToolStore.getState().currentTool === 'diamond',
+  });
+
+  commandRegistry.register({
+    id: 'tool.shape.line',
+    label: 'Line',
+    category: 'tool',
+    description: 'Draw straight lines',
+    execute: () => {
+      const toolStore = useToolStore.getState();
+      toolStore.setTool('line');
+      toolStore.setActiveShapeTool('line');
+      toolStore.setShapesFlyoutOpen(false);
+      if (useDocumentStore.getState().selectedIds.length > 0) {
+        useDocumentStore.getState().setSelected([]);
+      }
+    },
+    isActive: () => useToolStore.getState().currentTool === 'line',
+  });
+
+  commandRegistry.register({
+    id: 'tool.line',
+    label: 'Line',
+    category: 'tool',
+    description: 'Draw straight lines (alias)',
+    execute: () => {
+      commandRegistry.execute('tool.shape.line');
+    },
+    isActive: () => useToolStore.getState().currentTool === 'line',
+  });
+
+  commandRegistry.register({
+    id: 'tool.shape.arrow',
+    label: 'Arrow',
+    category: 'tool',
+    description: 'Draw directional arrows',
+    execute: () => {
+      const toolStore = useToolStore.getState();
+      toolStore.setTool('arrow');
+      toolStore.setActiveShapeTool('arrow');
+      toolStore.setShapesFlyoutOpen(false);
+      if (useDocumentStore.getState().selectedIds.length > 0) {
+        useDocumentStore.getState().setSelected([]);
+      }
+    },
+    isActive: () => useToolStore.getState().currentTool === 'arrow',
+  });
+
+  commandRegistry.register({
+    id: 'tool.arrow',
+    label: 'Arrow',
+    category: 'tool',
+    description: 'Draw directional arrows (alias)',
+    execute: () => {
+      commandRegistry.execute('tool.shape.arrow');
+    },
+    isActive: () => useToolStore.getState().currentTool === 'arrow',
   });
 
   // Zoom actions

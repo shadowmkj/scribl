@@ -1,7 +1,7 @@
 import { useCameraStore } from '../../stores/useCameraStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
-import { Camera, CanvasElement, ToolType } from '../../types/canvas';
+import { Camera, CanvasElement, ShapeElement, ShapeType, ToolType } from '../../types/canvas';
 import {
   calculateBoxFitCamera,
   calculateScrubbyZoom,
@@ -22,6 +22,16 @@ import {
 } from '../geometry/transformMath';
 import { FSMState, MarqueeBox } from './ToolFSM';
 
+function isShapeTool(tool: ToolType): tool is ShapeType {
+  return (
+    tool === 'rectangle'
+    || tool === 'circle'
+    || tool === 'diamond'
+    || tool === 'line'
+    || tool === 'arrow'
+  );
+}
+
 export class PointerRouter {
   private state: FSMState = 'IDLE';
   private scratchRenderer: ScratchRenderer;
@@ -32,6 +42,8 @@ export class PointerRouter {
   private zoomStartScreen: { x: number; y: number; } = { x: 0, y: 0 };
   private zoomInitialCamera: Camera = { x: 0, y: 0, zoom: 1 };
   private zoomHasDragged: boolean = false;
+  private shapeStartWorld: { x: number; y: number; } = { x: 0, y: 0 };
+  private activeShapeTool: ShapeType | null = null;
   public marqueeBox: MarqueeBox | null = null;
   public onMarqueeUpdate?: (box: MarqueeBox | null) => void;
   public isRotateKeyHeld: boolean = false;
@@ -83,8 +95,8 @@ export class PointerRouter {
     const activeTool: ToolType = isHardwareEraser ? 'eraser' : useToolStore.getState().currentTool;
 
     const isSpacePressed = useCameraStore.getState().isSpacePressed;
-    // Spacebar held, Middle Click, or Shift+LeftClick = Pan
-    if (isSpacePressed || e.buttons === 4 || (e.shiftKey && e.buttons === 1)) {
+    // Spacebar held or Middle Click = Pan
+    if (isSpacePressed || e.buttons === 4) {
       container.setPointerCapture(e.pointerId);
       this.activePointerId = e.pointerId;
       this.state = 'PANNING';
@@ -140,6 +152,10 @@ export class PointerRouter {
       this.state = 'ERASING';
       this.scratchRenderer.startEraserTrail(worldPoint);
       this.performEraseAt(worldPoint);
+    } else if (isShapeTool(activeTool)) {
+      this.state = 'DRAWING_SHAPE';
+      this.shapeStartWorld = { x: worldPoint.x, y: worldPoint.y };
+      this.activeShapeTool = activeTool;
     } else if (activeTool === 'select') {
       const doc = useDocumentStore.getState();
 
@@ -340,6 +356,111 @@ export class PointerRouter {
       } else if (this.state === 'ERASING') {
         this.scratchRenderer.addEraserTrailPoint(worldPoint);
         this.performEraseAt(worldPoint);
+      } else if (this.state === 'DRAWING_SHAPE' && this.activeShapeTool) {
+        let currentX = worldPoint.x;
+        let currentY = worldPoint.y;
+        const startX = this.shapeStartWorld.x;
+        const startY = this.shapeStartWorld.y;
+
+        const isLineOrArrow = this.activeShapeTool === 'line' || this.activeShapeTool === 'arrow';
+
+        if (isLineOrArrow) {
+          if (ev.shiftKey) {
+            // Snap angle to 15-degree increments (PI / 12)
+            const dx = currentX - startX;
+            const dy = currentY - startY;
+            const dist = Math.hypot(dx, dy);
+            const angle = Math.atan2(dy, dx);
+            const step = Math.PI / 12;
+            const snappedAngle = Math.round(angle / step) * step;
+            currentX = startX + dist * Math.cos(snappedAngle);
+            currentY = startY + dist * Math.sin(snappedAngle);
+          }
+
+          let p1: { x: number; y: number; };
+          let p2: { x: number; y: number; };
+
+          if (ev.altKey) {
+            const dx = currentX - startX;
+            const dy = currentY - startY;
+            p1 = { x: startX - dx, y: startY - dy };
+            p2 = { x: currentX, y: currentY };
+          } else {
+            p1 = { x: startX, y: startY };
+            p2 = { x: currentX, y: currentY };
+          }
+
+          const minX = Math.min(p1.x, p2.x);
+          const minY = Math.min(p1.y, p2.y);
+          const maxX = Math.max(p1.x, p2.x);
+          const maxY = Math.max(p1.y, p2.y);
+
+          const toolState = useToolStore.getState();
+          const preview: ShapeElement = {
+            id: 'preview',
+            type: 'shape',
+            shapeType: this.activeShapeTool,
+            x: minX,
+            y: minY,
+            width: Math.max(1, maxX - minX),
+            height: Math.max(1, maxY - minY),
+            zIndex: 0,
+            strokeColor: toolState.color,
+            fillColor: toolState.fillColor,
+            strokeWidth: toolState.strokeSize,
+            strokeStyle: toolState.strokeStyle,
+            startPoint: p1,
+            endPoint: p2,
+          };
+          this.scratchRenderer.setShapePreview(preview);
+        } else {
+          let dx = currentX - startX;
+          let dy = currentY - startY;
+
+          if (ev.shiftKey) {
+            const side = Math.max(Math.abs(dx), Math.abs(dy));
+            dx = (dx >= 0 ? 1 : -1) * side;
+            dy = (dy >= 0 ? 1 : -1) * side;
+            currentX = startX + dx;
+            currentY = startY + dy;
+          }
+
+          let left: number;
+          let top: number;
+          let w: number;
+          let h: number;
+
+          if (ev.altKey) {
+            const halfW = Math.abs(dx);
+            const halfH = Math.abs(dy);
+            left = startX - halfW;
+            top = startY - halfH;
+            w = halfW * 2;
+            h = halfH * 2;
+          } else {
+            left = Math.min(startX, currentX);
+            top = Math.min(startY, currentY);
+            w = Math.abs(dx);
+            h = Math.abs(dy);
+          }
+
+          const toolState = useToolStore.getState();
+          const preview: ShapeElement = {
+            id: 'preview',
+            type: 'shape',
+            shapeType: this.activeShapeTool,
+            x: left,
+            y: top,
+            width: Math.max(1, w),
+            height: Math.max(1, h),
+            zIndex: 0,
+            strokeColor: toolState.color,
+            fillColor: toolState.fillColor,
+            strokeWidth: toolState.strokeSize,
+            strokeStyle: toolState.strokeStyle,
+          };
+          this.scratchRenderer.setShapePreview(preview);
+        }
       } else if (this.state === 'DRAGGING_SELECTION') {
         const dx = worldPoint.x - this.lastDragWorld.x;
         const dy = worldPoint.y - this.lastDragWorld.y;
@@ -408,7 +529,7 @@ export class PointerRouter {
       }
     }
 
-    if (this.state === 'DRAWING') {
+    if (this.state === 'DRAWING' || this.state === 'DRAWING_SHAPE') {
       this.scratchRenderer.render(camera, width, height);
     }
   }
@@ -439,6 +560,23 @@ export class PointerRouter {
         const element = createStrokeElement(points, color, size, zIndex);
         useDocumentStore.getState().addElement(element);
       }
+    } else if (this.state === 'DRAWING_SHAPE') {
+      const preview = this.scratchRenderer.getShapePreview();
+      this.scratchRenderer.clear(width, height);
+
+      if (preview && (preview.width > 2 || preview.height > 2)) {
+        const id = `shape_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+        const zIndex = useDocumentStore.getState().elementIds.length + 1;
+        const element: ShapeElement = {
+          ...preview,
+          id,
+          zIndex,
+        };
+        useDocumentStore.getState().addElement(element);
+        useDocumentStore.getState().setSelected([id]);
+        useToolStore.getState().setTool('select');
+      }
+      this.activeShapeTool = null;
     } else if (this.state === 'DRAGGING_SELECTION') {
       if (this.dragTotalDelta.x !== 0 || this.dragTotalDelta.y !== 0) {
         useDocumentStore.getState().commitMoveSelected(

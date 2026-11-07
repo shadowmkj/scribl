@@ -41,9 +41,37 @@ pub struct KeymapEntry {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ToolGroupConfig {
+    pub label: String,
+    pub default: String,
+    pub items: Vec<String>,
+}
+
+pub fn default_groups() -> HashMap<String, ToolGroupConfig> {
+    let mut groups = HashMap::new();
+    groups.insert(
+        "shapes".to_string(),
+        ToolGroupConfig {
+            label: "Shapes".to_string(),
+            default: "rectangle".to_string(),
+            items: vec![
+                "rectangle".to_string(),
+                "circle".to_string(),
+                "diamond".to_string(),
+                "line".to_string(),
+                "arrow".to_string(),
+            ],
+        },
+    );
+    groups
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ToolbarConfig {
     pub position: String, // "bottom", "top", "left", "right"
     pub items: Vec<String>,
+    #[serde(default = "default_groups")]
+    pub groups: HashMap<String, ToolGroupConfig>,
 }
 
 impl Default for ToolbarConfig {
@@ -54,6 +82,7 @@ impl Default for ToolbarConfig {
                 "select".to_string(),
                 "pen".to_string(),
                 "eraser".to_string(),
+                "shapes".to_string(),
                 "text".to_string(),
                 "zoom".to_string(),
                 "|".to_string(),
@@ -62,6 +91,7 @@ impl Default for ToolbarConfig {
                 "|".to_string(),
                 "clear".to_string(),
             ],
+            groups: default_groups(),
         }
     }
 }
@@ -284,6 +314,24 @@ impl Default for ScriblConfig {
                     lhs: "1".into(),
                     rhs: "tool.select".into(),
                     desc: Some("Select Tool".into()),
+                },
+                KeymapEntry {
+                    mode: "n".into(),
+                    lhs: "s".into(),
+                    rhs: "tool.shapes".into(),
+                    desc: Some("Shapes Tool (Browse on double-press)".into()),
+                },
+                KeymapEntry {
+                    mode: "n".into(),
+                    lhs: "6".into(),
+                    rhs: "tool.shapes".into(),
+                    desc: Some("Shapes Tool".into()),
+                },
+                KeymapEntry {
+                    mode: "n".into(),
+                    lhs: "r".into(),
+                    rhs: "tool.shape.rectangle".into(),
+                    desc: Some("Rectangle Shape".into()),
                 },
                 KeymapEntry {
                     mode: "n".into(),

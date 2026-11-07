@@ -23,6 +23,48 @@ const ALL_ACTIONS: ActionDefinition[] = [
   { id: 'tool.eraser', label: 'Eraser Tool', category: 'Tools', defaultLhs: 'e', mode: 'n' },
   { id: 'tool.select', label: 'Select Tool', category: 'Tools', defaultLhs: 'v', mode: 'n' },
   { id: 'tool.text', label: 'Text Tool', category: 'Tools', defaultLhs: 't', mode: 'n' },
+  {
+    id: 'tool.shapes',
+    label: 'Shapes Tool (Browse on double-press)',
+    category: 'Tools',
+    defaultLhs: 's',
+    mode: 'n',
+  },
+  {
+    id: 'tool.shape.rectangle',
+    label: 'Rectangle Shape',
+    category: 'Tools',
+    defaultLhs: 'r',
+    mode: 'n',
+  },
+  {
+    id: 'tool.shape.circle',
+    label: 'Circle Shape',
+    category: 'Tools',
+    defaultLhs: '',
+    mode: 'n',
+  },
+  {
+    id: 'tool.shape.diamond',
+    label: 'Diamond Shape',
+    category: 'Tools',
+    defaultLhs: '',
+    mode: 'n',
+  },
+  {
+    id: 'tool.shape.line',
+    label: 'Line Shape',
+    category: 'Tools',
+    defaultLhs: '',
+    mode: 'n',
+  },
+  {
+    id: 'tool.shape.arrow',
+    label: 'Arrow Shape',
+    category: 'Tools',
+    defaultLhs: '',
+    mode: 'n',
+  },
   { id: 'tool.zoom', label: 'Zoom Tool', category: 'Tools', defaultLhs: 'z', mode: 'n' },
 
   // Edit & Clipboard
@@ -251,12 +293,17 @@ export const KeybindingsTab: React.FC = () => {
         desc: actionDef?.label,
       };
 
-      // Filter out any other keymap for this action to cleanly replace it, or put new key first
+      const isSameAction = (rhs: string) =>
+        rhs === targetRhs
+        || (targetRhs.startsWith('tool.shape.')
+          && rhs === targetRhs.replace('tool.shape.', 'tool.'))
+        || (targetRhs === 'tool.shapes' && rhs === 'tool.shape');
+
       const otherKeymapsForAction = updatedKeymaps.filter(
-        (k) => (k.mode || 'n') === targetMode && k.rhs === targetRhs,
+        (k) => (k.mode || 'n') === targetMode && isSameAction(k.rhs),
       );
       const remainingKeymaps = updatedKeymaps.filter(
-        (k) => !((k.mode || 'n') === targetMode && k.rhs === targetRhs),
+        (k) => !((k.mode || 'n') === targetMode && isSameAction(k.rhs)),
       );
 
       updatedKeymaps = [newEntry, ...otherKeymapsForAction, ...remainingKeymaps];
@@ -444,10 +491,16 @@ export const KeybindingsTab: React.FC = () => {
                 }}
               >
                 {items.map((action, idx) => {
+                  const targetId = action.targetId || action.id;
                   const assignedKeymaps = config.keymaps.filter(
                     (k) =>
-                      k.rhs === (action.targetId || action.id)
-                      && (k.mode || 'n') === (action.mode || 'n'),
+                      ((k.mode || 'n') === (action.mode || 'n'))
+                      && (
+                        k.rhs === targetId
+                        || (targetId.startsWith('tool.shape.')
+                          && k.rhs === targetId.replace('tool.shape.', 'tool.'))
+                        || (targetId === 'tool.shapes' && k.rhs === 'tool.shape')
+                      ),
                   );
                   const isRecording = recordingActionId === action.id;
 
