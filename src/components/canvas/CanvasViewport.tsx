@@ -38,6 +38,8 @@ export const CanvasViewport: React.FC = () => {
   const isSpacePressed = useCameraStore((s) => s.isSpacePressed);
   const isPanning = useCameraStore((s) => s.isPanning);
   const dotGrid = useConfigStore((s) => s.config.options.dot_grid);
+  const theme = useConfigStore((s) => s.config.theme);
+  const themeMode = theme.active?.mode || 'dark';
 
   const [marqueeBox, setMarqueeBox] = useState<MarqueeBox | null>(null);
   const [isAltPressed, setIsAltPressed] = useState(false);
@@ -163,8 +165,9 @@ export const CanvasViewport: React.FC = () => {
       height,
       dpr,
       editingText?.elementId,
+      themeMode,
     );
-  }, [elements, elementIds, camera, width, height, editingText?.elementId]);
+  }, [elements, elementIds, camera, width, height, editingText?.elementId, themeMode]);
 
   // Mouse wheel zoom
   const handleWheel = (e: React.WheelEvent) => {

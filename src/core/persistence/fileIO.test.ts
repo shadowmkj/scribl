@@ -164,4 +164,46 @@ describe('fileIO', () => {
     expect(fillTextSpy).toHaveBeenCalledWith('Hello World', 50, 60);
     expect(fillTextSpy).toHaveBeenCalledWith('Line 2', 50, 60 + 24 * 1.25);
   });
+
+  it('adapts black strokes to white in dark mode and white to black in light mode when exporting to PNG', async () => {
+    const mockCtx = {
+      scale: vi.fn(),
+      translate: vi.fn(),
+      save: vi.fn(),
+      restore: vi.fn(),
+      setLineDash: vi.fn(),
+      fill: vi.fn(),
+      stroke: vi.fn(),
+      fillStyle: '',
+      strokeStyle: '',
+      lineWidth: 1,
+      lineCap: 'butt',
+      lineJoin: 'miter',
+    };
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+      mockCtx as unknown as CanvasRenderingContext2D,
+    );
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue(
+      'data:image/png;base64,mock',
+    );
+
+    const blackStroke: StrokeElement = {
+      ...dummyStroke,
+      id: 's-black',
+      color: '#000000',
+    };
+
+    // Dark mode export of black stroke -> fillStyle resolves to white (#ffffff)
+    await exportToPng({ 's-black': blackStroke }, ['s-black'], 'dark');
+    expect(mockCtx.fillStyle).toBe('#ffffff');
+
+    // Light mode export of white stroke -> fillStyle resolves to black (#000000)
+    const whiteStroke: StrokeElement = {
+      ...dummyStroke,
+      id: 's-white',
+      color: '#ffffff',
+    };
+    await exportToPng({ 's-white': whiteStroke }, ['s-white'], 'light');
+    expect(mockCtx.fillStyle).toBe('#000000');
+  });
 });

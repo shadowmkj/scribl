@@ -37,6 +37,24 @@ const STROKE_STYLES: Array<{ label: string; value: StrokeStyle; }> = [
   { label: 'Dotted', value: 'dotted' },
 ];
 
+function isColorSelected(activeColor: string, swatchHex: string): boolean {
+  if (activeColor === swatchHex) return true;
+  const a = activeColor.trim().toLowerCase();
+  const s = swatchHex.trim().toLowerCase();
+  if (a === s) return true;
+  if (
+    s === '#1e293b'
+    && (a === '#000000' || a === '#000' || a === 'black' || a === 'currentcolor'
+      || a === 'adaptive')
+  ) {
+    return true;
+  }
+  if (s === '#ffffff' && (a === '#fff' || a === 'white')) {
+    return true;
+  }
+  return false;
+}
+
 export const StyleInspector: React.FC = () => {
   const currentTool = useToolStore((s) => s.currentTool);
   const zoomMode = useToolStore((s) => s.zoomMode);
@@ -476,7 +494,7 @@ export const StyleInspector: React.FC = () => {
           }}
         >
           {COLOR_SWATCHES.map((swatch) => {
-            const isSelected = color === swatch.hex;
+            const isSelected = isColorSelected(color, swatch.hex);
             return (
               <button
                 key={swatch.hex}
@@ -651,7 +669,7 @@ export const StyleInspector: React.FC = () => {
               </button>
 
               {COLOR_SWATCHES.map((swatch) => {
-                const isSelected = fillColor === swatch.hex;
+                const isSelected = isColorSelected(fillColor, swatch.hex);
                 return (
                   <button
                     key={swatch.hex}

@@ -513,6 +513,18 @@ scribl.keymap.set("n", "<BS>", "selection.delete")
         let config = eval_lua_config_string(script, None).expect("should evaluate");
         assert_eq!(config.theme.name, "tokyo-night");
         assert_eq!(config.theme.active.as_ref().unwrap().canvas_bg, "#1a1b26");
+        assert_eq!(config.theme.active.as_ref().unwrap().mode, "dark");
+    }
+
+    #[test]
+    fn test_eval_theme_mode() {
+        let script = r#"
+            local scribl = require("scribl")
+            scribl.theme.name = "default-dark"
+            scribl.theme.mode = "light"
+        "#;
+        let config = eval_lua_config_string(script, None).expect("should evaluate");
+        assert_eq!(config.theme.active.as_ref().unwrap().mode, "light");
     }
 
     #[test]
