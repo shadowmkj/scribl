@@ -164,5 +164,11 @@ mod tests {
             APP_VERSION == base || APP_VERSION.starts_with(&unreleased_prefix),
             "expected version '{APP_VERSION}' to be '{base}' or start with '{unreleased_prefix}'"
         );
+        if option_env!("SCRIBL_IS_RELEASE").is_some() {
+            assert_eq!(
+                APP_VERSION, base,
+                "expected release version '{base}' without commit hash when SCRIBL_IS_RELEASE is set"
+            );
+        }
     }
 }

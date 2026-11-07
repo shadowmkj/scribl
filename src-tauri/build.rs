@@ -3,15 +3,25 @@ use std::process::Command;
 fn main() {
     let pkg_version = env!("CARGO_PKG_VERSION");
 
+    println!("cargo:rerun-if-env-changed=SCRIBL_RELEASE");
+    println!("cargo:rerun-if-env-changed=SCRIBL_VERSION");
+
     rerun_if_git_changes();
 
-    let version = match get_unreleased_git_info() {
-        Some(commit_hash) => format!("{pkg_version}+{commit_hash}"),
-        None => pkg_version.to_string(),
+    let version = if let Ok(custom_version) = std::env::var("SCRIBL_VERSION") {
+        custom_version
+    } else {
+        match get_unreleased_git_info() {
+            Some(commit_hash) => format!("{pkg_version}+{commit_hash}"),
+            None => pkg_version.to_string(),
+        }
     };
 
     println!("cargo:rustc-env=SCRIBL_VERSION={version}");
     println!("cargo:rustc-env=APP_VERSION={version}");
+    if is_release_build() {
+        println!("cargo:rustc-env=SCRIBL_IS_RELEASE=1");
+    }
 
     tauri_build::build();
 }
@@ -19,6 +29,11 @@ fn main() {
 /// Returns Git commit hash if this is an unreleased build (HEAD is not tagged).
 /// Returns None if HEAD points to a tag or if git is unavailable.
 fn get_unreleased_git_info() -> Option<String> {
+    // If explicitly marked as a release build via environment variable, never include commit hash
+    if is_release_build() {
+        return None;
+    }
+
     // Check if HEAD has any tag pointing directly to it
     let has_tag = Command::new("git")
         .args(["tag", "--points-at", "HEAD"])
@@ -43,6 +58,37 @@ fn get_unreleased_git_info() -> Option<String> {
         .ok()
         .filter(|out| out.status.success())
         .map(|out| String::from_utf8_lossy(&out.stdout).trim().to_string())
+}
+
+/// Determines whether the current build should be treated as an official release build.
+/// Returns true if SCRIBL_RELEASE is set, or if running in a GitHub Actions release/tag workflow.
+fn is_release_build() -> bool {
+    // 1. Explicit release flag: SCRIBL_RELEASE=true, 1, yes, on
+    if let Ok(val) = std::env::var("SCRIBL_RELEASE") {
+        let val = val.trim().to_lowercase();
+        if val == "1" || val == "true" || val == "yes" || val == "on" {
+            return true;
+        }
+    }
+
+    // 2. GitHub Actions automated release detection
+    // GITHUB_ACTIONS is always "true" in GitHub Actions.
+    // GITHUB_WORKFLOW is set to the name of the workflow (e.g. "Release").
+    // GITHUB_REF_TYPE is "tag" when a tag is pushed.
+    if std::env::var("GITHUB_ACTIONS").is_ok() {
+        if let Ok(workflow) = std::env::var("GITHUB_WORKFLOW")
+            && workflow.eq_ignore_ascii_case("release")
+        {
+            return true;
+        }
+        if let Ok(ref_type) = std::env::var("GITHUB_REF_TYPE")
+            && ref_type.eq_ignore_ascii_case("tag")
+        {
+            return true;
+        }
+    }
+
+    false
 }
 
 /// Watches git reference files so Cargo rebuilds when branches, commits, or tags change.

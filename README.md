@@ -4,6 +4,7 @@
   <p><strong>A high-performance infinite canvas sketching & whiteboard app built for mouse, stylus, and drawing tablets.</strong></p>
 
 <p>
+    <a href="https://github.com/shadowmkj/scribl/releases/latest"><img src="https://img.shields.io/github/v/release/shadowmkj/scribl?style=for-the-badge&color=10b981&label=Release" alt="Latest Release" /></a>
     <a href="https://tauri.app/"><img src="https://img.shields.io/badge/Tauri-v2-24c8db?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri v2" /></a>
     <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-61dafb?style=for-the-badge&logo=react&logoColor=black" alt="React 19" /></a>
     <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.x-3178c6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" /></a>
@@ -71,6 +72,58 @@ Engineered from the ground up for high-refresh-rate displays (120Hz–240Hz), Sc
   - Debounced autosave to local storage.
   - Open & Save native `.scribl` JSON documents.
   - 2x high-resolution PNG export bounded tightly to content with dark/light background adaptation.
+
+---
+
+## 📥 Installation
+
+Ready-to-run desktop packages for macOS, Linux, and Windows are available on the [**GitHub Releases**](https://github.com/shadowmkj/scribl/releases/latest) page.
+
+### macOS (Apple Silicon & Intel)
+
+#### Via Homebrew (Recommended)
+
+```bash
+brew install --cask shadowmkj/tap/scribl
+```
+
+#### Via Direct Download (`.dmg`)
+
+1. Download the latest `.dmg` installer from [Releases](https://github.com/shadowmkj/scribl/releases/latest):
+   - **Apple Silicon (M1/M2/M3/M4)**: `scribl_0.1.0_aarch64.dmg`
+2. Open the downloaded `.dmg` and drag **scribl** into your `/Applications` folder.
+3. **First Launch (macOS Gatekeeper)**:\
+   Because Scribl is an open-source project without a paid Apple Developer certificate ($99/year), macOS Gatekeeper may display a prompt stating the app _"is damaged and can’t be opened"_ or from an _"unidentified developer"_.
+   - **Fix via Terminal**:
+     ```bash
+     xattr -cr /Applications/scribl.app
+     ```
+   - **Or via Finder**: Right-click (or Control-click) `scribl.app` in `/Applications`, select **Open**, and click **Open** in the dialog.
+
+### Linux (.deb, .rpm, .AppImage)
+
+Download the package matching your Linux distribution from [Releases](https://github.com/shadowmkj/scribl/releases/latest):
+
+- **Debian / Ubuntu (`.deb`)**:
+  ```bash
+  sudo dpkg -i scribl_0.1.0_amd64.deb
+  sudo apt-get install -f # resolve any missing system dependencies
+  ```
+- **Fedora / RHEL / openSUSE (`.rpm`)**:
+  ```bash
+  sudo rpm -i scribl-0.1.0-1.x86_64.rpm
+  ```
+- **Universal Linux (`.AppImage`)**:
+  ```bash
+  chmod +x scribl_0.1.0_amd64.AppImage
+  ./scribl_0.1.0_amd64.AppImage
+  ```
+
+### Windows (.exe, .msi)
+
+1. Download the setup installer (`scribl_0.1.0_x64-setup.exe`) or MSI package (`scribl_0.1.0_x64_en-US.msi`) from [Releases](https://github.com/shadowmkj/scribl/releases/latest).
+2. Run the installer and follow the setup wizard.
+3. _(If Windows SmartScreen warns "Windows protected your PC", click **More info** → **Run anyway**)._
 
 ---
 
@@ -181,7 +234,9 @@ scribl.ui.toolbar = {
 
 ---
 
-## 🚀 Getting Started
+## 🛠️ Building & Development from Source
+
+If you want to contribute, modify the code, or build the latest development branch locally:
 
 ### Prerequisites
 
@@ -189,23 +244,21 @@ Ensure you have the following installed on your machine:
 
 - [Node.js](https://nodejs.org/) (v18+)
 - [pnpm](https://pnpm.io/) (`npm install -g pnpm`)
-- [Rust](https://www.rust-lang.org/tools/install) (for Tauri v2 desktop integration)
+- [Rust](https://www.rust-lang.org/tools/install) (stable toolchain)
+- **Linux system dependencies** (Debian/Ubuntu):
+  ```bash
+  sudo apt update && sudo apt install -y libwebkit2gtk-4.1-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+  ```
 
-### Installation
+### 1. Clone & Install Dependencies
 
-1. Clone the repository:
+```bash
+git clone https://github.com/shadowmkj/scribl.git
+cd scribl
+pnpm install
+```
 
-   ```bash
-   git clone https://github.com/shadowmkj/scribl.git
-   cd scribl
-   ```
-
-2. Install dependencies:
-   ```bash
-   pnpm install
-   ```
-
-### Development
+### 2. Development
 
 Run the desktop application in Tauri development mode with hot-module replacement:
 
@@ -213,15 +266,15 @@ Run the desktop application in Tauri development mode with hot-module replacemen
 pnpm tauri dev
 ```
 
-_(or run `cargo tauri dev`)_
+_(or run `cargo tauri dev` or `just dev`)_
 
-To run purely in the browser for web testing:
+To run purely in the browser for fast web/canvas iteration:
 
 ```bash
 pnpm dev
 ```
 
-### Running Tests
+### 3. Running Tests & Quality Verification
 
 Execute the frontend unit test suite with Vitest:
 
@@ -229,7 +282,7 @@ Execute the frontend unit test suite with Vitest:
 pnpm test
 ```
 
-Execute Rust tests:
+Execute Rust backend tests:
 
 ```bash
 cargo test --manifest-path src-tauri/Cargo.toml
@@ -242,9 +295,9 @@ pnpm tsc --noEmit
 pnpm format:check
 ```
 
-### Building for Production (macOS App Bundle)
+### 4. Compiling Production Bundles
 
-To build a standalone signed/packaged macOS bundle (`.app` and `.dmg`):
+To build a standalone production release package for your operating system:
 
 ```bash
 pnpm tauri build
@@ -252,9 +305,9 @@ pnpm tauri build
 
 Bundled artifacts will be located in:
 
-```
-src-tauri/target/release/bundle/macos/
-```
+- **macOS**: `src-tauri/target/release/bundle/macos/scribl.app` and `src-tauri/target/release/bundle/dmg/`
+- **Linux**: `src-tauri/target/release/bundle/deb/`, `appimage/`, and `rpm/`
+- **Windows**: `src-tauri/target/release/bundle/msi/` and `nsis/`
 
 ---
 

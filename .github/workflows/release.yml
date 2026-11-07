@@ -192,9 +192,14 @@ jobs:
             target: ''
             args: ''
     runs-on: ${{ matrix.platform }}
+    env:
+      SCRIBL_RELEASE: 'true'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare-release.outputs.tag }}
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -242,6 +247,7 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SCRIBL_RELEASE: 'true'
         with:
           releaseId: ${{ needs.prepare-release.outputs.release_id }}
           tagName: ${{ needs.prepare-release.outputs.tag }}
