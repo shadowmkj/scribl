@@ -10,6 +10,37 @@ describe('themeManager', () => {
     expect(root.style.getPropertyValue('--color-canvas-bg')).toBe('#1a1b26');
     expect(root.style.getPropertyValue('--color-accent')).toBe('#7aa2f7');
     expect(root.style.getPropertyValue('--color-panel-bg')).toBe('rgba(26, 27, 38, 0.85)');
+    expect(root.getAttribute('data-theme-mode')).toBe('dark');
+  });
+
+  it('sets correct mode for all 4 presets', () => {
+    expect(THEME_PRESETS['default-dark'].mode).toBe('dark');
+    expect(THEME_PRESETS['tokyo-night'].mode).toBe('dark');
+    expect(THEME_PRESETS['catppuccin'].mode).toBe('dark');
+    expect(THEME_PRESETS['light'].mode).toBe('light');
+  });
+
+  it('resolves theme mode with explicit override and luminance fallback', () => {
+    // Luminance fallback from white background
+    const whiteTheme = resolveTheme({
+      name: 'default-dark',
+      overrides: { canvas_bg: '#ffffff' },
+    });
+    expect(whiteTheme.mode).toBe('light');
+
+    // Luminance fallback from black background
+    const blackTheme = resolveTheme({
+      name: 'light',
+      overrides: { canvas_bg: '#111111' },
+    });
+    expect(blackTheme.mode).toBe('dark');
+
+    // Explicit mode override
+    const explicitTheme = resolveTheme({
+      name: 'default-dark',
+      overrides: { mode: 'light', canvas_bg: '#000000' },
+    });
+    expect(explicitTheme.mode).toBe('light');
   });
 
   it('contains complete tokens for all 4 presets', () => {

@@ -6,7 +6,13 @@ import {
   StrokeElement,
   TextElement,
 } from '../../types/canvas';
-import { renderCommittedCanvas, renderShape, renderText } from './CanvasRenderer';
+import {
+  renderCommittedCanvas,
+  renderShape,
+  renderStroke,
+  renderText,
+  resolveCanvasColor,
+} from './CanvasRenderer';
 
 // Polyfill Path2D for jsdom test environment if needed
 if (typeof Path2D === 'undefined') {
@@ -363,5 +369,100 @@ describe('CanvasRenderer - renderCommittedCanvas with shapes', () => {
     renderCommittedCanvas(ctx, elements, ['shape-outside'], camera, 800, 600, 1);
     expect(outsideShape.cachedPath2D).toBeUndefined();
     expect(ctx.stroke).not.toHaveBeenCalled();
+  });
+
+  describe('resolveCanvasColor & adaptive monochrome ink', () => {
+    it('adapts black colors to white in dark mode', () => {
+      expect(resolveCanvasColor('#000000', 'dark')).toBe('#ffffff');
+      expect(resolveCanvasColor('#000', 'dark')).toBe('#ffffff');
+      expect(resolveCanvasColor('#1e293b', 'dark')).toBe('#ffffff');
+      expect(resolveCanvasColor('currentColor', 'dark')).toBe('#ffffff');
+      expect(resolveCanvasColor('#ffffff', 'dark')).toBe('#ffffff');
+    });
+
+    it('adapts white colors to black in light mode', () => {
+      expect(resolveCanvasColor('#ffffff', 'light')).toBe('#000000');
+      expect(resolveCanvasColor('#fff', 'light')).toBe('#000000');
+      expect(resolveCanvasColor('white', 'light')).toBe('#000000');
+      expect(resolveCanvasColor('currentColor', 'light')).toBe('#000000');
+      expect(resolveCanvasColor('#000000', 'light')).toBe('#000000');
+    });
+
+    it('preserves accent and transparent colors unchanged across modes', () => {
+      expect(resolveCanvasColor('#0284c7', 'dark')).toBe('#0284c7');
+      expect(resolveCanvasColor('#0284c7', 'light')).toBe('#0284c7');
+      expect(resolveCanvasColor('#e11d48', 'dark')).toBe('#e11d48');
+      expect(resolveCanvasColor('#e11d48', 'light')).toBe('#e11d48');
+      expect(resolveCanvasColor('transparent', 'dark')).toBe('transparent');
+      expect(resolveCanvasColor('transparent', 'light')).toBe('transparent');
+    });
+
+    it('applies adaptive color when rendering strokes, shapes, and text', () => {
+      const ctx = createMockContext();
+
+      // Black stroke in dark mode -> rendered with white fillStyle
+      const blackStroke: StrokeElement = {
+        id: 's-black',
+        type: 'stroke',
+        points: [{ x: 0, y: 0, pressure: 0.5 }, { x: 10, y: 10, pressure: 0.5 }],
+        color: '#000000',
+        size: 4,
+        thinning: 0.5,
+        smoothing: 0.5,
+        x: 0,
+        y: 0,
+        width: 10,
+        height: 10,
+        zIndex: 1,
+      };
+      renderStroke(ctx, blackStroke, 'dark');
+      expect(ctx.fillStyle).toBe('#ffffff');
+
+      // White stroke in light mode -> rendered with black fillStyle
+      const whiteStroke: StrokeElement = {
+        ...blackStroke,
+        id: 's-white',
+        color: '#ffffff',
+      };
+      renderStroke(ctx, whiteStroke, 'light');
+      expect(ctx.fillStyle).toBe('#000000');
+
+      // White shape stroke in light mode -> rendered with black strokeStyle
+      const whiteShape: ShapeElement = {
+        id: 'shape-white',
+        type: 'shape',
+        shapeType: 'rectangle',
+        x: 0,
+        y: 0,
+        width: 50,
+        height: 50,
+        zIndex: 1,
+        strokeColor: '#ffffff',
+        fillColor: '#000000',
+        strokeWidth: 2,
+        strokeStyle: 'solid',
+      };
+      renderShape(ctx, whiteShape, 'light');
+      expect(ctx.strokeStyle).toBe('#000000');
+      expect(ctx.fillStyle).toBe('#000000');
+
+      // Black text in dark mode -> rendered with white fillStyle
+      const blackText: TextElement = {
+        id: 'text-black',
+        type: 'text',
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 30,
+        zIndex: 1,
+        text: 'Notes',
+        fontSize: 20,
+        fontFamily: 'normal',
+        color: '#1e293b',
+        lineHeight: 1.25,
+      };
+      renderText(ctx, blackText, 'dark');
+      expect(ctx.fillStyle).toBe('#ffffff');
+    });
   });
 });

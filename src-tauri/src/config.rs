@@ -98,6 +98,8 @@ impl Default for ToolbarConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ThemeColors {
+    #[serde(default = "default_theme_mode_val")]
+    pub mode: String,
     pub canvas_bg: String,
     pub grid_dot: String,
     pub panel_bg: String,
@@ -114,6 +116,42 @@ pub struct ThemeColors {
     pub danger: String,
 }
 
+fn default_theme_mode_val() -> String {
+    "dark".to_string()
+}
+
+pub fn calculate_luminance_mode(canvas_bg: &str) -> &'static str {
+    let clean = canvas_bg.trim().trim_start_matches('#');
+    let rgb = if clean.len() == 6 {
+        match (
+            u8::from_str_radix(&clean[0..2], 16),
+            u8::from_str_radix(&clean[2..4], 16),
+            u8::from_str_radix(&clean[4..6], 16),
+        ) {
+            (Ok(r), Ok(g), Ok(b)) => Some((r as f64, g as f64, b as f64)),
+            _ => None,
+        }
+    } else if clean.len() == 3 {
+        match (
+            u8::from_str_radix(&clean[0..1], 16),
+            u8::from_str_radix(&clean[1..2], 16),
+            u8::from_str_radix(&clean[2..3], 16),
+        ) {
+            (Ok(r), Ok(g), Ok(b)) => Some((r as f64 * 17.0, g as f64 * 17.0, b as f64 * 17.0)),
+            _ => None,
+        }
+    } else {
+        None
+    };
+
+    if let Some((r, g, b)) = rgb {
+        let y = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255.0;
+        if y < 0.5 { "dark" } else { "light" }
+    } else {
+        "dark"
+    }
+}
+
 impl Default for ThemeColors {
     fn default() -> Self {
         get_preset_theme("default-dark")
@@ -123,6 +161,7 @@ impl Default for ThemeColors {
 pub fn get_preset_theme(name: &str) -> ThemeColors {
     match name {
         "light" => ThemeColors {
+            mode: "light".into(),
             canvas_bg: "#f8fafc".into(),
             grid_dot: "#cbd5e1".into(),
             panel_bg: "rgba(255, 255, 255, 0.88)".into(),
@@ -139,6 +178,7 @@ pub fn get_preset_theme(name: &str) -> ThemeColors {
             danger: "#dc2626".into(),
         },
         "tokyo-night" => ThemeColors {
+            mode: "dark".into(),
             canvas_bg: "#1a1b26".into(),
             grid_dot: "#2f3549".into(),
             panel_bg: "rgba(26, 27, 38, 0.85)".into(),
@@ -155,6 +195,7 @@ pub fn get_preset_theme(name: &str) -> ThemeColors {
             danger: "#f7768e".into(),
         },
         "catppuccin" => ThemeColors {
+            mode: "dark".into(),
             canvas_bg: "#1e1e2e".into(),
             grid_dot: "#45475a".into(),
             panel_bg: "rgba(30, 30, 46, 0.85)".into(),
@@ -172,6 +213,7 @@ pub fn get_preset_theme(name: &str) -> ThemeColors {
         },
         _ => ThemeColors {
             // default-dark
+            mode: "dark".into(),
             canvas_bg: "#090d16".into(),
             grid_dot: "#334155".into(),
             panel_bg: "rgba(15, 23, 42, 0.78)".into(),
@@ -242,6 +284,7 @@ pub fn resolve_theme(config: &ThemeConfig) -> ThemeColors {
     let mut base = get_preset_theme(&config.name);
     for (k, v) in &config.overrides {
         match k.as_str() {
+            "mode" => base.mode = v.clone(),
             "canvas_bg" => base.canvas_bg = v.clone(),
             "grid_dot" => base.grid_dot = v.clone(),
             "panel_bg" => base.panel_bg = v.clone(),
@@ -258,6 +301,10 @@ pub fn resolve_theme(config: &ThemeConfig) -> ThemeColors {
             "danger" => base.danger = v.clone(),
             _ => {}
         }
+    }
+    // If mode is not explicitly overridden but canvas_bg is, derive mode from canvas_bg luminance
+    if !config.overrides.contains_key("mode") && config.overrides.contains_key("canvas_bg") {
+        base.mode = calculate_luminance_mode(&base.canvas_bg).to_string();
     }
     // If accent is overridden but accent_hover is not, derive accent_hover from accent
     if config.overrides.contains_key("accent") && !config.overrides.contains_key("accent_hover") {
@@ -563,9 +610,38 @@ mod tests {
     }
 
     #[test]
+    fn test_preset_theme_modes() {
+        assert_eq!(get_preset_theme("default-dark").mode, "dark");
+        assert_eq!(get_preset_theme("tokyo-night").mode, "dark");
+        assert_eq!(get_preset_theme("catppuccin").mode, "dark");
+        assert_eq!(get_preset_theme("light").mode, "light");
+    }
+
+    #[test]
+    fn test_theme_mode_override_and_fallback() {
+        let mut theme = ThemeConfig {
+            name: "default-dark".to_string(),
+            ..Default::default()
+        };
+        theme
+            .overrides
+            .insert("canvas_bg".to_string(), "#ffffff".to_string());
+        let resolved = resolve_theme(&theme);
+        assert_eq!(resolved.mode, "light"); // Derived from white canvas_bg
+
+        theme
+            .overrides
+            .insert("mode".to_string(), "dark".to_string());
+        let resolved_explicit = resolve_theme(&theme);
+        assert_eq!(resolved_explicit.mode, "dark"); // Explicit override takes precedence
+    }
+
+    #[test]
     fn test_theme_overrides_overlay_preset() {
-        let mut theme = ThemeConfig::default();
-        theme.name = "default-dark".to_string();
+        let mut theme = ThemeConfig {
+            name: "default-dark".to_string(),
+            ..Default::default()
+        };
         theme
             .overrides
             .insert("canvas_bg".to_string(), "#000000".to_string());

@@ -1,4 +1,7 @@
+export type ThemeMode = 'dark' | 'light';
+
 export interface ThemeColors {
+  mode: ThemeMode;
   canvas_bg: string;
   grid_dot: string;
   panel_bg: string;
@@ -23,6 +26,7 @@ export interface ThemeConfig {
 
 export const THEME_PRESETS: Record<string, ThemeColors> = {
   'default-dark': {
+    mode: 'dark',
     canvas_bg: '#090d16',
     grid_dot: '#334155',
     panel_bg: 'rgba(15, 23, 42, 0.78)',
@@ -39,6 +43,7 @@ export const THEME_PRESETS: Record<string, ThemeColors> = {
     danger: '#ef4444',
   },
   'light': {
+    mode: 'light',
     canvas_bg: '#f8fafc',
     grid_dot: '#cbd5e1',
     panel_bg: 'rgba(255, 255, 255, 0.88)',
@@ -55,6 +60,7 @@ export const THEME_PRESETS: Record<string, ThemeColors> = {
     danger: '#dc2626',
   },
   'tokyo-night': {
+    mode: 'dark',
     canvas_bg: '#1a1b26',
     grid_dot: '#2f3549',
     panel_bg: 'rgba(26, 27, 38, 0.85)',
@@ -71,6 +77,7 @@ export const THEME_PRESETS: Record<string, ThemeColors> = {
     danger: '#f7768e',
   },
   'catppuccin': {
+    mode: 'dark',
     canvas_bg: '#1e1e2e',
     grid_dot: '#45475a',
     panel_bg: 'rgba(30, 30, 46, 0.85)',
@@ -118,6 +125,28 @@ export function darkenHex(hex: string, factor = 0.82): string {
   return hex;
 }
 
+export function calculateLuminanceMode(canvasBg: string): ThemeMode {
+  const clean = canvasBg.trim().replace(/^#/, '');
+  if (clean.length === 6) {
+    const r = parseInt(clean.slice(0, 2), 16);
+    const g = parseInt(clean.slice(2, 4), 16);
+    const b = parseInt(clean.slice(4, 6), 16);
+    if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+      const y = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+      return y < 0.5 ? 'dark' : 'light';
+    }
+  } else if (clean.length === 3) {
+    const r = parseInt(clean[0] + clean[0], 16);
+    const g = parseInt(clean[1] + clean[1], 16);
+    const b = parseInt(clean[2] + clean[2], 16);
+    if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+      const y = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+      return y < 0.5 ? 'dark' : 'light';
+    }
+  }
+  return 'dark';
+}
+
 export function resolveTheme(config: ThemeConfig): ThemeColors {
   const base = THEME_PRESETS[config.name] || THEME_PRESETS['default-dark'];
   const overrides = config.overrides || {};
@@ -125,6 +154,11 @@ export function resolveTheme(config: ThemeConfig): ThemeColors {
     ...base,
     ...overrides,
   };
+  if (overrides.mode === 'dark' || overrides.mode === 'light') {
+    resolved.mode = overrides.mode;
+  } else if (overrides.canvas_bg) {
+    resolved.mode = calculateLuminanceMode(resolved.canvas_bg);
+  }
   if (overrides.accent && !overrides.accent_hover) {
     resolved.accent_hover = darkenHex(overrides.accent, 0.82);
   }
@@ -135,6 +169,7 @@ export function applyThemeToDom(
   theme: ThemeColors,
   target: HTMLElement = document.documentElement,
 ): void {
+  target.setAttribute('data-theme-mode', theme.mode);
   target.style.setProperty('--color-canvas-bg', theme.canvas_bg);
   target.style.setProperty('--color-grid-dot', theme.grid_dot);
   target.style.setProperty('--color-panel-bg', theme.panel_bg);

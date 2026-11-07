@@ -1,6 +1,6 @@
 import { Camera, CanvasElement } from '../../types/canvas';
-import { renderShape, renderText } from '../engine/CanvasRenderer';
-import { getStrokeOutline, getSvgPathFromStroke } from '../engine/InkingEngine';
+import { renderShape, renderStroke, renderText } from '../engine/CanvasRenderer';
+import { ThemeMode } from '../theme/themeManager';
 
 export interface ScriblFileData {
   app: 'scribl';
@@ -74,6 +74,7 @@ export function triggerDownload(
 export function exportToPng(
   elements: Record<string, CanvasElement>,
   elementIds: string[],
+  themeMode?: ThemeMode,
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     if (elementIds.length === 0) {
@@ -117,16 +118,11 @@ export function exportToPng(
       const el = elements[id];
       if (!el) continue;
       if (el.type === 'stroke') {
-        ctx.fillStyle = el.color;
-        const outline = getStrokeOutline(el.points, el.size, el.thinning, el.smoothing);
-        const path = getSvgPathFromStroke(outline);
-        if (path && typeof Path2D !== 'undefined') {
-          ctx.fill(new Path2D(path));
-        }
+        renderStroke(ctx, el, themeMode);
       } else if (el.type === 'shape') {
-        renderShape(ctx, el);
+        renderShape(ctx, el, themeMode);
       } else if (el.type === 'text') {
-        renderText(ctx, el);
+        renderText(ctx, el, themeMode);
       }
     }
 

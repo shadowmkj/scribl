@@ -345,7 +345,7 @@ mod tests {
     #[test]
     fn test_eval_empty_script_returns_defaults() {
         let config = eval_lua_config_string("", None).expect("should evaluate");
-        assert_eq!(config.options.dot_grid, true);
+        assert!(config.options.dot_grid);
         assert_eq!(config.options.default_tool, "pen");
         assert_eq!(config.toolbar.position, "bottom");
         assert!(
@@ -373,7 +373,7 @@ mod tests {
         "#;
 
         let config = eval_lua_config_string(script, None).expect("should evaluate");
-        assert_eq!(config.options.dot_grid, false);
+        assert!(!config.options.dot_grid);
         assert_eq!(config.options.default_tool, "eraser");
         assert_eq!(config.toolbar.position, "top");
         assert_eq!(config.toolbar.items, vec!["zoom", "pen"]);
@@ -513,6 +513,18 @@ scribl.keymap.set("n", "<BS>", "selection.delete")
         let config = eval_lua_config_string(script, None).expect("should evaluate");
         assert_eq!(config.theme.name, "tokyo-night");
         assert_eq!(config.theme.active.as_ref().unwrap().canvas_bg, "#1a1b26");
+        assert_eq!(config.theme.active.as_ref().unwrap().mode, "dark");
+    }
+
+    #[test]
+    fn test_eval_theme_mode() {
+        let script = r#"
+            local scribl = require("scribl")
+            scribl.theme.name = "default-dark"
+            scribl.theme.mode = "light"
+        "#;
+        let config = eval_lua_config_string(script, None).expect("should evaluate");
+        assert_eq!(config.theme.active.as_ref().unwrap().mode, "light");
     }
 
     #[test]

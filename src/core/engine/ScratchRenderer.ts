@@ -1,6 +1,6 @@
 import { useCameraStore } from '../../stores/useCameraStore';
 import { Camera, ShapeElement, StrokePoint } from '../../types/canvas';
-import { renderShape } from './CanvasRenderer';
+import { renderShape, resolveCanvasColor } from './CanvasRenderer';
 import { getStrokeOutline, getSvgPathFromStroke } from './InkingEngine';
 
 export interface TrailPoint {
@@ -126,7 +126,7 @@ export class ScratchRenderer {
       const outline = getStrokeOutline(this.activePoints, this.strokeSize);
       const pathString = getSvgPathFromStroke(outline);
       if (pathString && typeof Path2D !== 'undefined') {
-        this.ctx.fillStyle = this.color;
+        this.ctx.fillStyle = resolveCanvasColor(this.color);
         this.ctx.fill(new Path2D(pathString));
       }
 
