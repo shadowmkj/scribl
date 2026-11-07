@@ -224,4 +224,30 @@ describe('useDocumentStore - movement and atomic undo/redo', () => {
     expect(reapplied.fontSize).toBe(48);
     expect(reapplied.fontFamily).toBe('code');
   });
+
+  it('inserts multiple elements atomically and undos them together', () => {
+    const store = useDocumentStore.getState();
+    const strokeA: StrokeElement = {
+      ...dummyStroke,
+      id: 'insert-a',
+    };
+    const strokeB: StrokeElement = {
+      ...dummyStroke,
+      id: 'insert-b',
+    };
+
+    store.insertElements([strokeA, strokeB]);
+    expect(useDocumentStore.getState().elements['insert-a']).toBeDefined();
+    expect(useDocumentStore.getState().elements['insert-b']).toBeDefined();
+
+    // Single undo step removes both
+    store.undo();
+    expect(useDocumentStore.getState().elements['insert-a']).toBeUndefined();
+    expect(useDocumentStore.getState().elements['insert-b']).toBeUndefined();
+
+    // Single redo restores both
+    store.redo();
+    expect(useDocumentStore.getState().elements['insert-a']).toBeDefined();
+    expect(useDocumentStore.getState().elements['insert-b']).toBeDefined();
+  });
 });

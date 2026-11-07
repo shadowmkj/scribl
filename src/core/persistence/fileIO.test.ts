@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ShapeElement, StrokeElement, TextElement } from '../../types/canvas';
-import { exportToPng, parseScriblJSON, serializeScriblDoc } from './fileIO';
+import { exportToPng, importDrawingDocument, parseScriblJSON, serializeScriblDoc } from './fileIO';
 
 if (typeof Path2D === 'undefined') {
   // @ts-expect-error jsdom environment polyfill
@@ -205,5 +205,20 @@ describe('fileIO', () => {
     };
     await exportToPng({ 's-white': whiteStroke }, ['s-white'], 'light');
     expect(mockCtx.fillStyle).toBe('#000000');
+  });
+
+  it('imports drawing documents using importDrawingDocument', () => {
+    const scriblDoc = {
+      app: 'scribl',
+      version: 1,
+      elementIds: ['s1'],
+      elements: {
+        s1: dummyStroke,
+      },
+      camera: { x: 0, y: 0, zoom: 1 },
+    };
+    const res = importDrawingDocument(JSON.stringify(scriblDoc));
+    expect(res.format).toBe('scribl');
+    expect(res.elements.length).toBe(1);
   });
 });

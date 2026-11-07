@@ -2,6 +2,8 @@ import { Camera, CanvasElement } from '../../types/canvas';
 import { renderShape, renderStroke, renderText } from '../engine/CanvasRenderer';
 import { ThemeMode } from '../theme/themeManager';
 
+export * from './importers';
+
 export interface ScriblFileData {
   app: 'scribl';
   version: 1;
