@@ -24,6 +24,21 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "category": "Graphics",
+    "shortDescription": "Minimal, modal, keyboard-centric canvas for infinite thinking",
+    "longDescription": "Scribl is a high-performance vector canvas for thinking and sketching, featuring 240Hz stroke rendering, geometric shapes, text editing, custom themes, Lua-driven configuration, and multi-format drawing import.",
+    "copyright": "Copyright © 2026 Milan Pramod",
+    "publisher": "Milan Pramod",
+    "licenseFile": "../LICENSE",
+    "fileAssociations": [
+      {
+        "ext": ["scribl"],
+        "name": "Scribl Canvas Drawing",
+        "description": "Scribl infinite canvas drawing document",
+        "mimeType": "application/x-scribl",
+        "role": "Editor"
+      }
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

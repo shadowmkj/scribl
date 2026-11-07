@@ -2,7 +2,28 @@
   "name": "scribl",
   "private": true,
   "version": "0.1.0",
+  "description": "Minimal, modal, keyboard-centric canvas for infinite thinking",
   "type": "module",
+  "author": "Milan Pramod",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shadowmkj/scribl.git"
+  },
+  "homepage": "https://github.com/shadowmkj/scribl",
+  "bugs": {
+    "url": "https://github.com/shadowmkj/scribl/issues"
+  },
+  "keywords": [
+    "canvas",
+    "whiteboard",
+    "drawing",
+    "handwriting",
+    "modal-editor",
+    "tauri",
+    "react",
+    "lua"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

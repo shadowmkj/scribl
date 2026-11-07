@@ -1,0 +1,265 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version / tag (e.g. 0.1.0 or v0.1.0). Leave empty to use package.json version.'
+        required: false
+        type: string
+        default: ''
+      draft:
+        description: 'Create as draft release (review before publishing)'
+        required: false
+        type: boolean
+        default: false
+      prerelease:
+        description: 'Mark release as pre-release'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  prepare-release:
+    name: Prepare Release & Generate Notes
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      version: ${{ steps.version.outputs.version }}
+      release_id: ${{ steps.create_release.outputs.release_id }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install git-cliff
+        uses: taiki-e/install-action@git-cliff
+
+      - name: Determine release version and tag
+        id: version
+        run: |
+          USER_INPUT="${{ inputs.version }}"
+          if [ -n "$USER_INPUT" ]; then
+            VERSION="$USER_INPUT"
+          else
+            VERSION=$(node -p "require('./package.json').version")
+          fi
+          PLAIN_VERSION="${VERSION#v}"
+          TAG="v${PLAIN_VERSION}"
+
+          echo "version=${PLAIN_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Target Release: $TAG (version: $PLAIN_VERSION)"
+
+      - name: Generate release notes from changelog / git-cliff
+        id: release_notes
+        run: |
+          node -e '
+          const fs = require("fs");
+          const { execSync } = require("child_process");
+
+          const tag = process.env.TAG;
+          const version = process.env.VERSION;
+          let notes = "";
+
+          // 1. Try to extract latest section from existing CHANGELOG.md
+          if (fs.existsSync("CHANGELOG.md")) {
+            const content = fs.readFileSync("CHANGELOG.md", "utf8");
+            const lines = content.split("\n");
+            let inSection = false;
+            let sectionLines = [];
+
+            for (const line of lines) {
+              const isHeading = /^##\s+/.test(line);
+              if (isHeading) {
+                if (inSection) break;
+                if (
+                  line.includes("[" + tag + "]") ||
+                  line.includes("[" + version + "]") ||
+                  line.toLowerCase().includes("unreleased")
+                ) {
+                  inSection = true;
+                  if (line.toLowerCase().includes("unreleased")) {
+                    const today = new Date().toISOString().split("T")[0];
+                    sectionLines.push(`## [${tag}](https://github.com/shadowmkj/scribl/releases/tag/${tag}) - ${today}`);
+                  } else {
+                    sectionLines.push(line);
+                  }
+                  continue;
+                }
+              }
+              if (inSection) {
+                sectionLines.push(line);
+              }
+            }
+            notes = sectionLines.join("\n").trim();
+          }
+
+          // 2. Fallback to git-cliff if no section found in CHANGELOG.md
+          if (!notes) {
+            console.log("No matching section found in CHANGELOG.md; generating from commits via git-cliff...");
+            try {
+              notes = execSync(`git cliff --unreleased --tag "${tag}" --strip all`, {
+                encoding: "utf8"
+              }).trim();
+            } catch (err) {
+              console.warn("git-cliff --unreleased failed, trying --latest...", err.message);
+              try {
+                notes = execSync(`git cliff --latest --strip all`, { encoding: "utf8" }).trim();
+              } catch (e) {
+                console.warn("git-cliff --latest also failed:", e.message);
+              }
+            }
+          }
+
+          // 3. Fallback header if still empty
+          if (!notes) {
+            notes = `## [${tag}] - Release ${tag}\n\nSee commits for details.`;
+          }
+
+          fs.writeFileSync("RELEASE_NOTES.md", notes + "\n");
+          console.log("RELEASE_NOTES.md generated successfully.");
+          '
+
+          cat RELEASE_NOTES.md >> "$GITHUB_STEP_SUMMARY"
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Create GitHub Release (Draft)
+        id: create_release
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          PRERELEASE_FLAG=""
+          if [ "${{ inputs.prerelease }}" = "true" ]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          # Create as draft so matrix builders can safely attach build artifacts
+          gh release create "$TAG" \
+            --title "scribl $TAG" \
+            --notes-file RELEASE_NOTES.md \
+            --draft \
+            --target "$GITHUB_SHA" \
+            $PRERELEASE_FLAG
+
+          RELEASE_ID=$(gh release view "$TAG" --json id --jq .id)
+          echo "release_id=${RELEASE_ID}" >> "$GITHUB_OUTPUT"
+          echo "Created draft release with id: ${RELEASE_ID} for tag ${TAG}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-tauri:
+    name: Build (${{ matrix.platform }}${{ matrix.target && format(' - {0}', matrix.target) || '' }})
+    needs: prepare-release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest'
+            target: 'aarch64-apple-darwin'
+            args: '--target aarch64-apple-darwin'
+          - platform: 'macos-latest'
+            target: 'x86_64-apple-darwin'
+            args: '--target x86_64-apple-darwin'
+          - platform: 'ubuntu-22.04'
+            target: ''
+            args: ''
+          - platform: 'windows-latest'
+            target: ''
+            args: ''
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install system dependencies for Tauri (Ubuntu)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Add Rust target
+        if: matrix.target != ''
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Cache cargo dependencies
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: 'src-tauri -> target'
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Tauri and upload to Release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          releaseId: ${{ needs.prepare-release.outputs.release_id }}
+          tagName: ${{ needs.prepare-release.outputs.tag }}
+          releaseDraft: true
+          prerelease: ${{ inputs.prerelease }}
+          args: ${{ matrix.args }}
+
+  publish-release:
+    name: Publish Release
+    needs: [prepare-release, build-tauri]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Finalize Release Visibility
+        run: |
+          TAG="${{ needs.prepare-release.outputs.tag }}"
+          IS_DRAFT="${{ inputs.draft }}"
+
+          if [ "$IS_DRAFT" = "true" ]; then
+            echo "Release $TAG kept in DRAFT status as requested in workflow inputs."
+            echo "Review uploaded artifacts and publish whenever ready:"
+            gh release view "$TAG" --web || gh release view "$TAG"
+          else
+            echo "Publishing release $TAG..."
+            gh release edit "$TAG" --draft=false
+            echo "Successfully published release $TAG!"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
