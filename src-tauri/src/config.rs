@@ -122,37 +122,34 @@ fn default_theme_mode_val() -> String {
 
 pub fn calculate_luminance_mode(canvas_bg: &str) -> &'static str {
     let clean = canvas_bg.trim().trim_start_matches('#');
-    if clean.len() == 6 {
-        if let (Ok(r), Ok(g), Ok(b)) = (
+    let rgb = if clean.len() == 6 {
+        match (
             u8::from_str_radix(&clean[0..2], 16),
             u8::from_str_radix(&clean[2..4], 16),
             u8::from_str_radix(&clean[4..6], 16),
         ) {
-            let y = (0.2126 * (r as f64) + 0.7152 * (g as f64) + 0.0722 * (b as f64)) / 255.0;
-            if y < 0.5 {
-                return "dark";
-            } else {
-                return "light";
-            }
+            (Ok(r), Ok(g), Ok(b)) => Some((r as f64, g as f64, b as f64)),
+            _ => None,
         }
     } else if clean.len() == 3 {
-        if let (Ok(r), Ok(g), Ok(b)) = (
+        match (
             u8::from_str_radix(&clean[0..1], 16),
             u8::from_str_radix(&clean[1..2], 16),
             u8::from_str_radix(&clean[2..3], 16),
         ) {
-            let y = (0.2126 * (r as f64 * 17.0)
-                + 0.7152 * (g as f64 * 17.0)
-                + 0.0722 * (b as f64 * 17.0))
-                / 255.0;
-            if y < 0.5 {
-                return "dark";
-            } else {
-                return "light";
-            }
+            (Ok(r), Ok(g), Ok(b)) => Some((r as f64 * 17.0, g as f64 * 17.0, b as f64 * 17.0)),
+            _ => None,
         }
+    } else {
+        None
+    };
+
+    if let Some((r, g, b)) = rgb {
+        let y = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255.0;
+        if y < 0.5 { "dark" } else { "light" }
+    } else {
+        "dark"
     }
-    "dark"
 }
 
 impl Default for ThemeColors {
@@ -622,8 +619,10 @@ mod tests {
 
     #[test]
     fn test_theme_mode_override_and_fallback() {
-        let mut theme = ThemeConfig::default();
-        theme.name = "default-dark".to_string();
+        let mut theme = ThemeConfig {
+            name: "default-dark".to_string(),
+            ..Default::default()
+        };
         theme
             .overrides
             .insert("canvas_bg".to_string(), "#ffffff".to_string());
@@ -639,8 +638,10 @@ mod tests {
 
     #[test]
     fn test_theme_overrides_overlay_preset() {
-        let mut theme = ThemeConfig::default();
-        theme.name = "default-dark".to_string();
+        let mut theme = ThemeConfig {
+            name: "default-dark".to_string(),
+            ..Default::default()
+        };
         theme
             .overrides
             .insert("canvas_bg".to_string(), "#000000".to_string());
