@@ -31,7 +31,7 @@ const FONT_SIZES = [
   { label: 'XL', value: 48 },
 ];
 
-const STROKE_STYLES: Array<{ label: string; value: StrokeStyle }> = [
+const STROKE_STYLES: Array<{ label: string; value: StrokeStyle; }> = [
   { label: 'Solid', value: 'solid' },
   { label: 'Dashed', value: 'dashed' },
   { label: 'Dotted', value: 'dotted' },
@@ -79,18 +79,17 @@ export const StyleInspector: React.FC = () => {
   ].includes(currentTool);
 
   const showShapeStyles = isShapeTool || hasShapeSelected;
-  const isTextMode =
-    currentTool === 'text' ||
-    editingText !== null ||
-    (currentTool === 'select' && hasTextSelected);
+  const isTextMode = currentTool === 'text'
+    || editingText !== null
+    || (currentTool === 'select' && hasTextSelected);
 
   if (
-    currentTool !== 'pen' &&
-    currentTool !== 'zoom' &&
-    !isTextMode &&
-    !isShapeTool &&
-    !hasShapeSelected &&
-    !hasStrokeSelected
+    currentTool !== 'pen'
+    && currentTool !== 'zoom'
+    && !isTextMode
+    && !isShapeTool
+    && !hasShapeSelected
+    && !hasStrokeSelected
   ) {
     return null;
   }
@@ -263,18 +262,15 @@ export const StyleInspector: React.FC = () => {
               onClick={() => setZoomMode('scrubby')}
               style={{
                 flex: 1,
-                background:
-                  zoomMode === 'scrubby'
-                    ? 'var(--color-accent, #0284c7)'
-                    : 'transparent',
-                color:
-                  zoomMode === 'scrubby'
-                    ? '#ffffff'
-                    : 'var(--color-text-secondary, #94a3b8)',
-                border:
-                  zoomMode === 'scrubby'
-                    ? '1px solid var(--color-accent, #0284c7)'
-                    : '1px solid transparent',
+                background: zoomMode === 'scrubby'
+                  ? 'var(--color-accent, #0284c7)'
+                  : 'transparent',
+                color: zoomMode === 'scrubby'
+                  ? '#ffffff'
+                  : 'var(--color-text-secondary, #94a3b8)',
+                border: zoomMode === 'scrubby'
+                  ? '1px solid var(--color-accent, #0284c7)'
+                  : '1px solid transparent',
                 borderRadius: 6,
                 padding: '5px 8px',
                 fontSize: 11,
@@ -305,18 +301,15 @@ export const StyleInspector: React.FC = () => {
               onClick={() => setZoomMode('selection')}
               style={{
                 flex: 1,
-                background:
-                  zoomMode === 'selection'
-                    ? 'var(--color-accent, #0284c7)'
-                    : 'transparent',
-                color:
-                  zoomMode === 'selection'
-                    ? '#ffffff'
-                    : 'var(--color-text-secondary, #94a3b8)',
-                border:
-                  zoomMode === 'selection'
-                    ? '1px solid var(--color-accent, #0284c7)'
-                    : '1px solid transparent',
+                background: zoomMode === 'selection'
+                  ? 'var(--color-accent, #0284c7)'
+                  : 'transparent',
+                color: zoomMode === 'selection'
+                  ? '#ffffff'
+                  : 'var(--color-text-secondary, #94a3b8)',
+                border: zoomMode === 'selection'
+                  ? '1px solid var(--color-accent, #0284c7)'
+                  : '1px solid transparent',
                 borderRadius: 6,
                 padding: '5px 8px',
                 fontSize: 11,
@@ -378,8 +371,7 @@ export const StyleInspector: React.FC = () => {
                 flex: 1,
                 background: 'rgba(125, 125, 125, 0.08)',
                 color: 'var(--color-text-primary, #cbd5e1)',
-                border:
-                  '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
+                border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
                 borderRadius: 6,
                 padding: '5px 8px',
                 fontSize: 11,
@@ -404,8 +396,7 @@ export const StyleInspector: React.FC = () => {
                 flex: 1,
                 background: 'rgba(125, 125, 125, 0.08)',
                 color: 'var(--color-text-primary, #cbd5e1)',
-                border:
-                  '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
+                border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
                 borderRadius: 6,
                 padding: '5px 8px',
                 fontSize: 11,
@@ -432,8 +423,7 @@ export const StyleInspector: React.FC = () => {
             fontSize: 10,
             color: 'var(--color-text-secondary, #64748b)',
             lineHeight: 1.4,
-            borderTop:
-              '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.06))',
+            borderTop: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.06))',
             paddingTop: 8,
           }}
         >
@@ -569,17 +559,14 @@ export const StyleInspector: React.FC = () => {
                     }}
                     onMouseEnter={(e) => {
                       if (!isSelected) {
-                        e.currentTarget.style.background =
-                          'rgba(125, 125, 125, 0.12)';
-                        e.currentTarget.style.color =
-                          'var(--color-text-primary, #f1f5f9)';
+                        e.currentTarget.style.background = 'rgba(125, 125, 125, 0.12)';
+                        e.currentTarget.style.color = 'var(--color-text-primary, #f1f5f9)';
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!isSelected) {
                         e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color =
-                          'var(--color-text-secondary, #94a3b8)';
+                        e.currentTarget.style.color = 'var(--color-text-secondary, #94a3b8)';
                       }
                     }}
                   >
@@ -629,14 +616,12 @@ export const StyleInspector: React.FC = () => {
                   height: 26,
                   borderRadius: 7,
                   background: 'rgba(125, 125, 125, 0.1)',
-                  border:
-                    fillColor === 'transparent'
-                      ? '2px solid var(--color-accent, #38bdf8)'
-                      : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.12))',
-                  boxShadow:
-                    fillColor === 'transparent'
-                      ? '0 0 8px rgba(56, 189, 248, 0.5)'
-                      : 'none',
+                  border: fillColor === 'transparent'
+                    ? '2px solid var(--color-accent, #38bdf8)'
+                    : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.12))',
+                  boxShadow: fillColor === 'transparent'
+                    ? '0 0 8px rgba(56, 189, 248, 0.5)'
+                    : 'none',
                   cursor: 'pointer',
                   outline: 'none',
                   display: 'flex',
@@ -778,91 +763,85 @@ export const StyleInspector: React.FC = () => {
         <div style={{ display: 'flex', gap: 5 }}>
           {isTextMode
             ? FONT_SIZES.map((s) => {
-                const isSelected = fontSize === s.value;
-                return (
-                  <button
-                    key={s.value}
-                    onClick={() => handleFontSizeChange(s.value)}
-                    style={{
-                      background: isSelected
-                        ? 'var(--color-accent, #0284c7)'
-                        : 'transparent',
-                      color: isSelected
-                        ? '#ffffff'
-                        : 'var(--color-text-secondary, #94a3b8)',
-                      border: isSelected
-                        ? '1px solid var(--color-accent, #0284c7)'
-                        : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
-                      borderRadius: 6,
-                      padding: '4px 7px',
-                      fontSize: 11,
-                      fontWeight: isSelected ? 600 : 500,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.background =
-                          'rgba(125, 125, 125, 0.12)';
-                        e.currentTarget.style.color =
-                          'var(--color-text-primary, #f1f5f9)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color =
-                          'var(--color-text-secondary, #94a3b8)';
-                      }
-                    }}
-                  >
-                    {s.label}
-                  </button>
-                );
-              })
+              const isSelected = fontSize === s.value;
+              return (
+                <button
+                  key={s.value}
+                  onClick={() => handleFontSizeChange(s.value)}
+                  style={{
+                    background: isSelected
+                      ? 'var(--color-accent, #0284c7)'
+                      : 'transparent',
+                    color: isSelected
+                      ? '#ffffff'
+                      : 'var(--color-text-secondary, #94a3b8)',
+                    border: isSelected
+                      ? '1px solid var(--color-accent, #0284c7)'
+                      : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
+                    borderRadius: 6,
+                    padding: '4px 7px',
+                    fontSize: 11,
+                    fontWeight: isSelected ? 600 : 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.background = 'rgba(125, 125, 125, 0.12)';
+                      e.currentTarget.style.color = 'var(--color-text-primary, #f1f5f9)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = 'var(--color-text-secondary, #94a3b8)';
+                    }
+                  }}
+                >
+                  {s.label}
+                </button>
+              );
+            })
             : STROKE_SIZES.map((s) => {
-                const isSelected = strokeSize === s.value;
-                return (
-                  <button
-                    key={s.value}
-                    onClick={() => handleStrokeSizeChange(s.value)}
-                    style={{
-                      background: isSelected
-                        ? 'var(--color-accent, #0284c7)'
-                        : 'transparent',
-                      color: isSelected
-                        ? '#ffffff'
-                        : 'var(--color-text-secondary, #94a3b8)',
-                      border: isSelected
-                        ? '1px solid var(--color-accent, #0284c7)'
-                        : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
-                      borderRadius: 6,
-                      padding: '4px 7px',
-                      fontSize: 11,
-                      fontWeight: isSelected ? 600 : 500,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.background =
-                          'rgba(125, 125, 125, 0.12)';
-                        e.currentTarget.style.color =
-                          'var(--color-text-primary, #f1f5f9)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color =
-                          'var(--color-text-secondary, #94a3b8)';
-                      }
-                    }}
-                  >
-                    {s.label}
-                  </button>
-                );
-              })}
+              const isSelected = strokeSize === s.value;
+              return (
+                <button
+                  key={s.value}
+                  onClick={() => handleStrokeSizeChange(s.value)}
+                  style={{
+                    background: isSelected
+                      ? 'var(--color-accent, #0284c7)'
+                      : 'transparent',
+                    color: isSelected
+                      ? '#ffffff'
+                      : 'var(--color-text-secondary, #94a3b8)',
+                    border: isSelected
+                      ? '1px solid var(--color-accent, #0284c7)'
+                      : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
+                    borderRadius: 6,
+                    padding: '4px 7px',
+                    fontSize: 11,
+                    fontWeight: isSelected ? 600 : 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.background = 'rgba(125, 125, 125, 0.12)';
+                      e.currentTarget.style.color = 'var(--color-text-primary, #f1f5f9)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = 'var(--color-text-secondary, #94a3b8)';
+                    }
+                  }}
+                >
+                  {s.label}
+                </button>
+              );
+            })}
         </div>
       </div>
     </aside>

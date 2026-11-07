@@ -247,6 +247,7 @@ src/
 ---
 
 ## 🗺️ Roadmap (Post-v0.1.0)
+
 The overall architecture is still not entirely decided. I am just trying out options and implementing basic features.
 I might change the architecture before first release. (I am considering GPUI)
 

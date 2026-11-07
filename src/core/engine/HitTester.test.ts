@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { CanvasElement, ShapeElement, ShapeType, StrokeElement, TextElement } from '../../types/canvas';
+import {
+  CanvasElement,
+  ShapeElement,
+  ShapeType,
+  StrokeElement,
+  TextElement,
+} from '../../types/canvas';
 import { hitTestMarquee, hitTestPoint, hitTestShape } from './HitTester';
 
 describe('HitTester', () => {

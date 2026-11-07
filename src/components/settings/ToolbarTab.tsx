@@ -4,7 +4,7 @@ import { DEFAULT_GROUPS, useConfigStore } from '../../stores/useConfigStore';
 interface ToolCategory {
   title: string;
   description: string;
-  items: Array<{ id: string; label: string; hint?: string }>;
+  items: Array<{ id: string; label: string; hint?: string; }>;
 }
 
 export const ToolbarTab: React.FC = () => {
@@ -27,8 +27,7 @@ export const ToolbarTab: React.FC = () => {
     },
     {
       title: 'Tool Groups & Flyouts',
-      description:
-        'Grouped tools that collapse into a flyout drawer on the dock',
+      description: 'Grouped tools that collapse into a flyout drawer on the dock',
       items: Object.entries(groups).map(([groupId, groupCfg]) => ({
         id: groupId,
         label: `${groupCfg.label} Flyout`,
@@ -37,8 +36,7 @@ export const ToolbarTab: React.FC = () => {
     },
     {
       title: 'Standalone Shapes',
-      description:
-        'Pin individual geometric shapes directly onto the floating dock',
+      description: 'Pin individual geometric shapes directly onto the floating dock',
       items: [
         { id: 'rectangle', label: 'Rectangle Shape' },
         { id: 'circle', label: 'Circle Shape' },
@@ -118,8 +116,8 @@ export const ToolbarTab: React.FC = () => {
             color: 'var(--color-text-secondary, #94a3b8)',
           }}
         >
-          Adjust dock positioning on screen and choose which tools, shape
-          flyouts, and actions appear.
+          Adjust dock positioning on screen and choose which tools, shape flyouts, and actions
+          appear.
         </p>
       </div>
 
@@ -130,8 +128,7 @@ export const ToolbarTab: React.FC = () => {
             padding: '14px',
             background: 'rgba(0, 0, 0, 0.05)',
             borderRadius: 10,
-            border:
-              '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.06))',
+            border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.06))',
             display: 'flex',
             flexDirection: 'column',
             gap: 10,
@@ -193,8 +190,7 @@ export const ToolbarTab: React.FC = () => {
               padding: '14px',
               background: 'rgba(0, 0, 0, 0.05)',
               borderRadius: 10,
-              border:
-                '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.06))',
+              border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.06))',
               display: 'flex',
               flexDirection: 'column',
               gap: 8,

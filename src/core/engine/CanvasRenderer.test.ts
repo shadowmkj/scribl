@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Camera, CanvasElement, ShapeElement, StrokeElement, TextElement } from '../../types/canvas';
+import {
+  Camera,
+  CanvasElement,
+  ShapeElement,
+  StrokeElement,
+  TextElement,
+} from '../../types/canvas';
 import { renderCommittedCanvas, renderShape, renderText } from './CanvasRenderer';
 
 // Polyfill Path2D for jsdom test environment if needed

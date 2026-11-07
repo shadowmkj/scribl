@@ -1,4 +1,10 @@
-import { Camera, CanvasElement, ShapeElement, StrokeElement, TextElement } from '../../types/canvas';
+import {
+  Camera,
+  CanvasElement,
+  ShapeElement,
+  StrokeElement,
+  TextElement,
+} from '../../types/canvas';
 import { getFontFamilyString } from './fontConstants';
 import { getStrokeOutline, getSvgPathFromStroke } from './InkingEngine';
 import { generateShapePath } from './shapeGeometry';
