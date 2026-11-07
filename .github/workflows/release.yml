@@ -150,7 +150,7 @@ jobs:
 
           # Create as draft so matrix builders can safely attach build artifacts
           gh release create "$TAG" \
-            --title "scribl $TAG" \
+            --title "$TAG" \
             --notes-file RELEASE_NOTES.md \
             --draft \
             --target "$GITHUB_SHA" \
