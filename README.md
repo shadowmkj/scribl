@@ -1,7 +1,7 @@
 <div align="center">
   <img src="public/logo.png" alt="Scribl Logo" width="120" height="120" style="border-radius: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);" />
   <h1>Scribl</h1>
-  <p><strong>A high-performance infinite canvas sketching & whiteboard app built for mouse and drawing tablets.</strong></p>
+  <p><strong>A high-performance infinite canvas sketching & whiteboard app built for mouse, stylus, and drawing tablets.</strong></p>
 
 <p>
     <a href="https://tauri.app/"><img src="https://img.shields.io/badge/Tauri-v2-24c8db?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri v2" /></a>
@@ -16,9 +16,9 @@
 
 ## 🌟 Overview
 
-**Scribl** combines the diagramming flexibility of Excalidraw and Tldraw with the organic, low-latency feel of native tablet note-taking applications (Apple Notes, Concepts, Goodnotes).
+**Scribl** combines the diagramming flexibility of Excalidraw and tldraw with the organic, low-latency feel of native tablet note-taking applications (Apple Notes, Concepts, Goodnotes).
 
-Engineered from the ground up to support high-refresh-rate displays (120Hz–240Hz), Scribl decouples high-frequency stylus events from React's state lifecycle to deliver sub-8ms inking latency, coalesced event routing, and strict palm rejection.
+Engineered from the ground up for high-refresh-rate displays (120Hz–240Hz), Scribl decouples high-frequency stylus events from React's state lifecycle to deliver sub-8ms inking latency, coalesced event routing, and strict palm rejection.
 
 ---
 
@@ -26,60 +26,100 @@ Engineered from the ground up to support high-refresh-rate displays (120Hz–240
 
 - ⚡ **Ultra-Low Latency Dual Canvas (240Hz Ready)**:
   - **Active Scratch Layer**: Initialized with `{ desynchronized: true, alpha: true }` bypassing window compositor double-buffering for immediate front-buffer drawing.
-  - **Committed Layer**: Frustum-culled batch vector rendering of cached `Path2D` strokes to maintain 60–120+ FPS across thousands of elements.
+  - **Committed Layer**: Frustum-culled batch vector rendering of cached `Path2D` strokes and geometric primitives to maintain 60–120+ FPS across thousands of elements.
 - 🖊️ **Tablet & Stylus Native**:
-  - Organic stroke outline smoothing and tapers using `perfect-freehand`.
-  - Event coalescing via `getCoalescedEvents()` preventing angular stepping during fast scribbling.
+  - Organic stroke outline smoothing and tapers powered by `perfect-freehand`.
+  - Event coalescing via `getCoalescedEvents()` preventing angular stepping during fast strokes.
   - Hardware stylus eraser flip recognition (`e.buttons === 32`).
   - Strict palm rejection (touch inputs pan/zoom without leaving accidental pen marks).
+- 📐 **Geometric Shapes & Flyout Dock**:
+  - Full geometric primitives: **Rectangles**, **Circles / Ellipses**, **Diamonds**, **Lines**, and **Arrows**.
+  - Interactive shape flyout menu (double-press `S` or click to browse shapes).
+  - Customizable stroke styles (`solid`, `dashed`, `dotted`), stroke widths, and fills (transparent or colored).
+- 🔤 **Infinite Canvas Text Tool**:
+  - Native in-place text creation and editing (`T` or `5`).
+  - Font families: Sans-serif (`Inter`), Serif (`Georgia`), and Monospace (`JetBrains Mono`).
+  - Typographic sizing scale (`16px`, `20px`, `24px`, `32px`, `40px`, `48px`) with dynamic text bounds measurement.
+- 🔄 **Selection, Transforms & Clipboard**:
+  - Multi-element selection marquee and bounding box with 8 resize handles.
+  - Proportional scaling (`Shift`), center-anchored scaling (`Alt`), and interactive rotation (`R` key or rotation handle).
+  - Full clipboard operations: **Copy** (`Cmd+C` / `y`), **Cut** (`Cmd+X`), **Paste** (`Cmd+V` / `p`), and **Duplicate** (`Cmd+D`) with atomic undo.
+- 🎨 **Adaptive Themes & Custom Lua Theme Files**:
+  - 4 built-in aesthetic presets: **Default Dark**, **Light**, **Tokyo Night**, and **Catppuccin**.
+  - **Adaptive Monochrome Ink**: Black and white strokes automatically adapt contrast across dark and light canvas modes.
+  - **Custom External Themes**: Drop `.lua` theme files into `~/.config/scribl/themes/` or define them programmatically via `scribl.theme.define(name, table)` in `init.lua`.
+  - Fine-grained color overrides for canvas, grid dots, panels, accents, and text.
+- 📥 **Excalidraw & tldraw File Imports**:
+  - Drop-in compatibility for drawings created in **Excalidraw** (`.excalidraw`, `.json`) and **tldraw** (`.tldr`, `.json`).
+  - **File Open**: Replaces canvas with a fresh board and automatically centers and frames the drawing (`zoomToFit`).
+  - **Drag-and-Drop**: Drag drawing files directly onto the canvas to insert elements centered at the cursor with an atomic undo step.
+  - Strict fidelity: Translates strokes (with pressure), supported shapes, and text into native Scribl elements; unsupported items (images, sticky notes) are cleanly discarded with an informative warning banner.
 - 🌌 **Infinite 2D Canvas**:
-  - Smooth pan and zoom from **10% to 800%** with world coordinate transforms strictly anchored to cursor position.
+  - Smooth pan and cursor-anchored zoom from **10% to 800%**.
   - Dynamic scaling dot-grid background.
-  - **Spacebar-to-Pan**: Hold `Space` and drag to glide across the canvas with custom grab cursor feedback.
+  - **Spacebar-to-Pan**: Hold `Space` and drag to glide across the canvas with grab cursor feedback.
+  - **Fit Drawing** (`F`): Instantly frame the entire drawing within the current viewport.
 - 🧽 **Minimalist Eraser Trail**:
   - Clean slate-gray trailing streak that tapers and smoothly dissolves over ~180ms.
   - Circular reticle cursor matching the eraser's hit-detection footprint.
-- 🎨 **Glassmorphic Floating HUD**:
-  - Bottom-docked floating island toolbar (`Select`, `Pen`, `Eraser`, `Shapes`, `Zoom`).
-  - Dedicated **Zoom Tool** featuring **Scrubby Zoom** (horizontal drag scaling) and **Selection Zoom** (box framing).
-  - Contextual color palette (8 curated swatches) and 4 discrete stroke thicknesses.
-  - Zoom HUD with quick presets (`100% / Shift+0`, `+`, `-`).
-  - Non-blocking two-step canvas clear action.
-- 🔄 **Command-Based History**:
-  - Multi-level Undo (`Cmd+Z`) and Redo (`Cmd+Shift+Z` / `Cmd+Y`) tracking stroke additions, deletions, and translations.
+- ⚙️ **Neovim-Style Lua Configuration & Settings UI**:
+  - Fully customizable via `~/.config/scribl/init.lua` using native Lua 5.4 (`mlua`).
+  - In-app **Settings Modal** (`Cmd+,`) with tabs for General options, Inking dynamics, Themes, Keybindings, Toolbar layouts, and Lua script status.
+  - Reorder, customize, and relocate the floating dock (`bottom`, `top`, `left`, `right`).
+  - Native filesystem watcher (`notify`) hot-reloads configuration instantly on save without resetting the canvas.
 - 💾 **Persistence & High-Res Export**:
   - Debounced autosave to local storage.
   - Open & Save native `.scribl` JSON documents.
-  - 2x high-resolution PNG export bounded tightly to content.
-- ⚙️ **Neovim-Style Lua Configuration**:
-  - Fully customizable via `~/.config/scribl/init.lua` using native Lua 5.4 (`mlua`).
-  - Configure every keybinding with Vim notation (`<C-z>`, `<D-z>`, `<S-0>`, `c`).
-  - Reorder, customize, and relocate the floating dock (`bottom`, `top`, `left`, `right`).
-  - Native filesystem watcher (`notify`) hot-reloads configuration instantly on save without reloading the canvas.
+  - 2x high-resolution PNG export bounded tightly to content with dark/light background adaptation.
 
 ---
 
 ## ⚙️ Lua Configuration (`~/.config/scribl/init.lua`)
 
-Scribl automatically creates a documented starter configuration at `~/.config/scribl/init.lua` on first launch.
+Scribl automatically creates a starter configuration at `~/.config/scribl/init.lua` and an example theme at `~/.config/scribl/themes/nord.lua` on first launch.
 
 ```lua
 local scribl = require("scribl")
 
--- App options
+-- App Options
 scribl.opt.dot_grid = true
 scribl.opt.default_tool = "pen"
 scribl.opt.zoom_mode = "scrubby"
 scribl.opt.stroke_smoothing = 0.5
+scribl.opt.stroke_thinning = 0.6
 scribl.opt.auto_save = true
+scribl.opt.default_pen_color = "#0284c7"
 
--- Custom Keymaps
+-- Theme Configuration
+scribl.theme.name = "default-dark" -- "default-dark", "light", "tokyo-night", "catppuccin", or custom
+scribl.theme.overrides = {
+  accent = "#38bdf8",
+}
+
+-- Programmatic Custom Theme Definition
+scribl.theme.define("dracula", {
+  mode = "dark",
+  canvas_bg = "#282a36",
+  grid_dot = "#44475a",
+  panel_bg = "rgba(40, 42, 54, 0.88)",
+  panel_border = "rgba(98, 114, 164, 0.2)",
+  text_primary = "#f8f8f2",
+  text_secondary = "#6272a4",
+  accent = "#bd93f9",
+  accent_light = "#ff79c6",
+  selection_stroke = "#bd93f9",
+  danger = "#ff5555",
+})
+
+-- Custom Keymaps (Vim notation)
 scribl.keymap.set("n", "p", "tool.pen", { desc = "Pen Tool" })
 scribl.keymap.set("n", "e", "tool.eraser", { desc = "Eraser Tool" })
 scribl.keymap.set("n", "v", "tool.select", { desc = "Select Tool" })
+scribl.keymap.set("n", "s", "tool.shapes", { desc = "Shapes Tool" })
+scribl.keymap.set("n", "t", "tool.text", { desc = "Text Tool" })
 scribl.keymap.set("n", "z", "tool.zoom", { desc = "Zoom Tool" })
-scribl.keymap.set("n", "c", "canvas.clear", { desc = "Clear Canvas" })
 scribl.keymap.set("n", "f", "zoom.fit_all", { desc = "Fit Drawing" })
+scribl.keymap.set("n", "c", "canvas.clear", { desc = "Clear Canvas" })
 
 -- Dynamic Toolbar Layout
 scribl.ui.toolbar = {
@@ -96,6 +136,7 @@ scribl.ui.toolbar = {
     "pen",
     "eraser",
     "shapes",
+    "text",
     "zoom",
     "|",
     "undo",
@@ -110,24 +151,33 @@ scribl.ui.toolbar = {
 
 ## ⌨️ Keyboard Shortcuts
 
-| Shortcut                                 | Action                                         |
-| ---------------------------------------- | ---------------------------------------------- |
-| `P` or `2`                               | **Pen Tool**                                   |
-| `E` or `3`                               | **Eraser Tool**                                |
-| `V` or `1`                               | **Select / Move Tool**                         |
-| `S` or `5`                               | **Shapes Tool (press twice to browse shapes)** |
-| `R`                                      | **Rectangle Shape Tool**                       |
-| `Z` or `4`                               | **Zoom Tool**                                  |
-| `Space` + Drag                           | **Pan Canvas**                                 |
-| `Cmd/Ctrl + Z`                           | **Undo**                                       |
-| `Cmd/Ctrl + Shift + Z` or `Cmd/Ctrl + Y` | **Redo**                                       |
-| `Backspace` or `Delete`                  | **Delete Selected Strokes**                    |
-| `+` / `=`                                | **Zoom In**                                    |
-| `-`                                      | **Zoom Out**                                   |
-| `Shift + 0`                              | **Reset Zoom (100%)**                          |
-| `Alt` + Click (Zoom Tool)                | **Zoom Out (Step)**                            |
-| `Shift` + Drag (Zoom Tool)               | **Toggle Scrubby / Box Mode**                  |
-| Mouse Wheel                              | **Cursor-Anchored Zoom**                       |
+| Shortcut                                 | Action                                               |
+| :--------------------------------------- | :--------------------------------------------------- |
+| `P` or `2`                               | **Pen Tool**                                         |
+| `E` or `3`                               | **Eraser Tool**                                      |
+| `V` or `1`                               | **Select / Move Tool**                               |
+| `S` or `6`                               | **Shapes Tool (press twice to browse flyout)**       |
+| `R`                                      | **Rectangle Shape Tool**                             |
+| `T` or `5`                               | **Text Tool**                                        |
+| `Z` or `4`                               | **Zoom Tool**                                        |
+| `Space` + Drag                           | **Pan Canvas**                                       |
+| `F`                                      | **Fit All (Zoom to Fit Drawing)**                    |
+| `Cmd/Ctrl + C` / `y` (Visual)            | **Copy Selected**                                    |
+| `Cmd/Ctrl + X`                           | **Cut Selected**                                     |
+| `Cmd/Ctrl + V` / `p` (Visual)            | **Paste**                                            |
+| `Cmd/Ctrl + D`                           | **Duplicate Selected**                               |
+| `Cmd/Ctrl + Z`                           | **Undo**                                             |
+| `Cmd/Ctrl + Shift + Z` or `Cmd/Ctrl + Y` | **Redo**                                             |
+| `Backspace` or `Delete` / `d` (Visual)   | **Delete Selected**                                  |
+| `Cmd/Ctrl + ,`                           | **Open Settings Modal**                              |
+| `Cmd/Ctrl + S`                           | **Save Drawing (`.scribl`)**                         |
+| `Cmd/Ctrl + O`                           | **Open Drawing (`.scribl`, `.excalidraw`, `.tldr`)** |
+| `+` / `=`                                | **Zoom In**                                          |
+| `-`                                      | **Zoom Out**                                         |
+| `Shift + 0` / `Cmd + 0`                  | **Reset Zoom (100%)**                                |
+| `Alt` + Click (Zoom Tool)                | **Zoom Out Step**                                    |
+| `Shift` + Drag (Zoom Tool)               | **Selection Box Zoom**                               |
+| Mouse Wheel                              | **Cursor-Anchored Zoom**                             |
 
 ---
 
@@ -173,16 +223,23 @@ pnpm dev
 
 ### Running Tests
 
-Execute the unit test suite with Vitest:
+Execute the frontend unit test suite with Vitest:
 
 ```bash
 pnpm test
 ```
 
-Run TypeScript verification:
+Execute Rust tests:
+
+```bash
+cargo test --manifest-path src-tauri/Cargo.toml
+```
+
+Run TypeScript and code formatting verification:
 
 ```bash
 pnpm tsc --noEmit
+pnpm format:check
 ```
 
 ### Building for Production (macOS App Bundle)
@@ -203,58 +260,81 @@ src-tauri/target/release/bundle/macos/
 
 ## 🏛️ Architecture
 
-```
+```text
 src/
-├── app/
-│   ├── App.tsx                      # Root shell, global shortcuts & persistence sync
-│   └── App.css                      # Global styles & canvas viewport containment
+├── App.tsx                      # Root shell, global shortcuts, notifications & file dispatch
 ├── components/
 │   ├── canvas/
-│   │   ├── CanvasViewport.tsx       # Dual-layer canvas viewport container & pointer listeners
+│   │   ├── CanvasViewport.tsx       # Dual-layer canvas, pointer routing & drag-and-drop ingestion
 │   │   ├── InfiniteGrid.tsx         # Responsive background dot grid
-│   │   └── SelectionOverlay.tsx     # SVG selection bounding box & marquee rectangle
+│   │   ├── SelectionOverlay.tsx     # Transform bounding box, resize handles & marquee
+│   │   └── TextEditorOverlay.tsx    # In-place canvas text editor
+│   ├── settings/
+│   │   ├── SettingsModal.tsx        # Tabbed settings dialog (Cmd+,)
+│   │   ├── GeneralTab.tsx           # App options & default colors
+│   │   ├── InkingTab.tsx            # Smoothing and thinning dynamics
+│   │   ├── ThemeTab.tsx             # Theme presets, custom themes & color overrides
+│   │   ├── KeybindingsTab.tsx       # Keybinding inspector & search
+│   │   ├── ToolbarTab.tsx           # Visual toolbar layout manager
+│   │   └── LuaTab.tsx               # Lua script path, reload & reveal actions
 │   └── ui/
-│       ├── FloatingDock.tsx         # Bottom-center glassmorphic tool switcher
-│       ├── StyleInspector.tsx       # Floating color & thickness palette
-│       ├── TopHeader.tsx            # Brand bar, editable drawing title, file actions
-│       └── ZoomHUD.tsx              # Bottom-right zoom percentage & controls
+│       ├── FloatingDock.tsx         # Docked island tool switcher with shape flyouts
+│       ├── ImportToast.tsx          # Non-blocking import status & warning banner
+│       ├── StyleInspector.tsx       # Floating color, thickness, fill & typography inspector
+│       ├── TopHeader.tsx            # Brand header, editable title, file actions
+│       └── ZoomHUD.tsx              # Zoom percentage & quick framing controls
 ├── core/
 │   ├── camera/
-│   │   └── cameraMath.ts            # Screen <-> World coordinate mapping & cursor-anchored zoom
+│   │   └── cameraMath.ts            # World <-> Screen projection, zoom-to-fit & camera math
+│   ├── clipboard/
+│   │   └── clipboard.ts             # Copy, cut, paste, and duplicate with atomic undo
 │   ├── engine/
-│   │   ├── CanvasRenderer.ts        # Committed canvas frustum-culled vector batch renderer
-│   │   ├── HitTester.ts             # Point-to-stroke distance & marquee intersection
-│   │   ├── InkingEngine.ts          # perfect-freehand outline polygon & Path2D generator
-│   │   └── ScratchRenderer.ts       # Low-latency 240Hz scratch canvas & eraser trail loop
+│   │   ├── CanvasRenderer.ts        # Frustum-culled committed vector rendering (strokes, shapes, text)
+│   │   ├── HitTester.ts             # Point-to-stroke, shape, and text hit testing
+│   │   ├── InkingEngine.ts          # perfect-freehand outline polygon generator
+│   │   ├── ScratchRenderer.ts       # Low-latency 240Hz scratch canvas & eraser trail loop
+│   │   ├── shapeGeometry.ts         # Shape path builders (rect, circle, diamond, line, arrow)
+│   │   └── textMeasurement.ts      # Canvas font bounding box calculation
+│   ├── geometry/
+│   │   └── transformMath.ts         # Selection bounding box, handle hit testing & rotation
 │   ├── history/
-│   │   ├── HistoryStack.ts          # Command pattern Undo/Redo manager
-│   │   └── commands.ts              # Add, Delete, and Move commands
+│   │   ├── HistoryStack.ts          # Command-based multi-level Undo/Redo stack
+│   │   └── commands.ts              # Atomic commands for add, delete, move, and transform
 │   ├── input/
-│   │   ├── PointerRouter.ts         # High-rate coalesced pointer router & palm rejection
-│   │   └── ToolFSM.ts               # Interaction state machine
-│   └── persistence/
-│       ├── autoSave.ts              # LocalStorage debounced sync
-│       └── fileIO.ts                # .scribl JSON serializer & high-res PNG exporter
+│   │   ├── PointerRouter.ts         # Coalesced stylus event router & palm rejection
+│   │   ├── ToolFSM.ts               # Drawing, shaping, and transform interaction FSM
+│   │   └── keyboardShortcuts.ts     # Vim-style keybinding parser & dispatcher
+│   ├── persistence/
+│   │   ├── autoSave.ts              # LocalStorage debounced auto-sync
+│   │   ├── fileIO.ts                # Native .scribl serializer & high-res PNG export
+│   │   └── importers/
+│   │       ├── index.ts             # Multi-format import dispatcher
+│   │       ├── detector.ts          # JSON format sniffer (.scribl, .excalidraw, .tldr)
+│   │       ├── excalidrawImporter.ts# Excalidraw v2 schema parser & converter
+│   │       ├── tldrawImporter.ts    # tldraw v2 schema parser & converter
+│   │       └── types.ts             # Common import contracts & result types
+│   └── theme/
+│       ├── themeManager.ts          # Built-in presets, custom themes & DOM styling
+│       └── adaptiveThemeInk.ts      # Contrast-adaptive ink color resolution
 ├── stores/
-│   ├── useCameraStore.ts            # Camera offset, zoom, and spacebar panning state
-│   ├── useDocumentStore.ts          # Scene graph, z-index ordering, selection
-│   └── useToolStore.ts              # Active tool, color, stroke thickness
+│   ├── useCameraStore.ts            # Viewport dimensions, pan, and zoom state
+│   ├── useConfigStore.ts            # Lua config, keymaps, custom themes & toolbar layout
+│   ├── useDocumentStore.ts          # Canvas elements graph, z-index ordering & history
+│   └── useToolStore.ts              # Active tool, stroke style, text editing state
 └── types/
-    ├── canvas.ts                    # Core element, stroke point & camera interfaces
-    └── commands.ts                  # Command interfaces
+    ├── canvas.ts                    # Element primitives (stroke, shape, text) & camera
+    └── commands.ts                  # Document command interfaces
 ```
 
 ---
 
 ## 🗺️ Roadmap (Post-v0.1.0)
 
-The overall architecture is still not entirely decided. I am just trying out options and implementing basic features.
-I might change the architecture before first release. (I am considering GPUI)
-
-- 🖊️ **Hardware Stylus Pressure Sensitivity**: Native pen pressure curves and dynamic stylus thickness.
-- 📥 **Application Imports**: Import support for Excalidraw (`.excalidraw`) and tldraw (`.tldr`) files.
-- 📐 **Shape Primitives & Connectors**: Rectangles, ellipses, diamonds, and smart arrows.
-- 🔤 **Canvas Text & Sticky Notes**: Rich text cards and sticky notes.
+- 🖊️ **Hardware Stylus Pressure Sensitivity**: Native pen pressure curves and dynamic stylus thickness calibration.
+- 📐 **Smart Connectors**: Dynamic snapping anchor points and connectors between shapes.
+- 🖼️ **Image & Media Support**: Local bitmap paste, placement, and canvas scaling.
+- 📄 **Vector SVG & PDF Export**: Native vector document exports alongside high-resolution raster PNGs.
+- 🦀 **GPUI / Native Renderer Exploration**: Evaluating Rust-native GPU canvas pipelines.
 
 ---
 
