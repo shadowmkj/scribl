@@ -139,7 +139,7 @@ jobs:
           TAG: ${{ steps.version.outputs.tag }}
           VERSION: ${{ steps.version.outputs.version }}
 
-      - name: Create GitHub Release (Draft)
+      - name: Create or Reuse GitHub Release (Draft)
         id: create_release
         run: |
           TAG="${{ steps.version.outputs.tag }}"
@@ -148,17 +148,27 @@ jobs:
             PRERELEASE_FLAG="--prerelease"
           fi
 
-          # Create as draft so matrix builders can safely attach build artifacts
-          gh release create "$TAG" \
-            --title "$TAG" \
-            --notes-file RELEASE_NOTES.md \
-            --draft \
-            --target "$GITHUB_SHA" \
-            $PRERELEASE_FLAG
+          # Check if a release for this tag already exists
+          EXISTING_ID=$(gh release view "$TAG" --json databaseId --jq .databaseId 2>/dev/null || true)
 
-          RELEASE_ID=$(gh release view "$TAG" --json id --jq .id)
+          if [ -n "$EXISTING_ID" ]; then
+            echo "Release for $TAG already exists (databaseId: $EXISTING_ID), reusing it."
+            RELEASE_ID="$EXISTING_ID"
+            # Update notes from latest notes file if needed
+            gh release edit "$TAG" --notes-file RELEASE_NOTES.md || true
+          else
+            echo "Creating draft release for $TAG..."
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --notes-file RELEASE_NOTES.md \
+              --draft \
+              --target "$GITHUB_SHA" \
+              $PRERELEASE_FLAG
+            RELEASE_ID=$(gh release view "$TAG" --json databaseId --jq .databaseId)
+          fi
+
           echo "release_id=${RELEASE_ID}" >> "$GITHUB_OUTPUT"
-          echo "Created draft release with id: ${RELEASE_ID} for tag ${TAG}"
+          echo "Target draft release databaseId: ${RELEASE_ID} for tag ${TAG}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
