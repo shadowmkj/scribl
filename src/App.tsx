@@ -1,12 +1,14 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { CanvasViewport } from './components/canvas/CanvasViewport';
 import { TextEditorOverlay } from './components/canvas/TextEditorOverlay';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { ConfigErrorToast } from './components/ui/ConfigErrorToast';
 import { FloatingDock } from './components/ui/FloatingDock';
+import { ImportNotification, ImportToast } from './components/ui/ImportToast';
 import { StyleInspector } from './components/ui/StyleInspector';
 import { TopHeader } from './components/ui/TopHeader';
 import { ZoomHUD } from './components/ui/ZoomHUD';
+import { calculateBoxFitCamera } from './core/camera/cameraMath';
 import { copySelected, cutSelected, paste } from './core/clipboard/clipboard';
 import { registerDefaultCommands } from './core/commands/CommandRegistry';
 import {
@@ -18,7 +20,7 @@ import {
 import { restoreAutoSave, setupAutoSave } from './core/persistence/autoSave';
 import {
   exportToPng,
-  parseScriblJSON,
+  importDrawingDocument,
   serializeScriblDoc,
   triggerDownload,
 } from './core/persistence/fileIO';
@@ -27,10 +29,12 @@ import { useCameraStore } from './stores/useCameraStore';
 import { ScriblConfig, useConfigStore } from './stores/useConfigStore';
 import { useDocumentStore } from './stores/useDocumentStore';
 import { useToolStore } from './stores/useToolStore';
+import { CanvasElement } from './types/canvas';
 import './App.css';
 
 export function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importNotification, setImportNotification] = useState<ImportNotification | null>(null);
   const theme = useConfigStore((state) => state.config.theme);
 
   // Apply theme to DOM
@@ -191,17 +195,67 @@ export function App() {
     reader.onload = (event) => {
       try {
         const text = event.target?.result as string;
-        const data = parseScriblJSON(text);
+        const result = importDrawingDocument(text, file.name);
+
+        const elementsRecord: Record<string, CanvasElement> = {};
+        for (const el of result.elements) {
+          elementsRecord[el.id] = el;
+        }
+
         useDocumentStore.getState().loadDocument({
-          elements: data.elements,
-          elementIds: data.elementIds,
+          elements: elementsRecord,
+          elementIds: result.elementIds,
         });
-        if (data.camera) {
-          useCameraStore.getState().setPan(data.camera.x, data.camera.y);
-          useCameraStore.getState().zoomAt(0, 0, data.camera.zoom);
+
+        // Camera auto-framing
+        if (result.format === 'scribl') {
+          try {
+            const parsedScribl = JSON.parse(text);
+            if (parsedScribl.camera) {
+              useCameraStore.getState().setPan(parsedScribl.camera.x, parsedScribl.camera.y);
+              useCameraStore.getState().zoomAt(0, 0, parsedScribl.camera.zoom);
+            } else if (result.elements.length > 0) {
+              const { viewportWidth, viewportHeight } = useCameraStore.getState();
+              const fit = calculateBoxFitCamera(result.bounds, viewportWidth, viewportHeight, 0.85);
+              useCameraStore.setState({ camera: fit });
+            }
+          } catch {
+            if (result.elements.length > 0) {
+              const { viewportWidth, viewportHeight } = useCameraStore.getState();
+              const fit = calculateBoxFitCamera(result.bounds, viewportWidth, viewportHeight, 0.85);
+              useCameraStore.setState({ camera: fit });
+            }
+          }
+        } else if (result.elements.length > 0) {
+          const { viewportWidth, viewportHeight } = useCameraStore.getState();
+          const fit = calculateBoxFitCamera(result.bounds, viewportWidth, viewportHeight, 0.85);
+          useCameraStore.setState({ camera: fit });
+        }
+
+        // Warning or success notification
+        if (result.discardedCount > 0) {
+          setImportNotification({
+            id: String(Date.now()),
+            type: 'warning',
+            message: `Imported ${result.elements.length} elements from ${file.name}`,
+            details: `${result.discardedCount} unsupported items (${
+              result.discardedTypes.join(', ')
+            }) were discarded.`,
+          });
+        } else if (result.format !== 'scribl') {
+          setImportNotification({
+            id: String(Date.now()),
+            type: 'success',
+            message: `Imported ${result.elements.length} elements from ${file.name}`,
+          });
         }
       } catch (err) {
-        alert('Failed to load file: ' + err);
+        setImportNotification({
+          id: String(Date.now()),
+          type: 'error',
+          message: `Failed to import ${file.name}`,
+          details: err instanceof Error ? err.message : String(err),
+        });
       }
     };
     reader.readAsText(file);
@@ -213,14 +267,18 @@ export function App() {
       <input
         ref={fileInputRef}
         type='file'
-        accept='.scribl,application/json'
+        accept='.scribl,.excalidraw,.tldr,.json,application/json'
         style={{ display: 'none' }}
         onChange={handleFileChange}
       />
       <TopHeader onSave={handleSave} onOpen={handleOpenClick} onExportPNG={handleExportPNG} />
       <ConfigErrorToast />
+      <ImportToast
+        notification={importNotification}
+        onDismiss={() => setImportNotification(null)}
+      />
       <StyleInspector />
-      <CanvasViewport />
+      <CanvasViewport onImportNotification={setImportNotification} />
       <TextEditorOverlay />
       <FloatingDock />
       <ZoomHUD />

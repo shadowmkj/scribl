@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { worldToScreen } from '../../core/camera/cameraMath';
+import { screenToWorld, worldToScreen } from '../../core/camera/cameraMath';
 import { renderCommittedCanvas } from '../../core/engine/CanvasRenderer';
 import { ScratchRenderer } from '../../core/engine/ScratchRenderer';
 import {
@@ -9,17 +9,23 @@ import {
 } from '../../core/geometry/transformMath';
 import { PointerRouter } from '../../core/input/PointerRouter';
 import { MarqueeBox } from '../../core/input/ToolFSM';
+import { importDrawingDocument } from '../../core/persistence/importers';
 import { useCameraStore } from '../../stores/useCameraStore';
 import { useConfigStore } from '../../stores/useConfigStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
+import { ImportNotification } from '../ui/ImportToast';
 import { InfiniteGrid } from './InfiniteGrid';
 import { SelectionOverlay } from './SelectionOverlay';
 
 const ERASER_CURSOR =
   `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='7' fill='rgba(255,255,255,0.06)' stroke='%2394a3b8' stroke-width='1.2'/%3E%3Ccircle cx='10' cy='10' r='1' fill='%2394a3b8'/%3E%3C/svg%3E") 10 10, crosshair`;
 
-export const CanvasViewport: React.FC = () => {
+export interface CanvasViewportProps {
+  onImportNotification?: (notif: ImportNotification) => void;
+}
+
+export const CanvasViewport: React.FC<CanvasViewportProps> = ({ onImportNotification }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const committedCanvasRef = useRef<HTMLCanvasElement>(null);
   const scratchCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -46,6 +52,7 @@ export const CanvasViewport: React.FC = () => {
   const [rotationAngle, setRotationAngle] = useState<number | null>(null);
   const [isRotateKeyHeld, setIsRotateKeyHeld] = useState(false);
   const [hoveredHandle, setHoveredHandle] = useState<HandleType | null>(null);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
 
   const scratchRendererRef = useRef<ScratchRenderer>(new ScratchRenderer());
   const pointerRouterRef = useRef<PointerRouter | null>(null);
@@ -211,6 +218,126 @@ export const CanvasViewport: React.FC = () => {
     setHoveredHandle(null);
   };
 
+  const handleDragEnter = (e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes('Files')) {
+      e.preventDefault();
+      setIsDraggingFile(true);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes('Files')) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      setIsDraggingFile(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDraggingFile(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingFile(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        const result = importDrawingDocument(text, file.name);
+
+        if (result.elements.length === 0) {
+          if (result.discardedCount > 0) {
+            onImportNotification?.({
+              id: String(Date.now()),
+              type: 'warning',
+              message: `No supported elements found in ${file.name}`,
+              details: `${result.discardedCount} unsupported items (${
+                result.discardedTypes.join(', ')
+              }) were discarded.`,
+            });
+          }
+          return;
+        }
+
+        // Compute drop position in world coordinates
+        const rect = containerRef.current?.getBoundingClientRect();
+        const screenX = rect ? e.clientX - rect.left : e.clientX;
+        const screenY = rect ? e.clientY - rect.top : e.clientY;
+        const dropWorld = screenToWorld(screenX, screenY, camera, width, height);
+
+        // Center elements at drop position
+        const origCenterX = (result.bounds.minX + result.bounds.maxX) / 2;
+        const origCenterY = (result.bounds.minY + result.bounds.maxY) / 2;
+        const dx = dropWorld.x - origCenterX;
+        const dy = dropWorld.y - origCenterY;
+
+        const translatedElements = result.elements.map((el) => {
+          if (el.type === 'stroke') {
+            return {
+              ...el,
+              x: el.x + dx,
+              y: el.y + dy,
+              points: el.points.map((pt) => ({ ...pt, x: pt.x + dx, y: pt.y + dy })),
+            };
+          } else if (el.type === 'shape') {
+            return {
+              ...el,
+              x: el.x + dx,
+              y: el.y + dy,
+              startPoint: el.startPoint
+                ? { x: el.startPoint.x + dx, y: el.startPoint.y + dy }
+                : undefined,
+              endPoint: el.endPoint
+                ? { x: el.endPoint.x + dx, y: el.endPoint.y + dy }
+                : undefined,
+            };
+          } else if (el.type === 'text') {
+            return {
+              ...el,
+              x: el.x + dx,
+              y: el.y + dy,
+            };
+          }
+          return el;
+        });
+
+        useDocumentStore.getState().insertElements(translatedElements);
+
+        if (result.discardedCount > 0) {
+          onImportNotification?.({
+            id: String(Date.now()),
+            type: 'warning',
+            message: `Imported ${result.elements.length} elements from ${file.name}`,
+            details: `${result.discardedCount} unsupported items (${
+              result.discardedTypes.join(', ')
+            }) were discarded.`,
+          });
+        } else {
+          onImportNotification?.({
+            id: String(Date.now()),
+            type: 'success',
+            message: `Imported ${result.elements.length} elements from ${file.name}`,
+          });
+        }
+      } catch (err) {
+        onImportNotification?.({
+          id: String(Date.now()),
+          type: 'error',
+          message: `Failed to import ${file.name}`,
+          details: err instanceof Error ? err.message : String(err),
+        });
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const dpr = window.devicePixelRatio || 1;
 
   let cursorStyle = 'default';
@@ -265,6 +392,10 @@ export const CanvasViewport: React.FC = () => {
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerLeave}
       onDoubleClick={(e) => pointerRouterRef.current?.handleDoubleClick(e.nativeEvent)}
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
       {dotGrid && <InfiniteGrid camera={camera} width={width} height={height} />}
 
@@ -306,6 +437,78 @@ export const CanvasViewport: React.FC = () => {
         rotationAngle={rotationAngle}
         editingTextElementId={editingText?.elementId ?? (editingText ? '__new__' : null)}
       />
+
+      {/* Drag & Drop Visual Overlay */}
+      {isDraggingFile && (
+        <div
+          data-testid='canvas-drop-overlay'
+          style={{
+            position: 'absolute',
+            inset: 16,
+            borderRadius: 16,
+            border: '2px dashed var(--color-accent-light, #38bdf8)',
+            background: 'rgba(56, 189, 248, 0.08)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 12,
+            pointerEvents: 'none',
+            zIndex: 100,
+          }}
+        >
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 12,
+              background: 'var(--color-accent, #0284c7)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 8px 24px rgba(2, 132, 199, 0.35)',
+            }}
+          >
+            <svg
+              width='24'
+              height='24'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='#ffffff'
+              strokeWidth='2'
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            >
+              <path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' />
+              <polyline points='7 10 12 15 17 10' />
+              <line x1='12' y1='15' x2='12' y2='3' />
+            </svg>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <p
+              style={{
+                margin: '0 0 4px 0',
+                fontSize: 14,
+                fontWeight: 600,
+                color: 'var(--color-text-primary, #f8fafc)',
+              }}
+            >
+              Drop drawing to insert
+            </p>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 12,
+                color: 'var(--color-text-secondary, #94a3b8)',
+              }}
+            >
+              Supports .scribl, .excalidraw, and .tldr files
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

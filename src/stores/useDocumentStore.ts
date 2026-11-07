@@ -20,6 +20,7 @@ interface DocumentState extends DocumentData {
   canRedo: boolean;
   addElement: (element: CanvasElement) => void;
   addElements: (elements: CanvasElement[]) => void;
+  insertElements: (elements: CanvasElement[]) => void;
   deleteSelected: () => void;
   moveSelected: (dx: number, dy: number) => void;
   translateSelected: (dx: number, dy: number) => void;
@@ -74,6 +75,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       canUndo: history.canUndo(),
       canRedo: history.canRedo(),
     });
+  },
+
+  insertElements: (elements: CanvasElement[]) => {
+    get().addElements(elements);
   },
 
   deleteSelected: () => {
