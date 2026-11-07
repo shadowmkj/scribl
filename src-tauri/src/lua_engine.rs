@@ -1,9 +1,135 @@
 use mlua::{Lua, Table};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 
-use crate::config::{AppOptions, KeymapEntry, ScriblConfig, ThemeConfig, ToolbarConfig};
+use crate::config::{
+    AppOptions, KeymapEntry, ScriblConfig, ThemeColors, ThemeConfig, ToolbarConfig,
+    calculate_luminance_mode, darken_hex,
+};
+
+pub fn parse_theme_table(tbl: &Table) -> Option<ThemeColors> {
+    let canvas_bg = tbl.get::<String>("canvas_bg").ok()?;
+    let mode = tbl
+        .get::<String>("mode")
+        .ok()
+        .unwrap_or_else(|| calculate_luminance_mode(&canvas_bg).to_string());
+
+    let is_dark = mode == "dark";
+    let default_grid = if is_dark { "#334155" } else { "#cbd5e1" };
+    let default_panel_bg = if is_dark {
+        "rgba(15, 23, 42, 0.78)"
+    } else {
+        "rgba(255, 255, 255, 0.88)"
+    };
+    let default_panel_border = if is_dark {
+        "rgba(255, 255, 255, 0.08)"
+    } else {
+        "rgba(0, 0, 0, 0.08)"
+    };
+    let default_panel_shadow = if is_dark {
+        "0 12px 36px rgba(0, 0, 0, 0.45)"
+    } else {
+        "0 12px 36px rgba(0, 0, 0, 0.08)"
+    };
+    let default_text_primary = if is_dark { "#f8fafc" } else { "#0f172a" };
+    let default_text_secondary = if is_dark { "#94a3b8" } else { "#64748b" };
+    let default_text_disabled = if is_dark { "#64748b" } else { "#94a3b8" };
+    let default_danger = if is_dark { "#ef4444" } else { "#dc2626" };
+
+    let accent = tbl
+        .get::<String>("accent")
+        .unwrap_or_else(|_| "#0284c7".to_string());
+    let accent_hover = tbl
+        .get::<String>("accent_hover")
+        .unwrap_or_else(|_| darken_hex(&accent, 0.82));
+    let accent_light = tbl
+        .get::<String>("accent_light")
+        .unwrap_or_else(|_| accent.clone());
+    let selection_stroke = tbl
+        .get::<String>("selection_stroke")
+        .unwrap_or_else(|_| accent.clone());
+    let selection_fill = tbl
+        .get::<String>("selection_fill")
+        .unwrap_or_else(|_| "rgba(2, 132, 199, 0.12)".to_string());
+
+    Some(ThemeColors {
+        mode,
+        canvas_bg,
+        grid_dot: tbl
+            .get::<String>("grid_dot")
+            .unwrap_or_else(|_| default_grid.into()),
+        panel_bg: tbl
+            .get::<String>("panel_bg")
+            .unwrap_or_else(|_| default_panel_bg.into()),
+        panel_border: tbl
+            .get::<String>("panel_border")
+            .unwrap_or_else(|_| default_panel_border.into()),
+        panel_shadow: tbl
+            .get::<String>("panel_shadow")
+            .unwrap_or_else(|_| default_panel_shadow.into()),
+        text_primary: tbl
+            .get::<String>("text_primary")
+            .unwrap_or_else(|_| default_text_primary.into()),
+        text_secondary: tbl
+            .get::<String>("text_secondary")
+            .unwrap_or_else(|_| default_text_secondary.into()),
+        text_disabled: tbl
+            .get::<String>("text_disabled")
+            .unwrap_or_else(|_| default_text_disabled.into()),
+        accent,
+        accent_hover,
+        accent_light,
+        selection_stroke,
+        selection_fill,
+        danger: tbl
+            .get::<String>("danger")
+            .unwrap_or_else(|_| default_danger.into()),
+    })
+}
+
+pub fn scan_themes_dir(dir: &Path) -> HashMap<String, ThemeColors> {
+    let mut map = HashMap::new();
+    if !dir.exists() || !dir.is_dir() {
+        return map;
+    }
+
+    let entries = match std::fs::read_dir(dir) {
+        Ok(e) => e,
+        Err(_) => return map,
+    };
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_file() && path.extension().is_some_and(|ext| ext == "lua") {
+            let stem = path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("unnamed")
+                .to_string();
+
+            if let Ok(script) = std::fs::read_to_string(&path) {
+                let lua = Lua::new();
+                match lua.load(&script).eval::<Table>() {
+                    Ok(tbl) => {
+                        let name = tbl.get::<String>("name").unwrap_or(stem);
+                        if let Some(colors) = parse_theme_table(&tbl) {
+                            map.insert(name, colors);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!(
+                            "[Scribl] Failed to parse theme file {}: {}",
+                            path.display(),
+                            e
+                        );
+                    }
+                }
+            }
+        }
+    }
+    map
+}
 
 pub fn eval_lua_config_string(
     script: &str,
@@ -22,6 +148,13 @@ pub fn eval_lua_config_string(
     }
 
     let default = ScriblConfig::default();
+
+    let initial_custom_themes = if let Some(dir) = config_dir {
+        scan_themes_dir(&dir.join("themes"))
+    } else {
+        HashMap::new()
+    };
+    let custom_themes_shared = Arc::new(Mutex::new(initial_custom_themes));
 
     // Create the scribl module table
     let scribl_table = lua.create_table().map_err(|e| e.to_string())?;
@@ -176,6 +309,22 @@ pub fn eval_lua_config_string(
     theme_table
         .set("overrides", overrides_table)
         .map_err(|e| e.to_string())?;
+
+    // scribl.theme.define(name, table)
+    let ct_ref = Arc::clone(&custom_themes_shared);
+    let define_fn = lua
+        .create_function(move |_lua, (name, tbl): (String, Table)| {
+            if let Some(colors) = parse_theme_table(&tbl) {
+                let mut map = ct_ref.lock().unwrap();
+                map.insert(name, colors);
+            }
+            Ok(())
+        })
+        .map_err(|e| e.to_string())?;
+    theme_table
+        .set("define", define_fn)
+        .map_err(|e| e.to_string())?;
+
     scribl_table
         .set("theme", theme_table)
         .map_err(|e| e.to_string())?;
@@ -314,7 +463,10 @@ pub fn eval_lua_config_string(
             }
         }
     }
-    theme_config.active = Some(crate::config::resolve_theme(&theme_config));
+    let custom_themes = Arc::try_unwrap(custom_themes_shared)
+        .map(|m| m.into_inner().unwrap())
+        .unwrap_or_else(|arc| arc.lock().unwrap().clone());
+    theme_config.active = Some(crate::config::resolve_theme(&theme_config, &custom_themes));
 
     Ok(ScriblConfig {
         options,
@@ -325,6 +477,7 @@ pub fn eval_lua_config_string(
             groups,
         },
         theme: theme_config,
+        custom_themes,
     })
 }
 
@@ -586,5 +739,132 @@ scribl.keymap.set("n", "<BS>", "selection.delete")
         assert_eq!(shapes_group.label, "Shapes");
         assert_eq!(shapes_group.default, "circle");
         assert_eq!(shapes_group.items, vec!["circle", "rectangle"]);
+    }
+
+    #[test]
+    fn test_scan_themes_dir_discovers_valid_theme() {
+        let temp_dir = std::env::temp_dir().join("scribl_test_scan_valid");
+        let _ = std::fs::remove_dir_all(&temp_dir);
+        std::fs::create_dir_all(&temp_dir).unwrap();
+
+        let theme_file = temp_dir.join("dracula.lua");
+        let content = r##"
+            return {
+                name = "dracula",
+                mode = "dark",
+                canvas_bg = "#282a36",
+                grid_dot = "#44475a",
+                panel_bg = "rgba(40, 42, 54, 0.85)",
+                panel_border = "rgba(248, 248, 242, 0.1)",
+                panel_shadow = "0 12px 36px rgba(0, 0, 0, 0.5)",
+                text_primary = "#f8f8f2",
+                text_secondary = "#6272a4",
+                text_disabled = "#44475a",
+                accent = "#bd93f9",
+                selection_stroke = "#bd93f9",
+                selection_fill = "rgba(189, 147, 249, 0.15)",
+                danger = "#ff5555"
+            }
+        "##;
+        std::fs::write(&theme_file, content).unwrap();
+
+        let themes = scan_themes_dir(&temp_dir);
+        assert!(themes.contains_key("dracula"));
+        let dracula = themes.get("dracula").unwrap();
+        assert_eq!(dracula.canvas_bg, "#282a36");
+        assert_eq!(dracula.accent, "#bd93f9");
+        assert_eq!(dracula.mode, "dark");
+        assert!(!dracula.accent_hover.is_empty());
+
+        let _ = std::fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_scan_themes_dir_handles_syntax_error_gracefully() {
+        let temp_dir = std::env::temp_dir().join("scribl_test_scan_broken");
+        let _ = std::fs::remove_dir_all(&temp_dir);
+        std::fs::create_dir_all(&temp_dir).unwrap();
+
+        let bad_file = temp_dir.join("broken.lua");
+        std::fs::write(&bad_file, "this is not valid lua code !@#$").unwrap();
+
+        let themes = scan_themes_dir(&temp_dir);
+        assert!(!themes.contains_key("broken"));
+
+        let _ = std::fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_eval_theme_define_inline() {
+        let script = r##"
+            local scribl = require("scribl")
+            scribl.theme.define("monokai", {
+                mode = "dark",
+                canvas_bg = "#272822",
+                grid_dot = "#3e3d32",
+                panel_bg = "rgba(39, 40, 34, 0.85)",
+                panel_border = "rgba(248, 248, 242, 0.1)",
+                panel_shadow = "0 12px 36px rgba(0, 0, 0, 0.45)",
+                text_primary = "#f8f8f2",
+                text_secondary = "#75715e",
+                text_disabled = "#49483e",
+                accent = "#a6e22e",
+                danger = "#f92672"
+            })
+            scribl.theme.name = "monokai"
+        "##;
+
+        let config = eval_lua_config_string(script, None).expect("should evaluate");
+        assert_eq!(config.theme.name, "monokai");
+        assert!(config.custom_themes.contains_key("monokai"));
+        let active = config.theme.active.expect("active theme resolved");
+        assert_eq!(active.canvas_bg, "#272822");
+        assert_eq!(active.accent, "#a6e22e");
+        assert_eq!(active.mode, "dark");
+    }
+
+    #[test]
+    fn test_eval_lua_config_with_themes_dir() {
+        let temp_dir = std::env::temp_dir().join("scribl_test_themes_dir_eval");
+        let _ = std::fs::remove_dir_all(&temp_dir);
+        let themes_dir = temp_dir.join("themes");
+        std::fs::create_dir_all(&themes_dir).unwrap();
+
+        let nord_file = themes_dir.join("nord.lua");
+        let content = r##"
+            return {
+                name = "nord",
+                mode = "dark",
+                canvas_bg = "#2e3440",
+                grid_dot = "#434c5e",
+                panel_bg = "rgba(46, 52, 64, 0.85)",
+                panel_border = "rgba(236, 239, 244, 0.08)",
+                panel_shadow = "0 12px 36px rgba(0, 0, 0, 0.45)",
+                text_primary = "#eceff4",
+                text_secondary = "#d8dee9",
+                text_disabled = "#4c566a",
+                accent = "#88c0d0",
+                accent_hover = "#81a1c1",
+                accent_light = "#8fbcbb",
+                selection_stroke = "#88c0d0",
+                selection_fill = "rgba(136, 192, 208, 0.12)",
+                danger = "#bf616a",
+            }
+        "##;
+        std::fs::write(&nord_file, content).unwrap();
+
+        let script = r#"
+            local scribl = require("scribl")
+            scribl.theme.name = "nord"
+        "#;
+
+        let config = eval_lua_config_string(script, Some(&temp_dir)).expect("should evaluate");
+        assert_eq!(config.theme.name, "nord");
+        assert!(config.custom_themes.contains_key("nord"));
+        let active = config.theme.active.expect("active theme resolved");
+        assert_eq!(active.canvas_bg, "#2e3440");
+        assert_eq!(active.accent, "#88c0d0");
+
+        let _ = std::fs::remove_dir_all(&temp_dir);
     }
 }

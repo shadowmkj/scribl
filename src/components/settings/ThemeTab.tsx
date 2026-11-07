@@ -95,6 +95,7 @@ const TOKEN_GROUPS: { title: string; tokens: TokenField[]; }[] = [
 export const ThemeTab: React.FC = () => {
   const config = useConfigStore((s) => s.config);
   const saveConfigToDisk = useConfigStore((s) => s.saveConfigToDisk);
+  const revealThemesFolder = useConfigStore((s) => s.revealThemesFolder);
 
   const themeConfig = config.theme || {
     name: 'default-dark',
@@ -102,15 +103,17 @@ export const ThemeTab: React.FC = () => {
     active: THEME_PRESETS['default-dark'],
   };
 
+  const customThemes = config.custom_themes || {};
+  const customThemeKeys = Object.keys(customThemes);
   const activePreset = themeConfig.name || 'default-dark';
   const overrides = themeConfig.overrides || {};
-  const resolved = resolveTheme(themeConfig);
+  const resolved = resolveTheme(themeConfig, customThemes);
 
   const handleSelectPreset = (presetId: string) => {
     const updatedTheme = {
       ...themeConfig,
       name: presetId,
-      active: resolveTheme({ ...themeConfig, name: presetId }),
+      active: resolveTheme({ ...themeConfig, name: presetId }, customThemes),
     };
     saveConfigToDisk({
       ...config,
@@ -129,7 +132,7 @@ export const ThemeTab: React.FC = () => {
     const updatedTheme = {
       ...themeConfig,
       overrides: updatedOverrides,
-      active: resolveTheme({ ...themeConfig, overrides: updatedOverrides }),
+      active: resolveTheme({ ...themeConfig, overrides: updatedOverrides }, customThemes),
     };
     saveConfigToDisk({
       ...config,
@@ -141,7 +144,7 @@ export const ThemeTab: React.FC = () => {
     const updatedTheme = {
       name: activePreset,
       overrides: {},
-      active: resolveTheme({ name: activePreset, overrides: {} }),
+      active: resolveTheme({ name: activePreset, overrides: {} }, customThemes),
     };
     saveConfigToDisk({
       ...config,
@@ -155,25 +158,70 @@ export const ThemeTab: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Presets Grid */}
       <div>
-        <h3
+        <div
           style={{
-            fontSize: 14,
-            fontWeight: 600,
-            color: 'var(--color-text-primary, #f8fafc)',
-            marginBottom: 4,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 12,
           }}
         >
-          Theme Presets
-        </h3>
-        <p
-          style={{
-            fontSize: 12,
-            color: 'var(--color-text-secondary, #94a3b8)',
-            marginBottom: 14,
-          }}
-        >
-          Select an aesthetic preset for the canvas and application UI.
-        </p>
+          <div>
+            <h3
+              style={{
+                fontSize: 14,
+                fontWeight: 600,
+                color: 'var(--color-text-primary, #f8fafc)',
+                margin: '0 0 4px',
+              }}
+            >
+              Built-in Presets
+            </h3>
+            <p
+              style={{
+                fontSize: 12,
+                color: 'var(--color-text-secondary, #94a3b8)',
+                margin: 0,
+              }}
+            >
+              Select an aesthetic preset for the canvas and application UI.
+            </p>
+          </div>
+
+          <button
+            type='button'
+            onClick={() => revealThemesFolder()}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: 'rgba(125, 125, 125, 0.08)',
+              border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.1))',
+              borderRadius: 6,
+              padding: '6px 12px',
+              color: 'var(--color-text-primary, #f8fafc)',
+              fontSize: 12,
+              fontWeight: 500,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+            title='Open ~/.config/scribl/themes in system file manager'
+          >
+            <svg
+              width='14'
+              height='14'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              strokeWidth='2'
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            >
+              <path d='M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z' />
+            </svg>
+            Open Themes Folder
+          </button>
+        </div>
 
         <div
           style={{
@@ -285,6 +333,236 @@ export const ThemeTab: React.FC = () => {
             );
           })}
         </div>
+      </div>
+
+      {/* Custom Themes Section */}
+      <div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 12,
+          }}
+        >
+          <div>
+            <h3
+              style={{
+                fontSize: 14,
+                fontWeight: 600,
+                color: 'var(--color-text-primary, #f8fafc)',
+                margin: '0 0 4px',
+              }}
+            >
+              Custom Themes
+            </h3>
+            <p
+              style={{
+                fontSize: 12,
+                color: 'var(--color-text-secondary, #94a3b8)',
+                margin: 0,
+              }}
+            >
+              External themes discovered in ~/.config/scribl/themes/*.lua or defined via
+              scribl.theme.define().
+            </p>
+          </div>
+        </div>
+
+        {customThemeKeys.length > 0
+          ? (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: 12,
+              }}
+            >
+              {customThemeKeys.map((themeId) => {
+                const theme = customThemes[themeId];
+                const isSelected = activePreset === themeId;
+                const displayName = themeId.charAt(0).toUpperCase() + themeId.slice(1);
+                return (
+                  <div
+                    key={themeId}
+                    onClick={() => handleSelectPreset(themeId)}
+                    style={{
+                      background: isSelected
+                        ? 'rgba(56, 189, 248, 0.08)'
+                        : 'rgba(125, 125, 125, 0.04)',
+                      border: isSelected
+                        ? '2px solid var(--color-accent-light, #38bdf8)'
+                        : '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
+                      borderRadius: 10,
+                      padding: 12,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      position: 'relative',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: 8,
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: isSelected
+                              ? 'var(--color-accent-light, #38bdf8)'
+                              : 'var(--color-text-primary, #f8fafc)',
+                          }}
+                        >
+                          {displayName}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: 9,
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            color: 'var(--color-accent-light, #38bdf8)',
+                            background: 'rgba(56, 189, 248, 0.15)',
+                            padding: '1px 5px',
+                            borderRadius: 3,
+                          }}
+                        >
+                          Custom
+                        </span>
+                        <span
+                          style={{
+                            fontSize: 9,
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            color: 'var(--color-text-secondary, #94a3b8)',
+                            background: 'rgba(125, 125, 125, 0.15)',
+                            padding: '1px 5px',
+                            borderRadius: 3,
+                          }}
+                        >
+                          {theme.mode === 'dark' ? 'Dark' : 'Light'}
+                        </span>
+                      </div>
+                      {isSelected && (
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            background: 'var(--color-accent, #0284c7)',
+                            color: '#ffffff',
+                            padding: '1px 6px',
+                            borderRadius: 4,
+                          }}
+                        >
+                          Active
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Palette Color Swatches */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        padding: '6px 8px',
+                        borderRadius: 8,
+                        background: 'rgba(0, 0, 0, 0.35)',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        marginBottom: 8,
+                      }}
+                    >
+                      {[
+                        { name: 'Canvas', color: theme.canvas_bg },
+                        { name: 'Panel', color: theme.panel_bg },
+                        { name: 'Accent', color: theme.accent },
+                        { name: 'Highlight', color: theme.accent_light },
+                        { name: 'Text', color: theme.text_primary },
+                      ].map((swatch) => (
+                        <div
+                          key={swatch.name}
+                          title={`${swatch.name}: ${swatch.color}`}
+                          style={{
+                            flex: 1,
+                            height: 20,
+                            borderRadius: 4,
+                            background: swatch.color,
+                            border: '1px solid rgba(255, 255, 255, 0.16)',
+                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.25)',
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    <p
+                      style={{
+                        fontSize: 11,
+                        color: 'var(--color-text-secondary, #94a3b8)',
+                        margin: 0,
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      Custom user theme definition ({theme.mode} mode)
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )
+          : (
+            <div
+              style={{
+                border: '1px dashed var(--color-panel-border, rgba(255, 255, 255, 0.15))',
+                borderRadius: 10,
+                padding: '16px',
+                textAlign: 'center',
+                background: 'rgba(0, 0, 0, 0.02)',
+              }}
+            >
+              <p
+                style={{
+                  margin: '0 0 6px 0',
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: 'var(--color-text-primary, #f8fafc)',
+                }}
+              >
+                No custom themes detected
+              </p>
+              <p
+                style={{
+                  margin: '0 0 12px 0',
+                  fontSize: 11,
+                  color: 'var(--color-text-secondary, #94a3b8)',
+                }}
+              >
+                Drop <code>.lua</code> theme files into your themes directory or define themes via
+                {' '}
+                <code>scribl.theme.define()</code> in <code>init.lua</code>.
+              </p>
+              <button
+                type='button'
+                onClick={() => revealThemesFolder()}
+                style={{
+                  background: 'rgba(56, 189, 248, 0.12)',
+                  border: '1px solid rgba(56, 189, 248, 0.25)',
+                  color: 'var(--color-accent-light, #38bdf8)',
+                  padding: '5px 12px',
+                  borderRadius: 6,
+                  fontSize: 11,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                }}
+              >
+                Open Themes Folder
+              </button>
+            </div>
+          )}
       </div>
 
       {/* Token Overrides Section */}

@@ -45,6 +45,7 @@ export interface ScriblConfig {
   keymaps: KeymapEntry[];
   toolbar: ToolbarConfig;
   theme: ThemeConfig;
+  custom_themes?: Record<string, ThemeColors>;
 }
 
 export const DEFAULT_CONFIG: ScriblConfig = {
@@ -123,6 +124,7 @@ export const DEFAULT_CONFIG: ScriblConfig = {
     overrides: {},
     active: THEME_PRESETS['default-dark'],
   },
+  custom_themes: {},
 };
 
 export type SettingsTab = 'general' | 'inking' | 'theme' | 'keybindings' | 'toolbar' | 'lua';
@@ -147,6 +149,7 @@ interface ConfigState {
   openSettings: (tab?: SettingsTab) => void;
   closeSettings: () => void;
   saveConfigToDisk: (config: ScriblConfig) => Promise<void>;
+  revealThemesFolder: () => Promise<void>;
 }
 
 export const useConfigStore = create<ConfigState>((set) => ({
@@ -192,6 +195,15 @@ export const useConfigStore = create<ConfigState>((set) => ({
     } catch (e) {
       // In browser/mock mode, changes persist in Zustand state
       console.warn('save_config IPC skipped in web mode:', e);
+    }
+  },
+
+  revealThemesFolder: async () => {
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      await invoke('reveal_themes_folder');
+    } catch (e) {
+      console.warn('reveal_themes_folder IPC skipped in web mode:', e);
     }
   },
 }));

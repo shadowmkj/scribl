@@ -156,7 +156,10 @@ mod tests {
             .theme
             .overrides
             .insert("accent".to_string(), "#ffaa00".to_string());
-        config.theme.active = Some(crate::config::resolve_theme(&config.theme));
+        config.theme.active = Some(crate::config::resolve_theme(
+            &config.theme,
+            &config.custom_themes,
+        ));
 
         let script = generate_lua_script(&config);
         let evaluated = eval_lua_config_string(&script, None).expect("should evaluate");
