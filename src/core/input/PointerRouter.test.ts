@@ -896,4 +896,73 @@ describe('PointerRouter - Shape Drawing', () => {
     expect(movedElement.x).toBe(140); // 100 + 40
     expect(movedElement.y).toBe(130); // 100 + 30
   });
+
+  it('preserves user selected strokeSize when a stroke is resized and erased', () => {
+    // 1. Initial stroke drawn with size 4 (Regular)
+    const initialStroke: StrokeElement = {
+      id: 'stroke-resize-erase',
+      type: 'stroke',
+      points: [
+        { x: 100, y: 100, pressure: 0.5 },
+        { x: 200, y: 200, pressure: 0.5 },
+      ],
+      color: '#0284c7',
+      size: 4,
+      thinning: 0.5,
+      smoothing: 0.5,
+      x: 100,
+      y: 100,
+      width: 100,
+      height: 100,
+      zIndex: 1,
+    };
+
+    useDocumentStore.setState({
+      elements: { [initialStroke.id]: initialStroke },
+      elementIds: [initialStroke.id],
+      selectedIds: [initialStroke.id],
+    });
+    useToolStore.setState({ currentTool: 'select', strokeSize: 4 });
+
+    // 2. Stroke is resized / scaled (e.g. enlarged to size 18.5)
+    const enlargedStroke: StrokeElement = {
+      ...initialStroke,
+      size: 18.5,
+      width: 250,
+      height: 250,
+      points: [
+        { x: 100, y: 100, pressure: 0.5 },
+        { x: 350, y: 350, pressure: 0.5 },
+      ],
+    };
+    useDocumentStore.setState({
+      elements: { [enlargedStroke.id]: enlargedStroke },
+    });
+
+    // Selecting it again must not change strokeSize
+    useDocumentStore.getState().setSelected([enlargedStroke.id]);
+    expect(useToolStore.getState().strokeSize).toBe(4);
+
+    // 3. User switches to eraser tool and erases the enlarged stroke
+    useToolStore.setState({ currentTool: 'eraser' });
+
+    // Erase point at world (150, 150) -> screen (650, 550)
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 650,
+        clientY: 550,
+        pointerId: 10,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+      container,
+    );
+
+    // Stroke should be erased (deleted)
+    expect(useDocumentStore.getState().elements[enlargedStroke.id]).toBeUndefined();
+
+    // 4. Taking pen again - strokeSize must remain 4, NOT 18.5!
+    useToolStore.setState({ currentTool: 'pen' });
+    expect(useToolStore.getState().strokeSize).toBe(4);
+  });
 });

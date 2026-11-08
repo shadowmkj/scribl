@@ -10,7 +10,7 @@ import {
   TransformElementsCommand,
 } from '../core/history/commands';
 import { HistoryStack } from '../core/history/HistoryStack';
-import { CanvasElement } from '../types/canvas';
+import { CanvasElement, PRESET_STROKE_SIZES } from '../types/canvas';
 import { Command, DocumentData } from '../types/commands';
 import { useToolStore } from './useToolStore';
 
@@ -22,6 +22,7 @@ interface DocumentState extends DocumentData {
   addElements: (elements: CanvasElement[]) => void;
   insertElements: (elements: CanvasElement[]) => void;
   deleteSelected: () => void;
+  deleteElements: (ids: string[]) => void;
   moveSelected: (dx: number, dy: number) => void;
   translateSelected: (dx: number, dy: number) => void;
   commitMoveSelected: (totalDx: number, totalDy: number) => void;
@@ -81,12 +82,12 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     get().addElements(elements);
   },
 
-  deleteSelected: () => {
+  deleteElements: (ids: string[]) => {
+    if (ids.length === 0) return;
     const { elements, elementIds, selectedIds, history } = get();
-    if (selectedIds.length === 0) return;
     const currentData: DocumentData = { elements, elementIds, selectedIds };
     const nextData = history.execute(
-      new DeleteElementsCommand(selectedIds, currentData),
+      new DeleteElementsCommand(ids, currentData),
       currentData,
     );
     set({
@@ -94,6 +95,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       canUndo: history.canUndo(),
       canRedo: history.canRedo(),
     });
+  },
+
+  deleteSelected: () => {
+    get().deleteElements(get().selectedIds);
   },
 
   moveSelected: (dx: number, dy: number) => {
@@ -201,6 +206,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
             ...el,
             color: nextColor,
             size: nextSize,
+            isResized: style.strokeSize !== undefined ? false : el.isResized,
             cachedPath2D: undefined,
           };
         } else {
@@ -233,7 +239,9 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       } else if (firstEl && firstEl.type === 'stroke') {
         const toolStore = useToolStore.getState();
         toolStore.setColor(firstEl.color);
-        toolStore.setStrokeSize(firstEl.size);
+        if (!firstEl.isResized && PRESET_STROKE_SIZES.includes(firstEl.size)) {
+          toolStore.setStrokeSize(firstEl.size);
+        }
       }
     }
   },
@@ -257,7 +265,9 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       } else if (firstEl && firstEl.type === 'stroke') {
         const toolStore = useToolStore.getState();
         toolStore.setColor(firstEl.color);
-        toolStore.setStrokeSize(firstEl.size);
+        if (!firstEl.isResized && PRESET_STROKE_SIZES.includes(firstEl.size)) {
+          toolStore.setStrokeSize(firstEl.size);
+        }
       }
     }
   },
@@ -281,7 +291,9 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       } else if (firstEl && firstEl.type === 'stroke') {
         const toolStore = useToolStore.getState();
         toolStore.setColor(firstEl.color);
-        toolStore.setStrokeSize(firstEl.size);
+        if (!firstEl.isResized && PRESET_STROKE_SIZES.includes(firstEl.size)) {
+          toolStore.setStrokeSize(firstEl.size);
+        }
       }
     }
   },

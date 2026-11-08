@@ -174,7 +174,7 @@ export const StyleInspector: React.FC = () => {
         if (el?.type === 'shape') {
           updated[id] = { ...el, strokeWidth: newSize, cachedPath2D: undefined };
         } else if (el?.type === 'stroke') {
-          updated[id] = { ...el, size: newSize, cachedPath2D: undefined };
+          updated[id] = { ...el, size: newSize, isResized: false, cachedPath2D: undefined };
         }
       }
       if (Object.keys(updated).length > 0) {

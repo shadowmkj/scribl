@@ -240,6 +240,7 @@ export function scaleElement(
       height: Math.max(1, maxY - minY),
       size: newSize,
       points: newPoints,
+      isResized: true,
       cachedPath2D: undefined,
     };
   } else if (element.type === 'text') {

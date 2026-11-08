@@ -27,11 +27,14 @@ export interface StrokeElement extends BaseElement {
   size: number;
   thinning: number;
   smoothing: number;
+  isResized?: boolean;
   cachedPath2D?: Path2D;
 }
 
 export type ShapeType = 'line' | 'arrow' | 'rectangle' | 'circle' | 'diamond';
 export type StrokeStyle = 'solid' | 'dashed' | 'dotted';
+
+export const PRESET_STROKE_SIZES: readonly number[] = [2, 4, 8, 16];
 
 export interface ShapeElement extends BaseElement {
   type: 'shape';

@@ -1,7 +1,14 @@
 import { useCameraStore } from '../../stores/useCameraStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
-import { Camera, CanvasElement, ShapeElement, ShapeType, ToolType } from '../../types/canvas';
+import {
+  Camera,
+  CanvasElement,
+  PRESET_STROKE_SIZES,
+  ShapeElement,
+  ShapeType,
+  ToolType,
+} from '../../types/canvas';
 import {
   calculateBoxFitCamera,
   calculateScrubbyZoom,
@@ -248,7 +255,9 @@ export class PointerRouter {
           } else if (el && el.type === 'stroke') {
             const toolStore = useToolStore.getState();
             toolStore.setColor(el.color);
-            toolStore.setStrokeSize(el.size);
+            if (!el.isResized && PRESET_STROKE_SIZES.includes(el.size)) {
+              toolStore.setStrokeSize(el.size);
+            }
           }
         }
         this.state = 'DRAGGING_SELECTION';
@@ -696,8 +705,7 @@ export class PointerRouter {
     const doc = useDocumentStore.getState();
     const hitId = hitTestPoint(doc.elements, doc.elementIds, worldPoint, 12);
     if (hitId) {
-      doc.setSelected([hitId]);
-      doc.deleteSelected();
+      doc.deleteElements([hitId]);
     }
   }
 }
