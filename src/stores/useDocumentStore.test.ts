@@ -250,4 +250,36 @@ describe('useDocumentStore - movement and atomic undo/redo', () => {
     expect(useDocumentStore.getState().elements['insert-a']).toBeDefined();
     expect(useDocumentStore.getState().elements['insert-b']).toBeDefined();
   });
+
+  it('deletes elements directly via deleteElements without altering selection or tool store', () => {
+    const store = useDocumentStore.getState();
+    const stroke: StrokeElement = {
+      ...dummyStroke,
+      id: 'direct-delete',
+      size: 24, // custom enlarged size
+    };
+    store.addElement(stroke);
+    useToolStore.setState({ strokeSize: 4, color: '#0284c7' });
+
+    // deleteElements should remove the element without changing toolStore.strokeSize or color
+    store.deleteElements(['direct-delete']);
+    expect(useDocumentStore.getState().elements['direct-delete']).toBeUndefined();
+    expect(useToolStore.getState().strokeSize).toBe(4);
+    expect(useToolStore.getState().color).toBe('#0284c7');
+  });
+
+  it('does not sync non-preset or resized stroke size to tool store on setSelected', () => {
+    const store = useDocumentStore.getState();
+    const stroke: StrokeElement = {
+      ...dummyStroke,
+      id: 'resized-stroke',
+      size: 14.5,
+      isResized: true,
+    };
+    store.addElement(stroke);
+    useToolStore.setState({ strokeSize: 4 });
+
+    store.setSelected(['resized-stroke']);
+    expect(useToolStore.getState().strokeSize).toBe(4);
+  });
 });
