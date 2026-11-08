@@ -547,7 +547,7 @@ impl Default for ScriblConfig {
                 },
                 KeymapEntry {
                     mode: "v".into(),
-                    lhs: "d".into(),
+                    lhs: "<Del>".into(),
                     rhs: "selection.delete".into(),
                     desc: Some("Delete Selected".into()),
                 },

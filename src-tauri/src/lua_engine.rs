@@ -652,9 +652,9 @@ scribl.keymap.set("n", "<BS>", "selection.delete")
             .find(|k| k.mode == "v" && k.rhs == "selection.delete");
         assert!(
             delete_v.is_some(),
-            "Visual mode delete ('d') should not be blocked by normal mode delete ('<BS>')"
+            "Visual mode delete ('<Del>') should not be blocked by normal mode delete ('<BS>')"
         );
-        assert_eq!(delete_v.unwrap().lhs, "d");
+        assert_eq!(delete_v.unwrap().lhs, "<Del>");
     }
 
     #[test]

@@ -183,7 +183,7 @@ const ALL_ACTIONS: ActionDefinition[] = [
     targetId: 'selection.delete',
     label: 'Delete Selected (Visual Mode)',
     category: 'Visual Mode (Selection)',
-    defaultLhs: 'd',
+    defaultLhs: '<Del>',
     mode: 'v',
   },
   {

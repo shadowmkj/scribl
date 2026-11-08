@@ -116,7 +116,7 @@ scribl.keymap.set("n", "<D-d>", "edit.duplicate", { desc = "Duplicate" })
 -- Visual Mode (When selection is active)
 scribl.keymap.set("v", "r", "selection.rotate", { desc = "Rotate Selection" })
 scribl.keymap.set("v", "<Esc>", "selection.deselect", { desc = "Deselect" })
-scribl.keymap.set("v", "d", "selection.delete", { desc = "Delete Selected" })
+scribl.keymap.set("v", "<Del>", "selection.delete", { desc = "Delete Selected" })
 scribl.keymap.set("v", "y", "edit.copy", { desc = "Yank (Copy)" })
 scribl.keymap.set("v", "p", "edit.paste", { desc = "Put (Paste)" })
 scribl.keymap.set("v", "<D-c>", "edit.copy", { desc = "Copy" })
@@ -185,7 +185,7 @@ pub fn ensure_default_config_exists() -> Result<PathBuf, String> {
         let mut modified = false;
 
         if !content.is_empty() && !content.contains("scribl.keymap.set(\"v\"") {
-            let visual_block = "\n-- Visual Mode (When selection is active)\nscribl.keymap.set(\"v\", \"r\", \"selection.rotate\", { desc = \"Rotate Selection\" })\nscribl.keymap.set(\"v\", \"<Esc>\", \"selection.deselect\", { desc = \"Deselect\" })\nscribl.keymap.set(\"v\", \"d\", \"selection.delete\", { desc = \"Delete Selected\" })\n";
+            let visual_block = "\n-- Visual Mode (When selection is active)\nscribl.keymap.set(\"v\", \"r\", \"selection.rotate\", { desc = \"Rotate Selection\" })\nscribl.keymap.set(\"v\", \"<Esc>\", \"selection.deselect\", { desc = \"Deselect\" })\nscribl.keymap.set(\"v\", \"<Del>\", \"selection.delete\", { desc = \"Delete Selected\" })\n";
             content.push_str(visual_block);
             modified = true;
         }

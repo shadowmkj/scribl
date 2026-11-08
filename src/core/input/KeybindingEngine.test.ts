@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { DEFAULT_CONFIG } from '../../stores/useConfigStore';
 import { formatKeybindForDisplay, KeybindingEngine, parseVimKeyNotation } from './KeybindingEngine';
 
 describe('KeybindingEngine', () => {
@@ -300,6 +301,34 @@ describe('KeybindingEngine', () => {
       // 's' in visual mode invokes tool.shapes (unmapped in visual mode, falls back to tool command)
       visualEngine.handleKeyDown(new KeyboardEvent('keydown', { key: 's', cancelable: true }));
       expect(executedCommands).toEqual(['selection.rotate', 'tool.shapes']);
+    });
+
+    it('dispatches selection.delete on Delete key in visual mode by default and does not delete on d', () => {
+      let isVisual = true;
+      const visualEngine = new KeybindingEngine({
+        executeCommand: (id) => {
+          executedCommands.push(id);
+          return true;
+        },
+        getActiveMode: () => (isVisual ? 'v' : 'n'),
+      });
+
+      visualEngine.registerKeymaps(DEFAULT_CONFIG.keymaps);
+
+      executedCommands.length = 0;
+      // Pressing 'd' in visual mode should NOT trigger selection.delete
+      visualEngine.handleKeyDown(new KeyboardEvent('keydown', { key: 'd', cancelable: true }));
+      expect(executedCommands).not.toContain('selection.delete');
+
+      // Pressing 'Delete' key in visual mode SHOULD trigger selection.delete
+      visualEngine.handleKeyDown(new KeyboardEvent('keydown', { key: 'Delete', cancelable: true }));
+      expect(executedCommands).toContain('selection.delete');
+
+      // Verify DEFAULT_CONFIG keymap entry
+      const visualDelete = DEFAULT_CONFIG.keymaps.find(
+        (k) => (k.mode || 'n') === 'v' && k.rhs === 'selection.delete',
+      );
+      expect(visualDelete?.lhs).toBe('<Del>');
     });
   });
 });

@@ -94,7 +94,7 @@ export const DEFAULT_CONFIG: ScriblConfig = {
     { mode: 'n', lhs: '<D-d>', rhs: 'edit.duplicate', desc: 'Duplicate' },
     { mode: 'v', lhs: 'r', rhs: 'selection.rotate', desc: 'Rotate Selection' },
     { mode: 'v', lhs: '<Esc>', rhs: 'selection.deselect', desc: 'Deselect' },
-    { mode: 'v', lhs: 'd', rhs: 'selection.delete', desc: 'Delete Selected' },
+    { mode: 'v', lhs: '<Del>', rhs: 'selection.delete', desc: 'Delete Selected' },
     { mode: 'v', lhs: 'y', rhs: 'edit.copy', desc: 'Yank (Copy)' },
     { mode: 'v', lhs: 'p', rhs: 'edit.paste', desc: 'Put (Paste)' },
     { mode: 'v', lhs: '<D-c>', rhs: 'edit.copy', desc: 'Copy' },
