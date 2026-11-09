@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useCameraStore } from '../../stores/useCameraStore';
+import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
+import { StrokeElement } from '../../types/canvas';
 import { handleGlobalBlur, handleGlobalKeyDown, handleGlobalKeyUp } from './keyboardShortcuts';
 
 describe('keyboardShortcuts', () => {
@@ -153,5 +155,63 @@ describe('keyboardShortcuts', () => {
 
     handleGlobalKeyDown(new KeyboardEvent('keydown', { key: '4' }));
     expect(useToolStore.getState().currentTool).toBe('zoom');
+  });
+
+  it('selects all elements on Cmd+A / Ctrl+A and switches active tool to select', () => {
+    const dummyStroke: StrokeElement = {
+      id: 's1',
+      type: 'stroke',
+      x: 0,
+      y: 0,
+      width: 10,
+      height: 10,
+      zIndex: 1,
+      color: '#000',
+      size: 2,
+      thinning: 0.6,
+      smoothing: 0.5,
+      points: [{ x: 0, y: 0, pressure: 0.5 }],
+    };
+    useDocumentStore.setState({
+      elements: { s1: dummyStroke },
+      elementIds: ['s1'],
+      selectedIds: [],
+    });
+    useToolStore.setState({ currentTool: 'pen' });
+
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const event = new KeyboardEvent('keydown', {
+      key: 'a',
+      code: 'KeyA',
+      metaKey: isMac,
+      ctrlKey: !isMac,
+      cancelable: true,
+    });
+
+    handleGlobalKeyDown(event);
+
+    expect(useDocumentStore.getState().selectedIds).toEqual(['s1']);
+    expect(useToolStore.getState().currentTool).toBe('select');
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it('ignores Cmd+A / Ctrl+A when focused inside an input element', () => {
+    const input = document.createElement('input');
+    document.body.appendChild(input);
+
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const event = new KeyboardEvent('keydown', {
+      key: 'a',
+      code: 'KeyA',
+      metaKey: isMac,
+      ctrlKey: !isMac,
+      cancelable: true,
+    });
+    Object.defineProperty(event, 'target', { value: input });
+
+    handleGlobalKeyDown(event);
+
+    expect(event.defaultPrevented).toBe(false);
+    document.body.removeChild(input);
   });
 });
