@@ -5,6 +5,7 @@ import {
   AddElementCommand,
   AddElementsCommand,
   applyElementDelta,
+  ClearCanvasCommand,
   DeleteElementsCommand,
   MoveElementsCommand,
   TransformElementsCommand,
@@ -274,5 +275,24 @@ describe('HistoryStack and Commands', () => {
     data = history.undo(data);
     expect(data.elements['r1'].x).toBe(10);
     expect(data.elements['r1'].y).toBe(20);
+  });
+
+  it('clears canvas and restores full state on undo with ClearCanvasCommand', () => {
+    const history = new HistoryStack();
+    const data: DocumentData = {
+      elements: { s1: dummyStroke },
+      elementIds: ['s1'],
+      selectedIds: ['s1'],
+    };
+
+    const cleared = history.execute(new ClearCanvasCommand(data), data);
+    expect(cleared.elementIds).toHaveLength(0);
+    expect(Object.keys(cleared.elements)).toHaveLength(0);
+    expect(cleared.selectedIds).toHaveLength(0);
+
+    const undone = history.undo(cleared);
+    expect(undone.elementIds).toEqual(['s1']);
+    expect(undone.elements['s1']).toEqual(dummyStroke);
+    expect(undone.selectedIds).toEqual(['s1']);
   });
 });
