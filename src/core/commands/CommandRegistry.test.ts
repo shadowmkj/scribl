@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
+import { StrokeElement } from '../../types/canvas';
 import {
   Command,
   CommandRegistry,
@@ -93,6 +95,34 @@ describe('CommandRegistry', () => {
 
     commandRegistry.execute('tool.shape');
     expect(useToolStore.getState().currentTool).toBe('arrow');
+  });
+
+  it('executes selection.select_all: selects all element IDs and switches tool to select', () => {
+    const dummyStroke: StrokeElement = {
+      id: 'item-1',
+      type: 'stroke',
+      x: 0,
+      y: 0,
+      width: 10,
+      height: 10,
+      zIndex: 1,
+      color: '#000',
+      size: 2,
+      thinning: 0.6,
+      smoothing: 0.5,
+      points: [{ x: 0, y: 0, pressure: 0.5 }],
+    };
+    useDocumentStore.setState({
+      elements: { 'item-1': dummyStroke },
+      elementIds: ['item-1'],
+      selectedIds: [],
+    });
+    useToolStore.setState({ currentTool: 'pen' });
+
+    commandRegistry.execute('selection.select_all');
+
+    expect(useDocumentStore.getState().selectedIds).toEqual(['item-1']);
+    expect(useToolStore.getState().currentTool).toBe('select');
   });
 
   it('dispatches onCopyPng handler via edit.copy_png and file.copy_png', () => {

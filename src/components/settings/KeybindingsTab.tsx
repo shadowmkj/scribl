@@ -69,6 +69,13 @@ const ALL_ACTIONS: ActionDefinition[] = [
 
   // Edit & Clipboard
   {
+    id: 'selection.select_all',
+    label: 'Select All Elements',
+    category: 'Edit & Clipboard',
+    defaultLhs: '<D-a>',
+    mode: 'n',
+  },
+  {
     id: 'edit.copy',
     label: 'Copy Selected Elements',
     category: 'Edit & Clipboard',
@@ -207,6 +214,14 @@ const ALL_ACTIONS: ActionDefinition[] = [
     label: 'Put / Paste Elements (Visual Mode)',
     category: 'Visual Mode (Selection)',
     defaultLhs: 'p',
+    mode: 'v',
+  },
+  {
+    id: 'selection.select_all_visual',
+    targetId: 'selection.select_all',
+    label: 'Select All Elements (Visual Mode)',
+    category: 'Visual Mode (Selection)',
+    defaultLhs: '<D-a>',
     mode: 'v',
   },
 ];
