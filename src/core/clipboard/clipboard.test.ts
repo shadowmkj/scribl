@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 import { StrokeElement } from '../../types/canvas';
 import {
+  copyCanvasAsPng,
   copySelected,
   cutSelected,
   duplicateSelected,
@@ -9,6 +10,18 @@ import {
   paste,
   resetClipboardForTests,
 } from './clipboard';
+
+if (typeof Path2D === 'undefined') {
+  // @ts-expect-error jsdom environment polyfill
+  globalThis.Path2D = class Path2D {
+    rect() {}
+    roundRect() {}
+    ellipse() {}
+    moveTo() {}
+    lineTo() {}
+    closePath() {}
+  };
+}
 
 describe('Clipboard Module', () => {
   const stroke1: StrokeElement = {
@@ -55,6 +68,7 @@ describe('Clipboard Module', () => {
 
     // Mock navigator.clipboard
     let clipText = '';
+    const mockWrite = vi.fn(() => Promise.resolve());
     Object.assign(navigator, {
       clipboard: {
         writeText: vi.fn((text: string) => {
@@ -62,8 +76,38 @@ describe('Clipboard Module', () => {
           return Promise.resolve();
         }),
         readText: vi.fn(() => Promise.resolve(clipText)),
+        write: mockWrite,
       },
     });
+
+    // @ts-expect-error test mock
+    globalThis.ClipboardItem = class MockClipboardItem {
+      types: string[];
+      items: Record<string, Blob>;
+      constructor(items: Record<string, Blob>) {
+        this.items = items;
+        this.types = Object.keys(items);
+      }
+    };
+
+    const mockCtx = {
+      scale: vi.fn(),
+      translate: vi.fn(),
+      save: vi.fn(),
+      restore: vi.fn(),
+      beginPath: vi.fn(),
+      fill: vi.fn(),
+      stroke: vi.fn(),
+      arc: vi.fn(),
+      measureText: vi.fn(() => ({ width: 100 })),
+      fillText: vi.fn(),
+    };
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+      mockCtx as unknown as CanvasRenderingContext2D,
+    );
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue(
+      'data:image/png;base64,mockpngdata',
+    );
   });
 
   it('copies selected elements to internal clipboard and system clipboard', async () => {
@@ -178,5 +222,37 @@ describe('Clipboard Module', () => {
     useDocumentStore.getState().undo();
     const afterUndo = useDocumentStore.getState();
     expect(afterUndo.elementIds).toEqual(['s1', 's2']);
+  });
+
+  describe('copyCanvasAsPng', () => {
+    it('copies selected elements to clipboard as high-res PNG when elements are selected', async () => {
+      useDocumentStore.getState().setSelected(['s1']);
+      const res = await copyCanvasAsPng();
+
+      expect(res.success).toBe(true);
+      expect(res.isSelection).toBe(true);
+      expect(navigator.clipboard.write).toHaveBeenCalled();
+      const callArgs = vi.mocked(navigator.clipboard.write).mock.calls[0][0];
+      expect(callArgs).toHaveLength(1);
+      expect(callArgs[0].types).toContain('image/png');
+    });
+
+    it('copies full canvas when nothing is selected', async () => {
+      useDocumentStore.getState().setSelected([]);
+      const res = await copyCanvasAsPng();
+
+      expect(res.success).toBe(true);
+      expect(res.isSelection).toBe(false);
+      expect(navigator.clipboard.write).toHaveBeenCalled();
+    });
+
+    it('returns error when canvas is empty', async () => {
+      useDocumentStore.getState().clearDocument();
+      const res = await copyCanvasAsPng();
+
+      expect(res.success).toBe(false);
+      expect(res.error).toBe('Canvas is empty');
+      expect(navigator.clipboard.write).not.toHaveBeenCalled();
+    });
   });
 });

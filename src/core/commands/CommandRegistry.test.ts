@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useToolStore } from '../../stores/useToolStore';
-import { Command, CommandRegistry, commandRegistry } from './CommandRegistry';
+import {
+  Command,
+  CommandRegistry,
+  commandRegistry,
+  registerDefaultCommands,
+} from './CommandRegistry';
 
 describe('CommandRegistry', () => {
   let registry: CommandRegistry;
@@ -88,5 +93,16 @@ describe('CommandRegistry', () => {
 
     commandRegistry.execute('tool.shape');
     expect(useToolStore.getState().currentTool).toBe('arrow');
+  });
+
+  it('dispatches onCopyPng handler via edit.copy_png and file.copy_png', () => {
+    const onCopyPng = vi.fn();
+    registerDefaultCommands({ onCopyPng });
+
+    expect(commandRegistry.execute('edit.copy_png')).toBe(true);
+    expect(onCopyPng).toHaveBeenCalledTimes(1);
+
+    expect(commandRegistry.execute('file.copy_png')).toBe(true);
+    expect(onCopyPng).toHaveBeenCalledTimes(2);
   });
 });

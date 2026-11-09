@@ -6,9 +6,10 @@ interface TopHeaderProps {
   onSave: () => void;
   onOpen: () => void;
   onExportPNG: () => void;
+  onCopyPNG?: () => void;
 }
 
-export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPNG }) => {
+export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPNG, onCopyPNG }) => {
   const [docName, setDocName] = useState('Untitled Drawing');
   const [confirmClear, setConfirmClear] = useState(false);
   const appVersion = useConfigStore((s) => s.appVersion);
@@ -436,6 +437,58 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
           </svg>
           Export
         </button>
+
+        {/* Copy as PNG */}
+        {onCopyPNG && (
+          <button
+            onClick={onCopyPNG}
+            title={`Copy as PNG (${
+              typeof navigator !== 'undefined'
+                && navigator.platform?.toUpperCase().indexOf('MAC') >= 0
+                ? '⌘⇧C'
+                : 'Ctrl+Shift+C'
+            })`}
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--color-panel-border, rgba(56, 189, 248, 0.28))',
+              borderRadius: 8,
+              padding: '0 10px',
+              height: 32,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              color: 'var(--color-accent-light, #0284c7)',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(2, 132, 199, 0.25)';
+              e.currentTarget.style.borderColor = 'var(--color-accent, rgba(56, 189, 248, 0.5))';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.borderColor =
+                'var(--color-panel-border, rgba(56, 189, 248, 0.28))';
+            }}
+          >
+            <svg
+              width='14'
+              height='14'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              strokeWidth='2'
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            >
+              <rect width='8' height='4' x='8' y='2' rx='1' ry='1' />
+              <path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' />
+            </svg>
+            Copy PNG
+          </button>
+        )}
 
         <div
           style={{

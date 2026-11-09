@@ -1,6 +1,8 @@
 import { useDocumentStore } from '../../stores/useDocumentStore';
 import { CanvasElement } from '../../types/canvas';
 import { applyElementDelta } from '../history/commands';
+import { exportToBlob } from '../persistence/fileIO';
+import { ThemeMode } from '../theme/themeManager';
 
 export interface ScriblClipboardPayload {
   type: 'scribl/elements';
@@ -61,6 +63,50 @@ export async function copySelected(): Promise<boolean> {
   }
 
   return true;
+}
+
+export interface CopyAsPngResult {
+  success: boolean;
+  isSelection: boolean;
+  error?: string;
+}
+
+export async function copyCanvasAsPng(themeMode?: ThemeMode): Promise<CopyAsPngResult> {
+  const { elements, elementIds, selectedIds } = useDocumentStore.getState();
+
+  const isSelection = selectedIds.length > 0;
+  const targetIds = isSelection ? selectedIds : elementIds;
+
+  if (targetIds.length === 0) {
+    return {
+      success: false,
+      isSelection: false,
+      error: 'Canvas is empty',
+    };
+  }
+
+  try {
+    const blob = await exportToBlob(elements, targetIds, themeMode);
+    if (
+      typeof navigator !== 'undefined'
+      && navigator.clipboard?.write
+      && typeof ClipboardItem !== 'undefined'
+    ) {
+      await navigator.clipboard.write([
+        new ClipboardItem({ 'image/png': blob }),
+      ]);
+    }
+    return {
+      success: true,
+      isSelection,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      isSelection,
+      error: (err as Error).message,
+    };
+  }
 }
 
 export async function cutSelected(): Promise<boolean> {

@@ -10,6 +10,7 @@ import { TopHeader } from './components/ui/TopHeader';
 import { ZoomHUD } from './components/ui/ZoomHUD';
 import { calculateBoxFitCamera } from './core/camera/cameraMath';
 import { copySelected, cutSelected, paste } from './core/clipboard/clipboard';
+import { copyCanvasAsPng } from './core/clipboard/clipboard';
 import { registerDefaultCommands } from './core/commands/CommandRegistry';
 import {
   handleGlobalBlur,
@@ -178,12 +179,40 @@ export function App() {
     }
   };
 
+  const handleCopyPNG = async () => {
+    try {
+      const res = await copyCanvasAsPng();
+      if (res.success) {
+        setImportNotification({
+          id: `copy_png_${Date.now()}`,
+          type: 'success',
+          message: res.isSelection
+            ? 'Selection copied to clipboard as PNG'
+            : 'Canvas copied to clipboard as PNG',
+        });
+      } else if (res.error) {
+        setImportNotification({
+          id: `copy_png_err_${Date.now()}`,
+          type: 'warning',
+          message: res.error,
+        });
+      }
+    } catch (err) {
+      setImportNotification({
+        id: `copy_png_err_${Date.now()}`,
+        type: 'error',
+        message: 'Cannot copy PNG: ' + (err as Error).message,
+      });
+    }
+  };
+
   // Wire command handlers
   useEffect(() => {
     registerDefaultCommands({
       onSave: handleSave,
       onOpen: handleOpenClick,
       onExportPng: handleExportPNG,
+      onCopyPng: handleCopyPNG,
       onClear: () => useDocumentStore.getState().clearDocument(),
     });
   }, []);
@@ -271,7 +300,12 @@ export function App() {
         style={{ display: 'none' }}
         onChange={handleFileChange}
       />
-      <TopHeader onSave={handleSave} onOpen={handleOpenClick} onExportPNG={handleExportPNG} />
+      <TopHeader
+        onSave={handleSave}
+        onOpen={handleOpenClick}
+        onExportPNG={handleExportPNG}
+        onCopyPNG={handleCopyPNG}
+      />
       <ConfigErrorToast />
       <ImportToast
         notification={importNotification}
