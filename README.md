@@ -90,7 +90,7 @@ brew install --cask shadowmkj/tap/scribl
 #### Via Direct Download (`.dmg`)
 
 1. Download the latest `.dmg` installer from [Releases](https://github.com/shadowmkj/scribl/releases/latest):
-   - **Apple Silicon (M1/M2/M3/M4)**: `scribl_0.1.0_aarch64.dmg`
+   - **Apple Silicon (M1/M2/M3/M4)**: `scribl_0.1.1_aarch64.dmg`
 2. Open the downloaded `.dmg` and drag **scribl** into your `/Applications` folder.
 3. **First Launch (macOS Gatekeeper)**:\
    Because Scribl is an open-source project without a paid Apple Developer certificate ($99/year), macOS Gatekeeper may display a prompt stating the app _"is damaged and can’t be opened"_ or from an _"unidentified developer"_.
@@ -106,22 +106,22 @@ Download the package matching your Linux distribution from [Releases](https://gi
 
 - **Debian / Ubuntu (`.deb`)**:
   ```bash
-  sudo dpkg -i scribl_0.1.0_amd64.deb
+  sudo dpkg -i scribl_0.1.1_amd64.deb
   sudo apt-get install -f # resolve any missing system dependencies
   ```
 - **Fedora / RHEL / openSUSE (`.rpm`)**:
   ```bash
-  sudo rpm -i scribl-0.1.0-1.x86_64.rpm
+  sudo rpm -i scribl-0.1.1-1.x86_64.rpm
   ```
 - **Universal Linux (`.AppImage`)**:
   ```bash
-  chmod +x scribl_0.1.0_amd64.AppImage
+  chmod +x scribl_0.1.1_amd64.AppImage
   ./scribl_0.1.0_amd64.AppImage
   ```
 
 ### Windows (.exe, .msi)
 
-1. Download the setup installer (`scribl_0.1.0_x64-setup.exe`) or MSI package (`scribl_0.1.0_x64_en-US.msi`) from [Releases](https://github.com/shadowmkj/scribl/releases/latest).
+1. Download the setup installer (`scribl_0.1.1_x64-setup.exe`) or MSI package (`scribl_0.1.1_x64_en-US.msi`) from [Releases](https://github.com/shadowmkj/scribl/releases/latest).
 2. Run the installer and follow the setup wizard.
 3. _(If Windows SmartScreen warns "Windows protected your PC", click **More info** → **Run anyway**)._
 

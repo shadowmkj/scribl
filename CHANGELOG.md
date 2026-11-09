@@ -1,3 +1,16 @@
+## [v0.1.1](https://github.com/shadowmkj/scribl/releases/tag/v0.1.1) - 2026-11-09
+
+### 🚀 Features
+
+- _(clipboard)_ Add copy canvas or selection as PNG feature - ([ab26b48](https://github.com/shadowmkj/scribl/commit/ab26b484e52fd99e523a92f12b5b474d0df465c9)) (from [`@shadowmkj`](https://github.com/shadowmkj))
+- _(selection)_ Select All canvas elements with Cmd+A / Ctrl+A shortcut ([#35](https://github.com/shadowmkj/scribl/pull/35)) - ([40b0793](https://github.com/shadowmkj/scribl/commit/40b0793ff040d8681910250479bbf0a81b1c645b)) (from [`@shadowmkj`](https://github.com/shadowmkj))
+
+### 🐛 Bug Fixes
+
+- _(keybindings)_ Change default visual mode delete keybind from d to Del - ([6be5745](https://github.com/shadowmkj/scribl/commit/6be5745d1519c7dee94e4f3910c4bb21246cdc1c)) (from [`@shadowmkj`](https://github.com/shadowmkj))
+- _(canvas)_ Preserve user stroke size when resizing and erasing strokes - ([5ad192d](https://github.com/shadowmkj/scribl/commit/5ad192d1bf2cb171b08dd67766fe4727cdb19887)) (from [`@shadowmkj`](https://github.com/shadowmkj))
+- _(canvas)_ clear canvas is made reversible using undo - ([6c9783e](https://github.com/shadowmkj/scribl/commit/6c9783eaba5e098b23280f81e801741d59385fcb)) (from [`@shadowmkj`](https://github.com/shadowmkj))
+
 ## [v0.1.0](https://github.com/shadowmkj/scribl/releases/tag/v0.1.0) - 2026-11-07
 
 ### 🚀 Features

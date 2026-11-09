@@ -1,6 +1,6 @@
 [package]
 name = "scribl"
-version = "0.1.0"
+version = "0.1.1"
 description = "Minimal, modal, keyboard-centric canvas for infinite thinking"
 authors = ["Milan Pramod"]
 license = "MIT"
