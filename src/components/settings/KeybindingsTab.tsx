@@ -83,6 +83,13 @@ const ALL_ACTIONS: ActionDefinition[] = [
     mode: 'n',
   },
   {
+    id: 'edit.copy_png',
+    label: 'Copy as PNG',
+    category: 'Edit & Clipboard',
+    defaultLhs: '<D-S-c>',
+    mode: 'n',
+  },
+  {
     id: 'edit.paste',
     label: 'Paste Elements',
     category: 'Edit & Clipboard',

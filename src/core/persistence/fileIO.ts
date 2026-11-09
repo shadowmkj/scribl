@@ -131,3 +131,24 @@ export function exportToPng(
     resolve(canvas.toDataURL('image/png'));
   });
 }
+
+export function dataUrlToBlob(dataUrl: string): Blob {
+  const parts = dataUrl.split(',');
+  const mime = parts[0].match(/:(.*?);/)?.[1] || 'image/png';
+  const byteString = atob(parts[1]);
+  const arrayBuffer = new ArrayBuffer(byteString.length);
+  const uint8Array = new Uint8Array(arrayBuffer);
+  for (let i = 0; i < byteString.length; i++) {
+    uint8Array[i] = byteString.charCodeAt(i);
+  }
+  return new Blob([arrayBuffer], { type: mime });
+}
+
+export async function exportToBlob(
+  elements: Record<string, CanvasElement>,
+  elementIds: string[],
+  themeMode?: ThemeMode,
+): Promise<Blob> {
+  const dataUrl = await exportToPng(elements, elementIds, themeMode);
+  return dataUrlToBlob(dataUrl);
+}

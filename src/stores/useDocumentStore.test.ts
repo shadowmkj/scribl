@@ -23,7 +23,7 @@ describe('useDocumentStore - movement and atomic undo/redo', () => {
   };
 
   beforeEach(() => {
-    useDocumentStore.getState().clearDocument();
+    useDocumentStore.getState().resetDocument();
     useDocumentStore.getState().addElement(dummyStroke);
     useDocumentStore.getState().setSelected(['s1']);
   });
@@ -281,5 +281,53 @@ describe('useDocumentStore - movement and atomic undo/redo', () => {
 
     store.setSelected(['resized-stroke']);
     expect(useToolStore.getState().strokeSize).toBe(4);
+  });
+
+  describe('undoable clear canvas', () => {
+    it('clears all elements and allows undoing back to restored state', () => {
+      const store = useDocumentStore.getState();
+      expect(store.elementIds).toContain('s1');
+
+      // Clear document
+      store.clearDocument();
+      const cleared = useDocumentStore.getState();
+      expect(cleared.elementIds).toHaveLength(0);
+      expect(Object.keys(cleared.elements)).toHaveLength(0);
+      expect(cleared.canUndo).toBe(true);
+
+      // Undo restores the cleared elements
+      cleared.undo();
+      const restored = useDocumentStore.getState();
+      expect(restored.elementIds).toEqual(['s1']);
+      expect(restored.elements['s1']).toBeDefined();
+      expect(restored.elements['s1'].x).toBe(10);
+      expect(restored.selectedIds).toEqual(['s1']);
+
+      // Redo re-clears
+      restored.redo();
+      const reCleared = useDocumentStore.getState();
+      expect(reCleared.elementIds).toHaveLength(0);
+      expect(Object.keys(reCleared.elements)).toHaveLength(0);
+    });
+
+    it('does nothing and does not push undo step when canvas is already empty', () => {
+      const store = useDocumentStore.getState();
+      store.resetDocument();
+      expect(store.history.canUndo()).toBe(false);
+
+      store.clearDocument();
+      expect(useDocumentStore.getState().history.canUndo()).toBe(false);
+    });
+
+    it('resetDocument wipes history and elements', () => {
+      const store = useDocumentStore.getState();
+      expect(store.canUndo).toBe(true);
+
+      store.resetDocument();
+      const reset = useDocumentStore.getState();
+      expect(reset.elementIds).toHaveLength(0);
+      expect(reset.canUndo).toBe(false);
+      expect(reset.canRedo).toBe(false);
+    });
   });
 });

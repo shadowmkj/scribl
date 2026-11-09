@@ -5,6 +5,7 @@ import {
   AddElementCommand,
   AddElementsCommand,
   applyElementDelta,
+  ClearCanvasCommand,
   DeleteElementsCommand,
   MoveElementsCommand,
   TransformElementsCommand,
@@ -42,6 +43,7 @@ interface DocumentState extends DocumentData {
   redo: () => void;
   loadDocument: (data: { elements: Record<string, CanvasElement>; elementIds: string[]; }) => void;
   clearDocument: () => void;
+  resetDocument: () => void;
   executeCommand: (command: Command) => void;
 }
 
@@ -310,6 +312,19 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   },
 
   clearDocument: () => {
+    const { elements, elementIds, selectedIds, history } = get();
+    if (elementIds.length === 0) return;
+
+    const currentData: DocumentData = { elements, elementIds, selectedIds };
+    const nextData = history.execute(new ClearCanvasCommand(currentData), currentData);
+    set({
+      ...nextData,
+      canUndo: history.canUndo(),
+      canRedo: history.canRedo(),
+    });
+  },
+
+  resetDocument: () => {
     historyInstance.clear();
     set({
       elements: {},

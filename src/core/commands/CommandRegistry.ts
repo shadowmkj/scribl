@@ -49,6 +49,7 @@ export function registerDefaultCommands(handlers?: {
   onSave?: () => void;
   onOpen?: () => void;
   onExportPng?: () => void;
+  onCopyPng?: () => void;
   onClear?: () => void;
 }): void {
   // Tools
@@ -512,6 +513,22 @@ export function registerDefaultCommands(handlers?: {
     label: 'Export PNG',
     category: 'file',
     execute: () => handlers?.onExportPng?.(),
+  });
+
+  commandRegistry.register({
+    id: 'edit.copy_png',
+    label: 'Copy as PNG',
+    category: 'file',
+    description: 'Copy canvas or selection directly to system clipboard as high-res PNG',
+    execute: () => handlers?.onCopyPng?.(),
+  });
+
+  commandRegistry.register({
+    id: 'file.copy_png',
+    label: 'Copy as PNG',
+    category: 'file',
+    description: 'Copy canvas or selection directly to system clipboard as high-res PNG',
+    execute: () => handlers?.onCopyPng?.(),
   });
 
   commandRegistry.register({

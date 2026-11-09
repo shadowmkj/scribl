@@ -37,6 +37,23 @@ describe('TopHeader', () => {
 
     expect(screen.queryByTestId('dev-version-badge')).toBeNull();
   });
+
+  it('renders Copy PNG button when onCopyPNG is provided and handles click', () => {
+    const onCopyPNG = vi.fn();
+    render(
+      <TopHeader
+        onSave={vi.fn()}
+        onOpen={vi.fn()}
+        onExportPNG={vi.fn()}
+        onCopyPNG={onCopyPNG}
+      />,
+    );
+
+    const copyBtn = screen.getByText('Copy PNG');
+    expect(copyBtn).toBeTruthy();
+    copyBtn.click();
+    expect(onCopyPNG).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('isDevVersion', () => {
