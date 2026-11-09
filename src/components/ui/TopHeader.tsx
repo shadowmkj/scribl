@@ -41,11 +41,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
   const handleClearClick = () => {
     if (confirmClear) {
       clearDocument();
-      try {
-        localStorage.removeItem('scribl_active_doc');
-      } catch (e) {
-        // Ignore localStorage error
-      }
       setConfirmClear(false);
     } else {
       setConfirmClear(true);

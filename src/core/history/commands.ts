@@ -270,3 +270,36 @@ export class UpdateTextElementCommand implements Command {
     };
   }
 }
+
+export class ClearCanvasCommand implements Command {
+  id = `clear_${Date.now()}`;
+  name = 'Clear Canvas';
+
+  private snapshotElements: Record<string, CanvasElement>;
+  private snapshotElementIds: string[];
+  private snapshotSelectedIds: string[];
+
+  constructor(currentData: DocumentData) {
+    this.snapshotElements = { ...currentData.elements };
+    this.snapshotElementIds = [...currentData.elementIds];
+    this.snapshotSelectedIds = [...currentData.selectedIds];
+  }
+
+  execute(data: DocumentData): DocumentData {
+    return {
+      ...data,
+      elements: {},
+      elementIds: [],
+      selectedIds: [],
+    };
+  }
+
+  undo(data: DocumentData): DocumentData {
+    return {
+      ...data,
+      elements: { ...this.snapshotElements },
+      elementIds: [...this.snapshotElementIds],
+      selectedIds: [...this.snapshotSelectedIds],
+    };
+  }
+}

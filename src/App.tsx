@@ -206,6 +206,19 @@ export function App() {
     }
   };
 
+  const handleClear = () => {
+    const doc = useDocumentStore.getState();
+    if (doc.elementIds.length === 0) return;
+    doc.clearDocument();
+    const isMac = typeof navigator !== 'undefined'
+      && navigator.platform?.toUpperCase().indexOf('MAC') >= 0;
+    setImportNotification({
+      id: `clear_${Date.now()}`,
+      type: 'success',
+      message: `Canvas cleared. Press ${isMac ? '⌘Z' : 'Ctrl+Z'} to undo.`,
+    });
+  };
+
   // Wire command handlers
   useEffect(() => {
     registerDefaultCommands({
@@ -213,7 +226,7 @@ export function App() {
       onOpen: handleOpenClick,
       onExportPng: handleExportPNG,
       onCopyPng: handleCopyPNG,
-      onClear: () => useDocumentStore.getState().clearDocument(),
+      onClear: handleClear,
     });
   }, []);
 
