@@ -392,9 +392,12 @@ export function registerDefaultCommands(handlers?: {
     id: 'selection.select_all',
     label: 'Select All',
     category: 'selection',
+    description: 'Select all elements on the canvas',
     execute: () => {
       const doc = useDocumentStore.getState();
+      if (doc.elementIds.length === 0) return;
       doc.setSelected([...doc.elementIds]);
+      useToolStore.getState().setTool('select');
     },
   });
 
