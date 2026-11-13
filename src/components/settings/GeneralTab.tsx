@@ -464,6 +464,68 @@ export const GeneralTab: React.FC = () => {
             />
           </button>
         </div>
+
+        {/* Select After Create Toggle */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '12px 14px',
+            background: 'rgba(0, 0, 0, 0.05)',
+            borderRadius: 10,
+            border: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.06))',
+          }}
+        >
+          <div>
+            <div
+              style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary, #e2e8f0)' }}
+            >
+              Select Element After Creation
+            </div>
+            <div
+              style={{ fontSize: 11, color: 'var(--color-text-secondary, #64748b)', marginTop: 2 }}
+            >
+              Automatically select newly created shapes and text elements when switching to select
+              tool
+            </div>
+          </div>
+          <button
+            type='button'
+            role='switch'
+            aria-label='Toggle select element after creation'
+            aria-checked={config.options.select_after_create ?? true}
+            onClick={() =>
+              updateOption('select_after_create', !(config.options.select_after_create ?? true))}
+            style={{
+              width: 44,
+              height: 24,
+              borderRadius: 12,
+              background: (config.options.select_after_create ?? true)
+                ? 'var(--color-accent, #0284c7)'
+                : 'rgba(255, 255, 255, 0.15)',
+              border: 'none',
+              cursor: 'pointer',
+              position: 'relative',
+              transition: 'background 0.2s ease',
+              padding: 2,
+            }}
+          >
+            <div
+              style={{
+                width: 20,
+                height: 20,
+                borderRadius: '50%',
+                background: '#ffffff',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                transform: (config.options.select_after_create ?? true)
+                  ? 'translateX(20px)'
+                  : 'translateX(0)',
+                transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+              }}
+            />
+          </button>
+        </div>
       </div>
     </div>
   );

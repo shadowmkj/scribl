@@ -1,4 +1,5 @@
 import { useCameraStore } from '../../stores/useCameraStore';
+import { useConfigStore } from '../../stores/useConfigStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
 import {
@@ -582,7 +583,13 @@ export class PointerRouter {
           zIndex,
         };
         useDocumentStore.getState().addElement(element);
-        useDocumentStore.getState().setSelected([id]);
+        const selectAfterCreate = useConfigStore.getState().config.options.select_after_create
+          ?? true;
+        if (selectAfterCreate) {
+          useDocumentStore.getState().setSelected([id]);
+        } else {
+          useDocumentStore.getState().setSelected([]);
+        }
         useToolStore.getState().setTool('select');
       }
       this.activeShapeTool = null;

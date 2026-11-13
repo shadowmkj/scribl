@@ -189,6 +189,9 @@ pub fn eval_lua_config_string(
             default.options.default_pen_color.clone(),
         )
         .map_err(|e| e.to_string())?;
+    opt_table
+        .set("select_after_create", default.options.select_after_create)
+        .map_err(|e| e.to_string())?;
     scribl_table
         .set("opt", opt_table)
         .map_err(|e| e.to_string())?;
@@ -361,6 +364,9 @@ pub fn eval_lua_config_string(
         default_pen_color: opt
             .get("default_pen_color")
             .unwrap_or(default.options.default_pen_color),
+        select_after_create: opt
+            .get("select_after_create")
+            .unwrap_or(default.options.select_after_create),
     };
 
     // Extract keymaps and merge with defaults
@@ -866,5 +872,18 @@ scribl.keymap.set("n", "<BS>", "selection.delete")
         assert_eq!(active.accent, "#88c0d0");
 
         let _ = std::fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_eval_select_after_create_option() {
+        let script = r#"
+            local scribl = require("scribl")
+            scribl.opt.select_after_create = false
+        "#;
+        let config = eval_lua_config_string(script, None).expect("should evaluate");
+        assert!(!config.options.select_after_create);
+
+        let default_config = eval_lua_config_string("", None).expect("should evaluate");
+        assert!(default_config.options.select_after_create);
     }
 }

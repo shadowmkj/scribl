@@ -39,8 +39,12 @@ pub fn generate_lua_script(config: &ScriblConfig) -> String {
         config.options.stroke_thinning
     ));
     out.push_str(&format!(
-        "scribl.opt.auto_save = {}\n\n",
+        "scribl.opt.auto_save = {}\n",
         config.options.auto_save
+    ));
+    out.push_str(&format!(
+        "scribl.opt.select_after_create = {}\n\n",
+        config.options.select_after_create
     ));
 
     out.push_str(
@@ -134,12 +138,14 @@ mod tests {
         config.options.stroke_smoothing = 0.8;
         config.options.stroke_thinning = 0.4;
         config.options.auto_save = false;
+        config.options.select_after_create = false;
 
         let script = generate_lua_script(&config);
         assert!(script.contains("scribl.opt.dot_grid = false"));
         assert!(script.contains("scribl.opt.default_tool = \"eraser\""));
         assert!(script.contains("scribl.opt.default_pen_color = \"#ff0077\""));
         assert!(script.contains("scribl.opt.zoom_mode = \"selection\""));
+        assert!(script.contains("scribl.opt.select_after_create = false"));
 
         // Round-trip verification: evaluating generated script must yield exact same config
         let parsed = eval_lua_config_string(&script, None).expect("generated script should parse");
