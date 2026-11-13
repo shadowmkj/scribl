@@ -471,6 +471,7 @@ export const GeneralTab: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            gap: 16,
             padding: '12px 14px',
             background: 'rgba(0, 0, 0, 0.05)',
             borderRadius: 10,
@@ -481,13 +482,12 @@ export const GeneralTab: React.FC = () => {
             <div
               style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary, #e2e8f0)' }}
             >
-              Select Element After Creation
+              Auto-Select Created Elements
             </div>
             <div
               style={{ fontSize: 11, color: 'var(--color-text-secondary, #64748b)', marginTop: 2 }}
             >
-              Automatically select newly created shapes and text elements when switching to select
-              tool
+              Automatically select shapes and text after creating
             </div>
           </div>
           <button
@@ -498,6 +498,7 @@ export const GeneralTab: React.FC = () => {
             onClick={() =>
               updateOption('select_after_create', !(config.options.select_after_create ?? true))}
             style={{
+              flexShrink: 0,
               width: 44,
               height: 24,
               borderRadius: 12,
