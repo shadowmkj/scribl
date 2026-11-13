@@ -965,4 +965,136 @@ describe('PointerRouter - Shape Drawing', () => {
     useToolStore.setState({ currentTool: 'pen' });
     expect(useToolStore.getState().strokeSize).toBe(4);
   });
+
+  it('eraser tool ignores locked elements and deletes unlocked elements underneath', () => {
+    const lockedRect: ShapeElement = {
+      id: 'locked_box',
+      type: 'shape',
+      shapeType: 'rectangle',
+      x: 100,
+      y: 100,
+      width: 200,
+      height: 200,
+      zIndex: 2,
+      strokeColor: '#000',
+      fillColor: '#fff',
+      strokeWidth: 2,
+      strokeStyle: 'solid',
+      locked: true,
+    };
+
+    const unlockedStroke: StrokeElement = {
+      id: 'unlocked_line',
+      type: 'stroke',
+      x: 120,
+      y: 120,
+      width: 100,
+      height: 100,
+      zIndex: 1,
+      color: '#ff0000',
+      size: 4,
+      thinning: 0.6,
+      smoothing: 0.5,
+      points: [
+        { x: 120, y: 120, pressure: 0.5 },
+        { x: 220, y: 220, pressure: 0.5 },
+      ],
+      locked: false,
+    };
+
+    useDocumentStore.setState({
+      elements: {
+        locked_box: lockedRect,
+        unlocked_line: unlockedStroke,
+      },
+      elementIds: ['unlocked_line', 'locked_box'],
+      selectedIds: [],
+    });
+
+    useToolStore.setState({ currentTool: 'eraser' });
+
+    // Erase point at world (150, 150) -> screen (650, 550)
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 650,
+        clientY: 550,
+        pointerId: 11,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+      container,
+    );
+
+    const doc = useDocumentStore.getState();
+    // locked_box must survive
+    expect(doc.elements['locked_box']).toBeDefined();
+    // unlocked_line must be erased
+    expect(doc.elements['unlocked_line']).toBeUndefined();
+  });
+
+  it('select tool selects locked element on click but prevents dragging', () => {
+    const lockedRect: ShapeElement = {
+      id: 'locked_box',
+      type: 'shape',
+      shapeType: 'rectangle',
+      x: 100,
+      y: 100,
+      width: 200,
+      height: 200,
+      zIndex: 1,
+      strokeColor: '#000',
+      fillColor: '#fff',
+      strokeWidth: 2,
+      strokeStyle: 'solid',
+      locked: true,
+    };
+
+    useDocumentStore.setState({
+      elements: { locked_box: lockedRect },
+      elementIds: ['locked_box'],
+      selectedIds: [],
+    });
+
+    useToolStore.setState({ currentTool: 'select' });
+
+    // Click at world (150, 150) -> screen (650, 550)
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 650,
+        clientY: 550,
+        pointerId: 12,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+      container,
+    );
+
+    // Locked element should be selected
+    expect(useDocumentStore.getState().selectedIds).toEqual(['locked_box']);
+
+    // Attempt to drag to screen (700, 600) -> world (200, 200)
+    router.handlePointerMove(
+      new PointerEvent('pointermove', {
+        clientX: 700,
+        clientY: 600,
+        pointerId: 12,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+    );
+
+    router.handlePointerUp(
+      new PointerEvent('pointerup', {
+        clientX: 700,
+        clientY: 600,
+        pointerId: 12,
+        pointerType: 'mouse',
+      }),
+      container,
+    );
+
+    // Locked element should NOT have moved
+    expect(useDocumentStore.getState().elements['locked_box'].x).toBe(100);
+    expect(useDocumentStore.getState().elements['locked_box'].y).toBe(100);
+  });
 });

@@ -330,5 +330,32 @@ describe('KeybindingEngine', () => {
       );
       expect(visualDelete?.lhs).toBe('<Del>');
     });
+
+    it('dispatches selection.toggle_lock on Mod+Shift+L in visual mode', () => {
+      const visualEngine = new KeybindingEngine({
+        executeCommand: (id) => {
+          executedCommands.push(id);
+          return true;
+        },
+        getActiveMode: () => 'v',
+      });
+
+      visualEngine.registerKeymaps(DEFAULT_CONFIG.keymaps);
+
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      executedCommands.length = 0;
+      // Trigger Cmd/Ctrl + Shift + L
+      visualEngine.handleKeyDown(
+        new KeyboardEvent('keydown', {
+          key: 'L',
+          metaKey: isMac,
+          ctrlKey: !isMac,
+          shiftKey: true,
+          cancelable: true,
+        }),
+      );
+
+      expect(executedCommands).toContain('selection.toggle_lock');
+    });
   });
 });

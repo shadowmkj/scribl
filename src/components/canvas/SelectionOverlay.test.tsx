@@ -87,4 +87,55 @@ describe('SelectionOverlay', () => {
     const selectionBox = container.querySelector('[data-testid="unified-selection-box"]');
     expect(selectionBox).toBeNull();
   });
+
+  it('hides resize handles and renders lock badge when selected elements are locked', () => {
+    const lockedElements: Record<string, StrokeElement> = {
+      l1: {
+        ...elements.s1,
+        id: 'l1',
+        locked: true,
+      },
+    };
+
+    const { container } = render(
+      <SelectionOverlay
+        elements={lockedElements}
+        selectedIds={['l1']}
+        camera={{ x: 0, y: 0, zoom: 1 }}
+        width={1000}
+        height={800}
+        marqueeBox={null}
+      />,
+    );
+
+    const selectionBox = container.querySelector('[data-testid="unified-selection-box"]');
+    expect(selectionBox).not.toBeNull();
+
+    // Corner handles must NOT be rendered
+    const handles = container.querySelectorAll('[data-testid^="handle-"]');
+    expect(handles.length).toBe(0);
+
+    // Lock badge must be rendered
+    const lockBadge = container.querySelector('[data-testid="selection-lock-badge"]');
+    expect(lockBadge).not.toBeNull();
+  });
+
+  it('does not render lock badge when selected elements are unlocked', () => {
+    const { container } = render(
+      <SelectionOverlay
+        elements={elements}
+        selectedIds={['s1']}
+        camera={{ x: 0, y: 0, zoom: 1 }}
+        width={1000}
+        height={800}
+        marqueeBox={null}
+      />,
+    );
+
+    const handles = container.querySelectorAll('[data-testid^="handle-"]');
+    expect(handles.length).toBe(4);
+
+    const lockBadge = container.querySelector('[data-testid="selection-lock-badge"]');
+    expect(lockBadge).toBeNull();
+  });
 });

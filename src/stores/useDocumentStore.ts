@@ -8,6 +8,7 @@ import {
   ClearCanvasCommand,
   DeleteElementsCommand,
   MoveElementsCommand,
+  SetElementsLockCommand,
   TransformElementsCommand,
 } from '../core/history/commands';
 import { HistoryStack } from '../core/history/HistoryStack';
@@ -44,6 +45,7 @@ interface DocumentState extends DocumentData {
   loadDocument: (data: { elements: Record<string, CanvasElement>; elementIds: string[]; }) => void;
   clearDocument: () => void;
   resetDocument: () => void;
+  toggleLockSelected: () => void;
   executeCommand: (command: Command) => void;
 }
 
@@ -87,9 +89,12 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   deleteElements: (ids: string[]) => {
     if (ids.length === 0) return;
     const { elements, elementIds, selectedIds, history } = get();
+    const deletableIds = ids.filter((id) => !elements[id]?.locked);
+    if (deletableIds.length === 0) return;
+
     const currentData: DocumentData = { elements, elementIds, selectedIds };
     const nextData = history.execute(
-      new DeleteElementsCommand(ids, currentData),
+      new DeleteElementsCommand(deletableIds, currentData),
       currentData,
     );
     set({
@@ -106,8 +111,11 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   moveSelected: (dx: number, dy: number) => {
     const { elements, elementIds, selectedIds, history } = get();
     if (selectedIds.length === 0 || (dx === 0 && dy === 0)) return;
+    const movableIds = selectedIds.filter((id) => !elements[id]?.locked);
+    if (movableIds.length === 0) return;
+
     const currentData: DocumentData = { elements, elementIds, selectedIds };
-    const nextData = history.execute(new MoveElementsCommand(selectedIds, dx, dy), currentData);
+    const nextData = history.execute(new MoveElementsCommand(movableIds, dx, dy), currentData);
     set({
       ...nextData,
       canUndo: history.canUndo(),
@@ -118,8 +126,11 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   translateSelected: (dx: number, dy: number) => {
     const { elements, selectedIds } = get();
     if (selectedIds.length === 0 || (dx === 0 && dy === 0)) return;
+    const movableIds = selectedIds.filter((id) => !elements[id]?.locked);
+    if (movableIds.length === 0) return;
+
     const nextElements = { ...elements };
-    for (const id of selectedIds) {
+    for (const id of movableIds) {
       const el = nextElements[id];
       if (el) {
         nextElements[id] = applyElementDelta(el, dx, dy);
@@ -129,9 +140,12 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   },
 
   commitMoveSelected: (totalDx: number, totalDy: number) => {
-    const { selectedIds, history } = get();
+    const { elements, selectedIds, history } = get();
     if (selectedIds.length === 0 || (totalDx === 0 && totalDy === 0)) return;
-    history.pushExecuted(new MoveElementsCommand([...selectedIds], totalDx, totalDy));
+    const movableIds = selectedIds.filter((id) => !elements[id]?.locked);
+    if (movableIds.length === 0) return;
+
+    history.pushExecuted(new MoveElementsCommand([...movableIds], totalDx, totalDy));
     set({
       canUndo: history.canUndo(),
       canRedo: history.canRedo(),
@@ -139,8 +153,16 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   },
 
   transformSelectedLive: (updated: Record<string, CanvasElement>) => {
+    const { elements } = get();
+    const filtered: Record<string, CanvasElement> = {};
+    for (const [id, el] of Object.entries(updated)) {
+      if (!elements[id]?.locked) {
+        filtered[id] = el;
+      }
+    }
+    if (Object.keys(filtered).length === 0) return;
     set((state) => ({
-      elements: { ...state.elements, ...updated },
+      elements: { ...state.elements, ...filtered },
     }));
   },
 
@@ -148,9 +170,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     initial: Record<string, CanvasElement>,
     final: Record<string, CanvasElement>,
   ) => {
-    const { selectedIds, history } = get();
-    if (selectedIds.length === 0) return;
-    history.pushExecuted(new TransformElementsCommand([...selectedIds], initial, final));
+    const { elements, selectedIds, history } = get();
+    const transformableIds = selectedIds.filter((id) => !elements[id]?.locked);
+    if (transformableIds.length === 0) return;
+    history.pushExecuted(new TransformElementsCommand([...transformableIds], initial, final));
     set({
       canUndo: history.canUndo(),
       canRedo: history.canRedo(),
@@ -314,6 +337,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   clearDocument: () => {
     const { elements, elementIds, selectedIds, history } = get();
     if (elementIds.length === 0) return;
+    const hasUnlocked = elementIds.some((id) => !elements[id]?.locked);
+    if (!hasUnlocked) return;
 
     const currentData: DocumentData = { elements, elementIds, selectedIds };
     const nextData = history.execute(new ClearCanvasCommand(currentData), currentData);
@@ -333,6 +358,23 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       canUndo: false,
       canRedo: false,
     });
+  },
+
+  toggleLockSelected: () => {
+    const { elements, selectedIds, executeCommand } = get();
+    if (selectedIds.length === 0) return;
+
+    const anyUnlocked = selectedIds.some((id) => !elements[id]?.locked);
+    const targetLocked = anyUnlocked;
+
+    const previousStates: Record<string, boolean> = {};
+    for (const id of selectedIds) {
+      if (elements[id]) {
+        previousStates[id] = elements[id].locked ?? false;
+      }
+    }
+
+    executeCommand(new SetElementsLockCommand([...selectedIds], targetLocked, previousStates));
   },
 
   executeCommand: (command) => {

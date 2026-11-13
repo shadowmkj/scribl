@@ -224,6 +224,14 @@ const ALL_ACTIONS: ActionDefinition[] = [
     defaultLhs: '<D-a>',
     mode: 'v',
   },
+  {
+    id: 'selection.toggle_lock_visual',
+    targetId: 'selection.toggle_lock',
+    label: 'Toggle Lock (Visual Mode)',
+    category: 'Visual Mode (Selection)',
+    defaultLhs: '<D-S-l>',
+    mode: 'v',
+  },
 ];
 
 export const KeybindingsTab: React.FC = () => {

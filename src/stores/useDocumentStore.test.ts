@@ -330,4 +330,123 @@ describe('useDocumentStore - movement and atomic undo/redo', () => {
       expect(reset.canRedo).toBe(false);
     });
   });
+
+  describe('element locking support', () => {
+    const lockedStroke: StrokeElement = {
+      ...dummyStroke,
+      id: 's_locked',
+      locked: true,
+    };
+    const unlockedStroke: StrokeElement = {
+      ...dummyStroke,
+      id: 's_unlocked',
+      locked: false,
+    };
+
+    beforeEach(() => {
+      const store = useDocumentStore.getState();
+      store.resetDocument();
+      store.addElement(lockedStroke);
+      store.addElement(unlockedStroke);
+    });
+
+    it('toggles lock on selected elements with undo/redo support', () => {
+      const store = useDocumentStore.getState();
+      store.setSelected(['s_unlocked']);
+
+      // Toggle lock -> should lock s_unlocked
+      store.toggleLockSelected();
+      expect(useDocumentStore.getState().elements['s_unlocked'].locked).toBe(true);
+
+      // Toggle lock again -> all selected are locked, so should unlock s_unlocked
+      store.toggleLockSelected();
+      expect(useDocumentStore.getState().elements['s_unlocked'].locked).toBe(false);
+
+      // Undo -> re-locks
+      useDocumentStore.getState().undo();
+      expect(useDocumentStore.getState().elements['s_unlocked'].locked).toBe(true);
+
+      // Undo again -> reverts to initially unlocked
+      useDocumentStore.getState().undo();
+      expect(useDocumentStore.getState().elements['s_unlocked'].locked).toBe(false);
+    });
+
+    it('locks all selected elements if any selected element is unlocked', () => {
+      const store = useDocumentStore.getState();
+      // Select both s_locked (true) and s_unlocked (false)
+      store.setSelected(['s_locked', 's_unlocked']);
+
+      store.toggleLockSelected();
+      const state = useDocumentStore.getState();
+      expect(state.elements['s_locked'].locked).toBe(true);
+      expect(state.elements['s_unlocked'].locked).toBe(true);
+    });
+
+    it('deleteSelected ignores locked elements', () => {
+      const store = useDocumentStore.getState();
+      store.setSelected(['s_locked', 's_unlocked']);
+
+      store.deleteSelected();
+      const state = useDocumentStore.getState();
+      // s_locked must still exist!
+      expect(state.elementIds).toContain('s_locked');
+      expect(state.elements['s_locked']).toBeDefined();
+      // s_unlocked should be deleted
+      expect(state.elementIds).not.toContain('s_unlocked');
+      expect(state.elements['s_unlocked']).toBeUndefined();
+    });
+
+    it('deleteSelected is a no-op if all selected elements are locked', () => {
+      const store = useDocumentStore.getState();
+      store.setSelected(['s_locked']);
+      const initialCanUndo = store.canUndo;
+
+      store.deleteSelected();
+      const state = useDocumentStore.getState();
+      expect(state.elementIds).toContain('s_locked');
+      expect(state.canUndo).toBe(initialCanUndo);
+    });
+
+    it('translateSelected and commitMoveSelected do not move locked elements', () => {
+      const store = useDocumentStore.getState();
+      store.setSelected(['s_locked', 's_unlocked']);
+
+      store.translateSelected(50, 50);
+      let state = useDocumentStore.getState();
+      expect(state.elements['s_locked'].x).toBe(10); // Unmoved
+      expect(state.elements['s_unlocked'].x).toBe(60); // Moved
+
+      store.commitMoveSelected(50, 50);
+      state = useDocumentStore.getState();
+      expect(state.elements['s_locked'].x).toBe(10);
+      expect(state.elements['s_unlocked'].x).toBe(60);
+    });
+
+    it('clearDocument keeps locked elements and only removes unlocked elements', () => {
+      const store = useDocumentStore.getState();
+      store.clearDocument();
+
+      const state = useDocumentStore.getState();
+      expect(state.elementIds).toEqual(['s_locked']);
+      expect(state.elements['s_locked']).toBeDefined();
+      expect(state.elements['s_unlocked']).toBeUndefined();
+      expect(state.canUndo).toBe(true);
+
+      // Undo restores the unlocked element
+      state.undo();
+      const undone = useDocumentStore.getState();
+      expect(undone.elementIds).toContain('s_unlocked');
+    });
+
+    it('clearDocument is a no-op if all elements are locked', () => {
+      const store = useDocumentStore.getState();
+      store.deleteElements(['s_unlocked']);
+
+      const canUndoBefore = useDocumentStore.getState().history.canUndo();
+      useDocumentStore.getState().clearDocument();
+
+      expect(useDocumentStore.getState().elements['s_locked']).toBeDefined();
+      expect(useDocumentStore.getState().history.canUndo()).toBe(canUndoBefore);
+    });
+  });
 });

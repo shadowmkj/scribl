@@ -105,6 +105,7 @@ export const DEFAULT_CONFIG: ScriblConfig = {
     { mode: 'v', lhs: '<D-v>', rhs: 'edit.paste', desc: 'Paste' },
     { mode: 'v', lhs: '<D-x>', rhs: 'edit.cut', desc: 'Cut' },
     { mode: 'v', lhs: '<D-d>', rhs: 'edit.duplicate', desc: 'Duplicate' },
+    { mode: 'v', lhs: '<D-S-l>', rhs: 'selection.toggle_lock', desc: 'Toggle Lock' },
   ],
   toolbar: {
     position: 'bottom',

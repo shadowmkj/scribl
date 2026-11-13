@@ -286,11 +286,21 @@ export class ClearCanvasCommand implements Command {
   }
 
   execute(data: DocumentData): DocumentData {
+    const preservedElements: Record<string, CanvasElement> = {};
+    const preservedIds: string[] = [];
+    for (const id of data.elementIds) {
+      const el = data.elements[id];
+      if (el?.locked) {
+        preservedElements[id] = el;
+        preservedIds.push(id);
+      }
+    }
+    const preservedSelectedIds = data.selectedIds.filter((id) => preservedElements[id]);
     return {
       ...data,
-      elements: {},
-      elementIds: [],
-      selectedIds: [],
+      elements: preservedElements,
+      elementIds: preservedIds,
+      selectedIds: preservedSelectedIds,
     };
   }
 
@@ -300,6 +310,49 @@ export class ClearCanvasCommand implements Command {
       elements: { ...this.snapshotElements },
       elementIds: [...this.snapshotElementIds],
       selectedIds: [...this.snapshotSelectedIds],
+    };
+  }
+}
+
+export class SetElementsLockCommand implements Command {
+  id = `lock_${Date.now()}`;
+  name = 'Toggle Lock';
+
+  constructor(
+    private elementIds: string[],
+    private locked: boolean,
+    private previousStates: Record<string, boolean>,
+  ) {}
+
+  execute(data: DocumentData): DocumentData {
+    const nextElements = { ...data.elements };
+    for (const id of this.elementIds) {
+      if (nextElements[id]) {
+        nextElements[id] = {
+          ...nextElements[id],
+          locked: this.locked,
+        };
+      }
+    }
+    return {
+      ...data,
+      elements: nextElements,
+    };
+  }
+
+  undo(data: DocumentData): DocumentData {
+    const nextElements = { ...data.elements };
+    for (const id of this.elementIds) {
+      if (nextElements[id]) {
+        nextElements[id] = {
+          ...nextElements[id],
+          locked: this.previousStates[id] ?? false,
+        };
+      }
+    }
+    return {
+      ...data,
+      elements: nextElements,
     };
   }
 }

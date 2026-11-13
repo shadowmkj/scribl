@@ -168,8 +168,9 @@ export class PointerRouter {
 
       // 1. If elements are selected, check for Corner Handle Hit or Rotation Trigger
       if (doc.selectedIds.length > 0) {
+        const hasUnlocked = doc.selectedIds.some((id) => !doc.elements[id]?.locked);
         const bounds = computeSelectionBounds(doc.elements, doc.selectedIds);
-        if (bounds) {
+        if (bounds && hasUnlocked) {
           const screenHandles = {
             nw: worldToScreen(bounds.minX, bounds.minY, camera, width, height),
             ne: worldToScreen(bounds.maxX, bounds.minY, camera, width, height),
@@ -260,9 +261,11 @@ export class PointerRouter {
             }
           }
         }
-        this.state = 'DRAGGING_SELECTION';
-        this.lastDragWorld = worldPoint;
-        this.dragTotalDelta = { x: 0, y: 0 };
+        if (!doc.elements[hitId]?.locked) {
+          this.state = 'DRAGGING_SELECTION';
+          this.lastDragWorld = worldPoint;
+          this.dragTotalDelta = { x: 0, y: 0 };
+        }
       } else {
         if (!e.shiftKey) {
           doc.setSelected([]);
@@ -703,7 +706,9 @@ export class PointerRouter {
 
   private performEraseAt(worldPoint: { x: number; y: number; }) {
     const doc = useDocumentStore.getState();
-    const hitId = hitTestPoint(doc.elements, doc.elementIds, worldPoint, 12);
+    const hitId = hitTestPoint(doc.elements, doc.elementIds, worldPoint, 12, {
+      ignoreLocked: true,
+    });
     if (hitId) {
       doc.deleteElements([hitId]);
     }

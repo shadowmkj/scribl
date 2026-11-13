@@ -135,4 +135,36 @@ describe('CommandRegistry', () => {
     expect(commandRegistry.execute('file.copy_png')).toBe(true);
     expect(onCopyPng).toHaveBeenCalledTimes(2);
   });
+
+  it('executes selection.toggle_lock and toggles element lock state', () => {
+    const dummyStroke: StrokeElement = {
+      id: 'lock-item',
+      type: 'stroke',
+      x: 0,
+      y: 0,
+      width: 10,
+      height: 10,
+      zIndex: 1,
+      color: '#000',
+      size: 2,
+      thinning: 0.6,
+      smoothing: 0.5,
+      points: [{ x: 0, y: 0, pressure: 0.5 }],
+      locked: false,
+    };
+    useDocumentStore.setState({
+      elements: { 'lock-item': dummyStroke },
+      elementIds: ['lock-item'],
+      selectedIds: ['lock-item'],
+    });
+
+    const cmd = commandRegistry.get('selection.toggle_lock');
+    expect(cmd).toBeDefined();
+
+    commandRegistry.execute('selection.toggle_lock');
+    expect(useDocumentStore.getState().elements['lock-item'].locked).toBe(true);
+
+    commandRegistry.execute('selection.toggle_lock');
+    expect(useDocumentStore.getState().elements['lock-item'].locked).toBe(false);
+  });
 });

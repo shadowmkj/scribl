@@ -48,6 +48,8 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
         const boxW = Math.max(1, screenBR.x - screenTL.x);
         const boxH = Math.max(1, screenBR.y - screenTL.y);
         const screenCenter = worldToScreen(bounds.centerX, bounds.centerY, camera, width, height);
+        const isAllLocked = activeSelectedIds.length > 0
+          && activeSelectedIds.every((id) => elements[id]?.locked);
 
         return (
           <g key='unified-selection'>
@@ -61,53 +63,85 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
               fill='var(--color-selection-fill, rgba(2, 132, 199, 0.04))'
               stroke='var(--color-selection-stroke, #0284c7)'
               strokeWidth={1.5}
+              strokeDasharray={isAllLocked ? '4 3' : undefined}
             />
 
+            {/* Lock Badge HUD */}
+            {isAllLocked && (
+              <g
+                data-testid='selection-lock-badge'
+                transform={`translate(${screenBR.x - 20}, ${screenTL.y - 24})`}
+              >
+                <rect
+                  x={0}
+                  y={0}
+                  width={20}
+                  height={20}
+                  rx={4}
+                  fill='var(--color-panel-bg, #0f172a)'
+                  stroke='var(--color-selection-stroke, #0284c7)'
+                  strokeWidth={1}
+                />
+                <path
+                  d='M7 9V7a3 3 0 0 1 6 0v2m-7 0h8a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1z'
+                  fill='none'
+                  stroke='var(--color-selection-stroke, #0284c7)'
+                  strokeWidth={1.4}
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                />
+              </g>
+            )}
+
             {/* 4 Corner Resize Handles */}
-            <rect
-              data-testid='handle-nw'
-              x={screenTL.x - 4.5}
-              y={screenTL.y - 4.5}
-              width={9}
-              height={9}
-              fill='#ffffff'
-              stroke='var(--color-selection-stroke, #0284c7)'
-              strokeWidth={1.5}
-              rx={1.5}
-            />
-            <rect
-              data-testid='handle-ne'
-              x={screenBR.x - 4.5}
-              y={screenTL.y - 4.5}
-              width={9}
-              height={9}
-              fill='#ffffff'
-              stroke='var(--color-selection-stroke, #0284c7)'
-              strokeWidth={1.5}
-              rx={1.5}
-            />
-            <rect
-              data-testid='handle-se'
-              x={screenBR.x - 4.5}
-              y={screenBR.y - 4.5}
-              width={9}
-              height={9}
-              fill='#ffffff'
-              stroke='var(--color-selection-stroke, #0284c7)'
-              strokeWidth={1.5}
-              rx={1.5}
-            />
-            <rect
-              data-testid='handle-sw'
-              x={screenTL.x - 4.5}
-              y={screenBR.y - 4.5}
-              width={9}
-              height={9}
-              fill='#ffffff'
-              stroke='var(--color-selection-stroke, #0284c7)'
-              strokeWidth={1.5}
-              rx={1.5}
-            />
+            {!isAllLocked && (
+              <>
+                <rect
+                  data-testid='handle-nw'
+                  x={screenTL.x - 4.5}
+                  y={screenTL.y - 4.5}
+                  width={9}
+                  height={9}
+                  fill='#ffffff'
+                  stroke='var(--color-selection-stroke, #0284c7)'
+                  strokeWidth={1.5}
+                  rx={1.5}
+                />
+                <rect
+                  data-testid='handle-ne'
+                  x={screenBR.x - 4.5}
+                  y={screenTL.y - 4.5}
+                  width={9}
+                  height={9}
+                  fill='#ffffff'
+                  stroke='var(--color-selection-stroke, #0284c7)'
+                  strokeWidth={1.5}
+                  rx={1.5}
+                />
+                <rect
+                  data-testid='handle-se'
+                  x={screenBR.x - 4.5}
+                  y={screenBR.y - 4.5}
+                  width={9}
+                  height={9}
+                  fill='#ffffff'
+                  stroke='var(--color-selection-stroke, #0284c7)'
+                  strokeWidth={1.5}
+                  rx={1.5}
+                />
+                <rect
+                  data-testid='handle-sw'
+                  x={screenTL.x - 4.5}
+                  y={screenBR.y - 4.5}
+                  width={9}
+                  height={9}
+                  fill='#ffffff'
+                  stroke='var(--color-selection-stroke, #0284c7)'
+                  strokeWidth={1.5}
+                  rx={1.5}
+                />
+              </>
+            )}
 
             {/* Rotation Center Pivot and HUD Badge */}
             {rotationAngle !== undefined && rotationAngle !== null && (
