@@ -11,7 +11,7 @@ export interface AppOptions {
   stroke_thinning: number;
   auto_save: boolean;
   default_pen_color: string;
-  select_after_create: boolean;
+  select_after_create?: boolean;
 }
 
 export interface KeymapEntry {
