@@ -85,4 +85,33 @@ describe('App Import Integration', () => {
       expect(screen.getByText(/1 unsupported items \(note\) were discarded/i)).toBeTruthy();
     });
   });
+
+  it('imports dropped image file directly into canvas as an ImageElement', async () => {
+    const { container } = render(<App />);
+    const viewport = container.querySelector('[data-testid="canvas-viewport"]');
+    expect(viewport).toBeTruthy();
+
+    const fakeBlob = new Blob(['fakepngbytes'], { type: 'image/png' });
+    const imageFile = new File([fakeBlob], 'mockup.png', { type: 'image/png' });
+
+    fireEvent.drop(viewport!, {
+      dataTransfer: {
+        files: [imageFile],
+        types: ['Files'],
+      },
+      clientX: 400,
+      clientY: 300,
+    });
+
+    await vi.waitFor(() => {
+      const doc = useDocumentStore.getState();
+      expect(doc.elementIds.length).toBe(1);
+      const el = doc.elements[doc.elementIds[0]];
+      expect(el.type).toBe('image');
+      if (el.type === 'image') {
+        expect(el.fileName).toBe('mockup.png');
+        expect(el.mimeType).toBe('image/png');
+      }
+    });
+  });
 });

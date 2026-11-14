@@ -59,7 +59,18 @@ export interface TextElement extends BaseElement {
   lineHeight: number;
 }
 
-export type CanvasElement = StrokeElement | ShapeElement | TextElement;
+export interface ImageElement extends BaseElement {
+  type: 'image';
+  src: string;
+  naturalWidth: number;
+  naturalHeight: number;
+  aspectRatio: number;
+  opacity?: number;
+  fileName?: string;
+  mimeType?: string;
+}
+
+export type CanvasElement = StrokeElement | ShapeElement | TextElement | ImageElement;
 
 export type ToolType =
   | 'select'

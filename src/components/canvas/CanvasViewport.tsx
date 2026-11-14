@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { screenToWorld, worldToScreen } from '../../core/camera/cameraMath';
-import { renderCommittedCanvas } from '../../core/engine/CanvasRenderer';
+import { createImageElementFromBlob } from '../../core/clipboard/clipboard';
+import { imageCache, renderCommittedCanvas } from '../../core/engine/CanvasRenderer';
 import { ScratchRenderer } from '../../core/engine/ScratchRenderer';
 import {
   computeSelectionBounds,
   HandleType,
   hitTestHandles,
 } from '../../core/geometry/transformMath';
+import { applyElementDelta } from '../../core/history/commands';
 import { PointerRouter } from '../../core/input/PointerRouter';
 import { MarqueeBox } from '../../core/input/ToolFSM';
 import { importDrawingDocument } from '../../core/persistence/importers';
@@ -53,6 +55,14 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({ onImportNotifica
   const [isRotateKeyHeld, setIsRotateKeyHeld] = useState(false);
   const [hoveredHandle, setHoveredHandle] = useState<HandleType | null>(null);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [imageTick, setImageTick] = useState(0);
+
+  // Subscribe to image decoding loads to re-render committed canvas
+  useEffect(() => {
+    return imageCache.subscribe(() => {
+      setImageTick((t) => t + 1);
+    });
+  }, []);
 
   const scratchRendererRef = useRef<ScratchRenderer>(new ScratchRenderer());
   const pointerRouterRef = useRef<PointerRouter | null>(null);
@@ -174,7 +184,7 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({ onImportNotifica
       editingText?.elementId,
       themeMode,
     );
-  }, [elements, elementIds, camera, width, height, editingText?.elementId, themeMode]);
+  }, [elements, elementIds, camera, width, height, editingText?.elementId, themeMode, imageTick]);
 
   // Mouse wheel zoom
   const handleWheel = (e: React.WheelEvent) => {
@@ -239,103 +249,109 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({ onImportNotifica
     }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDraggingFile(false);
 
-    const file = e.dataTransfer.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.dataTransfer.files || []);
+    if (files.length === 0) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const text = event.target?.result as string;
-        const result = importDrawingDocument(text, file.name);
+    useToolStore.getState().setTool('select');
 
-        if (result.elements.length === 0) {
+    const rect = containerRef.current?.getBoundingClientRect();
+    const screenX = rect ? e.clientX - rect.left : e.clientX;
+    const screenY = rect ? e.clientY - rect.top : e.clientY;
+    const dropWorld = screenToWorld(screenX, screenY, camera, width, height);
+
+    let imageOffset = 0;
+
+    for (const file of files) {
+      const isImage = file.type.startsWith('image/')
+        || /\.(png|jpe?g|webp|svg|gif|avif|bmp|ico)$/i.test(file.name);
+
+      if (isImage) {
+        const offsetPos = {
+          x: dropWorld.x + imageOffset * 24,
+          y: dropWorld.y + imageOffset * 24,
+        };
+        try {
+          const success = await createImageElementFromBlob(file, offsetPos, file.name);
+          if (success) {
+            onImportNotification?.({
+              id: String(Date.now()),
+              type: 'success',
+              message: `Imported image ${file.name}`,
+            });
+          }
+        } catch (err) {
+          onImportNotification?.({
+            id: String(Date.now()),
+            type: 'error',
+            message: `Failed to import image ${file.name}`,
+            details: err instanceof Error ? err.message : String(err),
+          });
+        }
+        imageOffset++;
+        continue;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const text = event.target?.result as string;
+          const result = importDrawingDocument(text, file.name);
+
+          if (result.elements.length === 0) {
+            if (result.discardedCount > 0) {
+              onImportNotification?.({
+                id: String(Date.now()),
+                type: 'warning',
+                message: `No supported elements found in ${file.name}`,
+                details: `${result.discardedCount} unsupported items (${
+                  result.discardedTypes.join(', ')
+                }) were discarded.`,
+              });
+            }
+            return;
+          }
+
+          // Center elements at drop position
+          const origCenterX = (result.bounds.minX + result.bounds.maxX) / 2;
+          const origCenterY = (result.bounds.minY + result.bounds.maxY) / 2;
+          const dx = dropWorld.x - origCenterX;
+          const dy = dropWorld.y - origCenterY;
+
+          const translatedElements = result.elements.map((el) => applyElementDelta(el, dx, dy));
+
+          useDocumentStore.getState().insertElements(translatedElements);
+
           if (result.discardedCount > 0) {
             onImportNotification?.({
               id: String(Date.now()),
               type: 'warning',
-              message: `No supported elements found in ${file.name}`,
+              message: `Imported ${result.elements.length} elements from ${file.name}`,
               details: `${result.discardedCount} unsupported items (${
                 result.discardedTypes.join(', ')
               }) were discarded.`,
             });
+          } else {
+            onImportNotification?.({
+              id: String(Date.now()),
+              type: 'success',
+              message: `Imported ${result.elements.length} elements from ${file.name}`,
+            });
           }
-          return;
-        }
-
-        // Compute drop position in world coordinates
-        const rect = containerRef.current?.getBoundingClientRect();
-        const screenX = rect ? e.clientX - rect.left : e.clientX;
-        const screenY = rect ? e.clientY - rect.top : e.clientY;
-        const dropWorld = screenToWorld(screenX, screenY, camera, width, height);
-
-        // Center elements at drop position
-        const origCenterX = (result.bounds.minX + result.bounds.maxX) / 2;
-        const origCenterY = (result.bounds.minY + result.bounds.maxY) / 2;
-        const dx = dropWorld.x - origCenterX;
-        const dy = dropWorld.y - origCenterY;
-
-        const translatedElements = result.elements.map((el) => {
-          if (el.type === 'stroke') {
-            return {
-              ...el,
-              x: el.x + dx,
-              y: el.y + dy,
-              points: el.points.map((pt) => ({ ...pt, x: pt.x + dx, y: pt.y + dy })),
-            };
-          } else if (el.type === 'shape') {
-            return {
-              ...el,
-              x: el.x + dx,
-              y: el.y + dy,
-              startPoint: el.startPoint
-                ? { x: el.startPoint.x + dx, y: el.startPoint.y + dy }
-                : undefined,
-              endPoint: el.endPoint
-                ? { x: el.endPoint.x + dx, y: el.endPoint.y + dy }
-                : undefined,
-            };
-          } else if (el.type === 'text') {
-            return {
-              ...el,
-              x: el.x + dx,
-              y: el.y + dy,
-            };
-          }
-          return el;
-        });
-
-        useDocumentStore.getState().insertElements(translatedElements);
-
-        if (result.discardedCount > 0) {
+        } catch (err) {
           onImportNotification?.({
             id: String(Date.now()),
-            type: 'warning',
-            message: `Imported ${result.elements.length} elements from ${file.name}`,
-            details: `${result.discardedCount} unsupported items (${
-              result.discardedTypes.join(', ')
-            }) were discarded.`,
-          });
-        } else {
-          onImportNotification?.({
-            id: String(Date.now()),
-            type: 'success',
-            message: `Imported ${result.elements.length} elements from ${file.name}`,
+            type: 'error',
+            message: `Failed to import ${file.name}`,
+            details: err instanceof Error ? err.message : String(err),
           });
         }
-      } catch (err) {
-        onImportNotification?.({
-          id: String(Date.now()),
-          type: 'error',
-          message: `Failed to import ${file.name}`,
-          details: err instanceof Error ? err.message : String(err),
-        });
-      }
-    };
-    reader.readAsText(file);
+      };
+      reader.readAsText(file);
+    }
   };
 
   const dpr = window.devicePixelRatio || 1;
@@ -495,7 +511,7 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({ onImportNotifica
                 color: 'var(--color-text-primary, #f8fafc)',
               }}
             >
-              Drop drawing to insert
+              Drop image or drawing to insert
             </p>
             <p
               style={{
@@ -504,7 +520,7 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({ onImportNotifica
                 color: 'var(--color-text-secondary, #94a3b8)',
               }}
             >
-              Supports .scribl, .excalidraw, and .tldr files
+              Supports images (PNG, JPG, SVG, WebP) and drawings (.scribl, .excalidraw, .tldr)
             </p>
           </div>
         </div>

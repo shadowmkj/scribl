@@ -1,6 +1,7 @@
 import {
   BoundingBox,
   CanvasElement,
+  ImageElement,
   ShapeElement,
   StrokeElement,
   StrokePoint,
@@ -26,6 +27,15 @@ interface ExcalidrawElement {
   fontSize?: number;
   lineHeight?: number;
   isDeleted?: boolean;
+  fileId?: string;
+}
+
+interface ExcalidrawFile {
+  id?: string;
+  mimeType?: string;
+  dataURL?: string;
+  created?: number;
+  lastRetrieved?: number;
 }
 
 interface ExcalidrawDocument {
@@ -33,6 +43,7 @@ interface ExcalidrawDocument {
   version?: number;
   elements?: ExcalidrawElement[];
   appState?: { name?: string; };
+  files?: Record<string, ExcalidrawFile>;
 }
 
 export function importExcalidraw(
@@ -229,6 +240,36 @@ export function importExcalidraw(
         elements.push(textEl);
         elementIds.push(elId);
         updateBounds(el.x, el.y, width, height);
+        break;
+      }
+
+      case 'image': {
+        const fileId = el.fileId;
+        const fileData = fileId && doc.files ? doc.files[fileId] : undefined;
+        if (fileData && fileData.dataURL) {
+          const width = el.width || 200;
+          const height = el.height || 200;
+          const imageEl: ImageElement = {
+            id: elId,
+            type: 'image',
+            x: el.x,
+            y: el.y,
+            width,
+            height,
+            naturalWidth: width,
+            naturalHeight: height,
+            aspectRatio: width / height,
+            src: fileData.dataURL,
+            mimeType: fileData.mimeType || 'image/png',
+            zIndex,
+          };
+          elements.push(imageEl);
+          elementIds.push(elId);
+          updateBounds(el.x, el.y, width, height);
+        } else {
+          discardedCount++;
+          discardedTypesSet.add('image');
+        }
         break;
       }
 

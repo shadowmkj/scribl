@@ -2,12 +2,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   Camera,
   CanvasElement,
+  ImageElement,
   ShapeElement,
   StrokeElement,
   TextElement,
 } from '../../types/canvas';
 import {
+  imageCache,
   renderCommittedCanvas,
+  renderImage,
   renderShape,
   renderStroke,
   renderText,
@@ -39,10 +42,14 @@ function createMockContext() {
     setLineDash: vi.fn(),
     fill: vi.fn(),
     stroke: vi.fn(),
+    drawImage: vi.fn(),
+    strokeRect: vi.fn(),
+    fillRect: vi.fn(),
     font: '',
     fillStyle: '',
     strokeStyle: '',
     textBaseline: '',
+    globalAlpha: 1,
     lineWidth: 1,
     lineCap: 'butt',
     lineJoin: 'miter',
@@ -57,6 +64,9 @@ function createMockContext() {
     setLineDash: ReturnType<typeof vi.fn>;
     fill: ReturnType<typeof vi.fn>;
     stroke: ReturnType<typeof vi.fn>;
+    drawImage: ReturnType<typeof vi.fn>;
+    strokeRect: ReturnType<typeof vi.fn>;
+    fillRect: ReturnType<typeof vi.fn>;
   };
 }
 
@@ -463,6 +473,119 @@ describe('CanvasRenderer - renderCommittedCanvas with shapes', () => {
       };
       renderText(ctx, blackText, 'dark');
       expect(ctx.fillStyle).toBe('#ffffff');
+    });
+  });
+
+  describe('CanvasRenderer - ImageElement', () => {
+    let ctx: ReturnType<typeof createMockContext>;
+
+    beforeEach(() => {
+      ctx = createMockContext();
+      imageCache.clear();
+    });
+
+    it('renders placeholder when image is decoding/loading', () => {
+      const imgEl: ImageElement = {
+        id: 'img-1',
+        type: 'image',
+        x: 50,
+        y: 50,
+        width: 200,
+        height: 150,
+        naturalWidth: 400,
+        naturalHeight: 300,
+        aspectRatio: 400 / 300,
+        src: 'data:image/png;base64,abc123',
+        zIndex: 1,
+      };
+
+      renderImage(ctx, imgEl);
+
+      expect(ctx.save).toHaveBeenCalled();
+      expect(ctx.setLineDash).toHaveBeenCalledWith([4, 4]);
+      expect(ctx.strokeRect).toHaveBeenCalledWith(50, 50, 200, 150);
+      expect(ctx.fillRect).toHaveBeenCalledWith(50, 50, 200, 150);
+      expect(ctx.restore).toHaveBeenCalled();
+    });
+
+    it('renders image via drawImage when loaded in cache', () => {
+      const mockImg = {
+        complete: true,
+        naturalWidth: 400,
+        naturalHeight: 300,
+      } as HTMLImageElement;
+
+      // Seed the cache
+      // @ts-expect-error accessing private for test
+      imageCache.cache.set('data:image/png;base64,loaded', mockImg);
+
+      const imgEl: ImageElement = {
+        id: 'img-loaded',
+        type: 'image',
+        x: 100,
+        y: 200,
+        width: 300,
+        height: 225,
+        naturalWidth: 400,
+        naturalHeight: 300,
+        aspectRatio: 400 / 300,
+        opacity: 0.8,
+        src: 'data:image/png;base64,loaded',
+        zIndex: 1,
+      };
+
+      renderImage(ctx, imgEl);
+
+      expect(ctx.save).toHaveBeenCalled();
+      expect(ctx.globalAlpha).toBe(0.8);
+      expect(ctx.drawImage).toHaveBeenCalledWith(mockImg, 100, 200, 300, 225);
+      expect(ctx.restore).toHaveBeenCalled();
+    });
+
+    it('renders ImageElement in renderCommittedCanvas with culling', () => {
+      const mockImg = {
+        complete: true,
+        naturalWidth: 200,
+        naturalHeight: 200,
+      } as HTMLImageElement;
+      // @ts-expect-error accessing private for test
+      imageCache.cache.set('data:image/png;base64,inside', mockImg);
+
+      const elements: Record<string, CanvasElement> = {
+        'img-inside': {
+          id: 'img-inside',
+          type: 'image',
+          x: 100,
+          y: 100,
+          width: 200,
+          height: 200,
+          naturalWidth: 200,
+          naturalHeight: 200,
+          aspectRatio: 1,
+          src: 'data:image/png;base64,inside',
+          zIndex: 1,
+        },
+        'img-culled': {
+          id: 'img-culled',
+          type: 'image',
+          x: 5000,
+          y: 5000,
+          width: 200,
+          height: 200,
+          naturalWidth: 200,
+          naturalHeight: 200,
+          aspectRatio: 1,
+          src: 'data:image/png;base64,culled',
+          zIndex: 2,
+        },
+      };
+
+      const camera: Camera = { x: 0, y: 0, zoom: 1 };
+      renderCommittedCanvas(ctx, elements, ['img-inside', 'img-culled'], camera, 800, 600, 1);
+
+      // Only img-inside should be drawn
+      expect(ctx.drawImage).toHaveBeenCalledTimes(1);
+      expect(ctx.drawImage).toHaveBeenCalledWith(mockImg, 100, 100, 200, 200);
     });
   });
 });

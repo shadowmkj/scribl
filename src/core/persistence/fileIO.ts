@@ -1,5 +1,5 @@
 import { Camera, CanvasElement } from '../../types/canvas';
-import { renderShape, renderStroke, renderText } from '../engine/CanvasRenderer';
+import { renderImage, renderShape, renderStroke, renderText } from '../engine/CanvasRenderer';
 import { ThemeMode } from '../theme/themeManager';
 
 export * from './importers';
@@ -125,6 +125,8 @@ export function exportToPng(
         renderShape(ctx, el, themeMode);
       } else if (el.type === 'text') {
         renderText(ctx, el, themeMode);
+      } else if (el.type === 'image') {
+        renderImage(ctx, el);
       }
     }
 

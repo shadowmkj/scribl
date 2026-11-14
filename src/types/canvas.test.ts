@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   CanvasElement,
+  ImageElement,
   ShapeElement,
   ShapeType,
   StrokeElement,
@@ -124,5 +125,34 @@ describe('canvas types', () => {
     });
 
     expect(types).toEqual(['stroke:1', 'shape:circle']);
+  });
+
+  it('instantiates a valid ImageElement and includes it in CanvasElement union', () => {
+    const image: ImageElement = {
+      id: 'img-1',
+      type: 'image',
+      x: 100,
+      y: 100,
+      width: 400,
+      height: 300,
+      naturalWidth: 800,
+      naturalHeight: 600,
+      aspectRatio: 800 / 600,
+      opacity: 0.9,
+      src:
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      fileName: 'test.png',
+      mimeType: 'image/png',
+      zIndex: 3,
+      locked: false,
+    };
+
+    const element: CanvasElement = image;
+    expect(element.type).toBe('image');
+    if (element.type === 'image') {
+      expect(element.src).toContain('data:image/png;base64');
+      expect(element.aspectRatio).toBeCloseTo(1.333, 2);
+      expect(element.opacity).toBe(0.9);
+    }
   });
 });

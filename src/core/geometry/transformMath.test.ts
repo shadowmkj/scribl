@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ShapeElement, StrokeElement, TextElement } from '../../types/canvas';
+import { ImageElement, ShapeElement, StrokeElement, TextElement } from '../../types/canvas';
 import {
   computeSelectionBounds,
   getHandlePositions,
@@ -265,5 +265,50 @@ describe('transformMath', () => {
     expect(rotated.height).toBeCloseTo(100, 1);
     expect(rotated.x).toBeCloseTo(25, 1);
     expect(rotated.y).toBeCloseTo(-25, 1);
+  });
+
+  it('scales an ImageElement proportionally from anchor', () => {
+    const img: ImageElement = {
+      id: 'img-1',
+      type: 'image',
+      x: 100,
+      y: 100,
+      width: 200,
+      height: 100,
+      naturalWidth: 400,
+      naturalHeight: 200,
+      aspectRatio: 2,
+      src: 'data:image/png;base64,123',
+      zIndex: 1,
+    };
+
+    // Scale 2x from top-left anchor (100, 100)
+    const scaled = scaleElement(img, { x: 100, y: 100 }, 2, 2) as ImageElement;
+    expect(scaled.x).toBe(100);
+    expect(scaled.y).toBe(100);
+    expect(scaled.width).toBe(400);
+    expect(scaled.height).toBe(200);
+  });
+
+  it('rotates an ImageElement around center', () => {
+    const img: ImageElement = {
+      id: 'img-1',
+      type: 'image',
+      x: 100,
+      y: 100,
+      width: 200,
+      height: 100,
+      naturalWidth: 400,
+      naturalHeight: 200,
+      aspectRatio: 2,
+      src: 'data:image/png;base64,123',
+      zIndex: 1,
+    };
+
+    // Center is (200, 150). Rotate 90 degrees around center
+    const rotated = rotateElement(img, { x: 200, y: 150 }, Math.PI / 2) as ImageElement;
+    // New center should stay (200, 150)
+    expect(rotated.x + rotated.width / 2).toBeCloseTo(200, 1);
+    expect(rotated.y + rotated.height / 2).toBeCloseTo(150, 1);
   });
 });

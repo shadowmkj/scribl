@@ -79,6 +79,15 @@ export function hitTestPoint(
       ) {
         return el.id;
       }
+    } else if (el.type === 'image') {
+      if (
+        point.x >= el.x - threshold
+        && point.x <= el.x + el.width + threshold
+        && point.y >= el.y - threshold
+        && point.y <= el.y + el.height + threshold
+      ) {
+        return el.id;
+      }
     }
   }
 

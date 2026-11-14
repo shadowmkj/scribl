@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   CanvasElement,
+  ImageElement,
   ShapeElement,
   ShapeType,
   StrokeElement,
@@ -96,6 +97,49 @@ describe('HitTester', () => {
         maxY: 120,
       });
       expect(selected).toEqual(['t1']);
+    });
+  });
+
+  describe('ImageElement hit testing', () => {
+    const imageEl: ImageElement = {
+      id: 'img1',
+      type: 'image',
+      x: 100,
+      y: 100,
+      width: 200,
+      height: 150,
+      naturalWidth: 400,
+      naturalHeight: 300,
+      aspectRatio: 400 / 300,
+      src: 'data:image/png;base64,123',
+      zIndex: 1,
+    };
+    const imageElements: Record<string, CanvasElement> = { img1: imageEl };
+    const imageIds = ['img1'];
+
+    it('detects point hit inside image bounding box', () => {
+      const hit = hitTestPoint(imageElements, imageIds, { x: 150, y: 150 });
+      expect(hit).toBe('img1');
+    });
+
+    it('detects point hit within threshold edge margin', () => {
+      const hit = hitTestPoint(imageElements, imageIds, { x: 95, y: 95 });
+      expect(hit).toBe('img1');
+    });
+
+    it('returns null when point is far from image box', () => {
+      const hit = hitTestPoint(imageElements, imageIds, { x: 500, y: 500 });
+      expect(hit).toBeNull();
+    });
+
+    it('selects image element in marquee intersection', () => {
+      const selected = hitTestMarquee(imageElements, imageIds, {
+        minX: 50,
+        minY: 50,
+        maxX: 150,
+        maxY: 150,
+      });
+      expect(selected).toEqual(['img1']);
     });
   });
 

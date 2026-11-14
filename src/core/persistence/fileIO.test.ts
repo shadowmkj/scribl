@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ShapeElement, StrokeElement, TextElement } from '../../types/canvas';
+import { ImageElement, ShapeElement, StrokeElement, TextElement } from '../../types/canvas';
 import { exportToPng, importDrawingDocument, parseScriblJSON, serializeScriblDoc } from './fileIO';
 
 if (typeof Path2D === 'undefined') {
@@ -220,5 +220,53 @@ describe('fileIO', () => {
     const res = importDrawingDocument(JSON.stringify(scriblDoc));
     expect(res.format).toBe('scribl');
     expect(res.elements.length).toBe(1);
+  });
+
+  it('serializes and deserializes documents containing ImageElement and exports to PNG', async () => {
+    const dummyImage: ImageElement = {
+      id: 'img1',
+      type: 'image',
+      x: 10,
+      y: 20,
+      width: 100,
+      height: 80,
+      naturalWidth: 200,
+      naturalHeight: 160,
+      aspectRatio: 1.25,
+      src: 'data:image/png;base64,mockimg',
+      fileName: 'photo.png',
+      mimeType: 'image/png',
+      zIndex: 1,
+    };
+
+    const json = serializeScriblDoc({ img1: dummyImage }, ['img1'], { x: 0, y: 0, zoom: 1 });
+    const parsed = parseScriblJSON(json);
+
+    expect(parsed.elementIds).toEqual(['img1']);
+    const imgEl = parsed.elements['img1'] as ImageElement;
+    expect(imgEl.type).toBe('image');
+    expect(imgEl.src).toBe('data:image/png;base64,mockimg');
+    expect(imgEl.aspectRatio).toBe(1.25);
+    expect(imgEl.fileName).toBe('photo.png');
+
+    const mockCtx = {
+      scale: vi.fn(),
+      translate: vi.fn(),
+      save: vi.fn(),
+      restore: vi.fn(),
+      drawImage: vi.fn(),
+      strokeRect: vi.fn(),
+      fillRect: vi.fn(),
+      setLineDash: vi.fn(),
+    };
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+      mockCtx as unknown as CanvasRenderingContext2D,
+    );
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue(
+      'data:image/png;base64,mockpngdata',
+    );
+
+    const pngUrl = await exportToPng({ img1: dummyImage }, ['img1']);
+    expect(pngUrl).toBe('data:image/png;base64,mockpngdata');
   });
 });

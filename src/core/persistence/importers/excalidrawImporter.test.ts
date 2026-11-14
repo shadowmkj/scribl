@@ -167,4 +167,40 @@ describe('importExcalidraw', () => {
     expect(result.discardedCount).toBe(3);
     expect(result.discardedTypes).toEqual(expect.arrayContaining(['image', 'frame', 'embeddable']));
   });
+
+  it('imports image element when fileId matches files map', () => {
+    const excalidrawDoc = {
+      elements: [
+        {
+          id: 'img-el-1',
+          type: 'image',
+          fileId: 'file-123',
+          x: 100,
+          y: 100,
+          width: 300,
+          height: 200,
+        },
+      ],
+      files: {
+        'file-123': {
+          id: 'file-123',
+          mimeType: 'image/png',
+          dataURL: 'data:image/png;base64,samplepngdata',
+          created: 1234567,
+        },
+      },
+    };
+
+    const result = importExcalidraw(excalidrawDoc);
+    expect(result.elements.length).toBe(1);
+    expect(result.discardedCount).toBe(0);
+    const imgEl = result.elements[0];
+    expect(imgEl.type).toBe('image');
+    if (imgEl.type === 'image') {
+      expect(imgEl.src).toBe('data:image/png;base64,samplepngdata');
+      expect(imgEl.width).toBe(300);
+      expect(imgEl.height).toBe(200);
+      expect(imgEl.aspectRatio).toBe(1.5);
+    }
+  });
 });
