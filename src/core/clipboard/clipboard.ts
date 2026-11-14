@@ -158,13 +158,92 @@ export function getImageDimensions(src: string): Promise<{ width: number; height
   }));
 }
 
+/**
+ * Optimize an image blob for canvas performance:
+ * - Uses URL.createObjectURL for near-instant native decode (bypassing slow base64 FileReader)
+ * - Constrains ultra-high-res images (e.g. 48MP smartphone photos) to max 2560px
+ * - Pre-populates imageCache so first render draws immediately with 0ms delay
+ */
+export async function optimizeImageBlob(blob: Blob): Promise<{
+  dataUrl: string;
+  width: number;
+  height: number;
+}> {
+  const isSvg = blob.type === 'image/svg+xml'
+    || (blob as File).name?.toLowerCase().endsWith('.svg');
+
+  let objectUrl = '';
+  if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+    try {
+      objectUrl = URL.createObjectURL(blob);
+    } catch {
+      objectUrl = '';
+    }
+  }
+
+  try {
+    const srcToLoad = objectUrl || (await readBlobAsDataUrl(blob));
+    const img = await imageCache.loadImage(srcToLoad);
+
+    const naturalWidth = img.naturalWidth || 400;
+    const naturalHeight = img.naturalHeight || 300;
+
+    const MAX_DIMENSION = 2560;
+    const needsDownscale = !isSvg
+      && (naturalWidth > MAX_DIMENSION || naturalHeight > MAX_DIMENSION);
+
+    let dataUrl: string;
+
+    if (needsDownscale && typeof document !== 'undefined') {
+      const scale = Math.min(MAX_DIMENSION / naturalWidth, MAX_DIMENSION / naturalHeight);
+      const targetW = Math.round(naturalWidth * scale);
+      const targetH = Math.round(naturalHeight * scale);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = targetW;
+      canvas.height = targetH;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, targetW, targetH);
+
+        const isJpeg = blob.type === 'image/jpeg' || (blob as File).name?.match(/\.jpe?g$/i);
+        const format = isJpeg ? 'image/jpeg' : 'image/png';
+        const quality = isJpeg ? 0.90 : undefined;
+        dataUrl = canvas.toDataURL(format, quality);
+      } else {
+        dataUrl = await readBlobAsDataUrl(blob);
+      }
+    } else {
+      dataUrl = await readBlobAsDataUrl(blob);
+    }
+
+    // Pre-populate imageCache with dataUrl pointing to the loaded HTMLImageElement
+    imageCache.set(dataUrl, img);
+
+    return {
+      dataUrl,
+      width: naturalWidth,
+      height: naturalHeight,
+    };
+  } finally {
+    if (objectUrl) {
+      try {
+        URL.revokeObjectURL(objectUrl);
+      } catch {
+        // Ignore
+      }
+    }
+  }
+}
+
 export async function createImageElementFromBlob(
   blob: Blob,
   worldPos?: { x: number; y: number; },
   fileName?: string,
 ): Promise<boolean> {
-  const dataUrl = await readBlobAsDataUrl(blob);
-  const dims = await getImageDimensions(dataUrl);
+  const { dataUrl, width: naturalWidth, height: naturalHeight } = await optimizeImageBlob(blob);
 
   const cameraState = useCameraStore.getState();
   const camera = cameraState.camera;
@@ -175,9 +254,9 @@ export async function createImageElementFromBlob(
   const maxWorldW = (viewportWidth / camera.zoom) * 0.5;
   const maxWorldH = (viewportHeight / camera.zoom) * 0.5;
 
-  let width = dims.width;
-  let height = dims.height;
-  const aspectRatio = dims.width && dims.height ? dims.width / dims.height : 1;
+  let width = naturalWidth;
+  let height = naturalHeight;
+  const aspectRatio = naturalWidth && naturalHeight ? naturalWidth / naturalHeight : 1;
 
   if (width > maxWorldW || height > maxWorldH) {
     const scale = Math.min(maxWorldW / width, maxWorldH / height);
@@ -202,8 +281,8 @@ export async function createImageElementFromBlob(
     y,
     width: Math.max(1, width),
     height: Math.max(1, height),
-    naturalWidth: dims.width,
-    naturalHeight: dims.height,
+    naturalWidth,
+    naturalHeight,
     aspectRatio,
     src: dataUrl,
     opacity: 1,

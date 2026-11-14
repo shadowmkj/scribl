@@ -186,6 +186,10 @@ export class ImageCache {
   private cache = new Map<string, HTMLImageElement>();
   private listeners = new Set<() => void>();
 
+  public set(src: string, img: HTMLImageElement): void {
+    this.cache.set(src, img);
+  }
+
   public getImage(src: string, onLoad?: () => void): HTMLImageElement | null {
     const existing = this.cache.get(src);
     if (existing) {
@@ -203,6 +207,7 @@ export class ImageCache {
     }
 
     const img = new Image();
+    img.decoding = 'async';
     img.src = src;
     this.cache.set(src, img);
 
@@ -241,6 +246,7 @@ export class ImageCache {
       }
 
       const img = existing || new Image();
+      img.decoding = 'async';
       let settled = false;
 
       const finish = () => {
