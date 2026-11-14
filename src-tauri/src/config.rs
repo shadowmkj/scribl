@@ -594,6 +594,12 @@ impl Default for ScriblConfig {
                     rhs: "edit.duplicate".into(),
                     desc: Some("Duplicate".into()),
                 },
+                KeymapEntry {
+                    mode: "v".into(),
+                    lhs: "<D-S-l>".into(),
+                    rhs: "selection.toggle_lock".into(),
+                    desc: Some("Toggle Lock".into()),
+                },
             ],
             toolbar: ToolbarConfig::default(),
             theme: ThemeConfig::default(),

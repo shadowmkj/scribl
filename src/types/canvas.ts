@@ -18,6 +18,7 @@ export interface BaseElement {
   width: number;
   height: number;
   zIndex: number;
+  locked?: boolean;
 }
 
 export interface StrokeElement extends BaseElement {

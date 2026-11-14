@@ -8,6 +8,7 @@ import {
   ClearCanvasCommand,
   DeleteElementsCommand,
   MoveElementsCommand,
+  SetElementsLockCommand,
   TransformElementsCommand,
   UpdateTextElementCommand,
 } from './commands';
@@ -294,5 +295,55 @@ describe('HistoryStack and Commands', () => {
     expect(undone.elementIds).toEqual(['s1']);
     expect(undone.elements['s1']).toEqual(dummyStroke);
     expect(undone.selectedIds).toEqual(['s1']);
+  });
+
+  it('preserves locked elements when executing ClearCanvasCommand', () => {
+    const history = new HistoryStack();
+    const lockedEl: StrokeElement = {
+      ...dummyStroke,
+      id: 's_locked',
+      locked: true,
+    };
+    const unlockedEl: StrokeElement = {
+      ...dummyStroke,
+      id: 's_unlocked',
+      locked: false,
+    };
+    const data: DocumentData = {
+      elements: { s_locked: lockedEl, s_unlocked: unlockedEl },
+      elementIds: ['s_locked', 's_unlocked'],
+      selectedIds: ['s_locked', 's_unlocked'],
+    };
+
+    const cleared = history.execute(new ClearCanvasCommand(data), data);
+    expect(cleared.elementIds).toEqual(['s_locked']);
+    expect(cleared.elements['s_locked']).toBeDefined();
+    expect(cleared.elements['s_unlocked']).toBeUndefined();
+    expect(cleared.selectedIds).toEqual(['s_locked']);
+
+    const undone = history.undo(cleared);
+    expect(undone.elementIds).toEqual(['s_locked', 's_unlocked']);
+    expect(undone.elements['s_unlocked']).toBeDefined();
+  });
+
+  it('executes SetElementsLockCommand and reverts to previous locked states on undo', () => {
+    const history = new HistoryStack();
+    const el1: StrokeElement = { ...dummyStroke, id: 'el1', locked: false };
+    const el2: StrokeElement = { ...dummyStroke, id: 'el2', locked: true };
+    const data: DocumentData = {
+      elements: { el1, el2 },
+      elementIds: ['el1', 'el2'],
+      selectedIds: ['el1', 'el2'],
+    };
+
+    // Lock all selected
+    const lockCmd = new SetElementsLockCommand(['el1', 'el2'], true, { el1: false, el2: true });
+    const locked = history.execute(lockCmd, data);
+    expect(locked.elements['el1'].locked).toBe(true);
+    expect(locked.elements['el2'].locked).toBe(true);
+
+    const undone = history.undo(locked);
+    expect(undone.elements['el1'].locked).toBe(false);
+    expect(undone.elements['el2'].locked).toBe(true);
   });
 });

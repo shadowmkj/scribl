@@ -420,6 +420,16 @@ export function registerDefaultCommands(handlers?: {
     execute: () => {},
   });
 
+  commandRegistry.register({
+    id: 'selection.toggle_lock',
+    label: 'Toggle Lock',
+    category: 'selection',
+    description: 'Lock or unlock selected elements',
+    execute: () => {
+      useDocumentStore.getState().toggleLockSelected();
+    },
+  });
+
   // Clipboard & Duplicate
   commandRegistry.register({
     id: 'edit.copy',

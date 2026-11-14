@@ -53,6 +53,7 @@ export class PointerRouter {
   private shapeStartWorld: { x: number; y: number; } = { x: 0, y: 0 };
   private activeShapeTool: ShapeType | null = null;
   public marqueeBox: MarqueeBox | null = null;
+  private marqueeInitialSelectedIds: string[] = [];
   public onMarqueeUpdate?: (box: MarqueeBox | null) => void;
   public isRotateKeyHeld: boolean = false;
   public rotationAngle: number | null = null;
@@ -169,8 +170,9 @@ export class PointerRouter {
 
       // 1. If elements are selected, check for Corner Handle Hit or Rotation Trigger
       if (doc.selectedIds.length > 0) {
+        const hasUnlocked = doc.selectedIds.some((id) => !doc.elements[id]?.locked);
         const bounds = computeSelectionBounds(doc.elements, doc.selectedIds);
-        if (bounds) {
+        if (bounds && hasUnlocked) {
           const screenHandles = {
             nw: worldToScreen(bounds.minX, bounds.minY, camera, width, height),
             ne: worldToScreen(bounds.maxX, bounds.minY, camera, width, height),
@@ -261,13 +263,16 @@ export class PointerRouter {
             }
           }
         }
-        this.state = 'DRAGGING_SELECTION';
-        this.lastDragWorld = worldPoint;
-        this.dragTotalDelta = { x: 0, y: 0 };
+        if (!doc.elements[hitId]?.locked) {
+          this.state = 'DRAGGING_SELECTION';
+          this.lastDragWorld = worldPoint;
+          this.dragTotalDelta = { x: 0, y: 0 };
+        }
       } else {
         if (!e.shiftKey) {
           doc.setSelected([]);
         }
+        this.marqueeInitialSelectedIds = e.shiftKey ? [...doc.selectedIds] : [];
         this.state = 'SELECTING_MARQUEE';
         this.marqueeBox = {
           startX: worldPoint.x,
@@ -529,13 +534,23 @@ export class PointerRouter {
         this.onMarqueeUpdate?.({ ...this.marqueeBox });
 
         const doc = useDocumentStore.getState();
-        const hitIds = hitTestMarquee(doc.elements, doc.elementIds, {
-          minX: this.marqueeBox.startX,
-          minY: this.marqueeBox.startY,
-          maxX: this.marqueeBox.currentX,
-          maxY: this.marqueeBox.currentY,
-        });
-        doc.setSelected(hitIds);
+        const hitIds = hitTestMarquee(
+          doc.elements,
+          doc.elementIds,
+          {
+            minX: this.marqueeBox.startX,
+            minY: this.marqueeBox.startY,
+            maxX: this.marqueeBox.currentX,
+            maxY: this.marqueeBox.currentY,
+          },
+          { includeLocked: ev.shiftKey },
+        );
+
+        if (ev.shiftKey && this.marqueeInitialSelectedIds.length > 0) {
+          doc.setSelected(Array.from(new Set([...this.marqueeInitialSelectedIds, ...hitIds])));
+        } else {
+          doc.setSelected(hitIds);
+        }
       }
     }
 
@@ -623,6 +638,7 @@ export class PointerRouter {
       this.scratchRenderer.stopEraserTrail();
     } else if (this.state === 'SELECTING_MARQUEE') {
       this.marqueeBox = null;
+      this.marqueeInitialSelectedIds = [];
       this.onMarqueeUpdate?.(null);
     } else if (this.state === 'ZOOMING_SCRUB') {
       if (!this.zoomHasDragged) {
@@ -710,7 +726,9 @@ export class PointerRouter {
 
   private performEraseAt(worldPoint: { x: number; y: number; }) {
     const doc = useDocumentStore.getState();
-    const hitId = hitTestPoint(doc.elements, doc.elementIds, worldPoint, 12);
+    const hitId = hitTestPoint(doc.elements, doc.elementIds, worldPoint, 12, {
+      ignoreLocked: true,
+    });
     if (hitId) {
       doc.deleteElements([hitId]);
     }

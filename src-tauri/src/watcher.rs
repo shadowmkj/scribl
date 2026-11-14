@@ -124,6 +124,7 @@ scribl.keymap.set("v", "<D-c>", "edit.copy", { desc = "Copy" })
 scribl.keymap.set("v", "<D-v>", "edit.paste", { desc = "Paste" })
 scribl.keymap.set("v", "<D-x>", "edit.cut", { desc = "Cut" })
 scribl.keymap.set("v", "<D-d>", "edit.duplicate", { desc = "Duplicate" })
+scribl.keymap.set("v", "<D-S-l>", "selection.toggle_lock", { desc = "Toggle Lock" })
 
 --------------------------------------------------------------------------------
 -- 3. Floating Toolbar Layout

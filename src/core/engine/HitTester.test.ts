@@ -498,4 +498,92 @@ describe('HitTester', () => {
       expect(hitTestShape(unknown, { x: 5, y: 5 })).toBe(false);
     });
   });
+
+  describe('Locked elements hit testing', () => {
+    const lockedShape: ShapeElement = {
+      id: 'locked_shape',
+      type: 'shape',
+      shapeType: 'rectangle',
+      x: 50,
+      y: 50,
+      width: 100,
+      height: 100,
+      zIndex: 2,
+      strokeColor: '#000',
+      fillColor: '#fff',
+      strokeWidth: 2,
+      strokeStyle: 'solid',
+      locked: true,
+    };
+
+    const unlockedStroke: StrokeElement = {
+      id: 'unlocked_stroke',
+      type: 'stroke',
+      x: 60,
+      y: 60,
+      width: 50,
+      height: 50,
+      zIndex: 1,
+      color: '#ff0000',
+      size: 4,
+      thinning: 0.6,
+      smoothing: 0.5,
+      points: [
+        { x: 60, y: 60, pressure: 0.5 },
+        { x: 100, y: 100, pressure: 0.5 },
+      ],
+      locked: false,
+    };
+
+    const lockedElements = {
+      unlocked_stroke: unlockedStroke,
+      locked_shape: lockedShape,
+    };
+    const lockedElementIds = ['unlocked_stroke', 'locked_shape'];
+
+    it('hits locked element directly when ignoreLocked is omitted or false', () => {
+      const hit = hitTestPoint(lockedElements, lockedElementIds, { x: 80, y: 80 });
+      expect(hit).toBe('locked_shape');
+    });
+
+    it('passes through locked element to hit underlying unlocked element when ignoreLocked is true', () => {
+      // Point (80, 80) is on both the locked_shape (zIndex 2) and unlocked_stroke (zIndex 1)
+      const hit = hitTestPoint(lockedElements, lockedElementIds, { x: 80, y: 80 }, 8, {
+        ignoreLocked: true,
+      });
+      expect(hit).toBe('unlocked_stroke');
+    });
+
+    it('returns null when ignoreLocked is true and no unlocked elements intersect point', () => {
+      const hit = hitTestPoint(lockedElements, lockedElementIds, { x: 140, y: 140 }, 8, {
+        ignoreLocked: true,
+      });
+      expect(hit).toBeNull();
+    });
+
+    it('skips locked elements in marquee selection', () => {
+      const selected = hitTestMarquee(lockedElements, lockedElementIds, {
+        minX: 0,
+        minY: 0,
+        maxX: 200,
+        maxY: 200,
+      });
+      expect(selected).toEqual(['unlocked_stroke']);
+    });
+
+    it('includes locked elements in marquee selection when includeLocked is true', () => {
+      const selected = hitTestMarquee(
+        lockedElements,
+        lockedElementIds,
+        {
+          minX: 0,
+          minY: 0,
+          maxX: 200,
+          maxY: 200,
+        },
+        { includeLocked: true },
+      );
+      expect(selected).toEqual(['unlocked_stroke', 'locked_shape']);
+    });
+  });
 });
