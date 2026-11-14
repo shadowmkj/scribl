@@ -320,7 +320,10 @@ mod tests {
         let _ = fs::write(&fake_exe, b"");
 
         let portable = get_portable_data_dir_from(Some(&fake_exe));
-        assert!(portable.is_none(), "expected None when data/ does not exist");
+        assert!(
+            portable.is_none(),
+            "expected None when data/ does not exist"
+        );
         let _ = fs::remove_dir_all(&temp);
     }
 

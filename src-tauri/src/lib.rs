@@ -84,10 +84,7 @@ pub fn apply_portable_directories_override(
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut context = tauri::generate_context!();
-    apply_portable_directories_override(
-        context.config_mut(),
-        watcher::get_portable_data_dir(),
-    );
+    apply_portable_directories_override(context.config_mut(), watcher::get_portable_data_dir());
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
