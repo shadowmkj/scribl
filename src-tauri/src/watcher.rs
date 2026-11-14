@@ -3,7 +3,31 @@ use std::path::PathBuf;
 use std::sync::mpsc::channel;
 use tauri::{AppHandle, Emitter};
 
+pub fn get_portable_data_dir() -> Option<PathBuf> {
+    if let Ok(override_dir) = std::env::var("SCRIBL_PORTABLE_DATA_DIR") {
+        let p = PathBuf::from(override_dir);
+        if p.is_dir() {
+            return Some(p);
+        }
+    }
+    get_portable_data_dir_from(std::env::current_exe().ok().as_deref())
+}
+
+pub fn get_portable_data_dir_from(exe_path: Option<&std::path::Path>) -> Option<PathBuf> {
+    if let Some(parent) = exe_path.and_then(|p| p.parent()) {
+        let data_dir = parent.join("data");
+        if data_dir.is_dir() {
+            return Some(data_dir);
+        }
+    }
+    None
+}
+
 pub fn get_config_dir() -> PathBuf {
+    if let Some(portable_dir) = get_portable_data_dir() {
+        return portable_dir.join("config");
+    }
+
     if let Ok(xdg) = std::env::var("XDG_CONFIG_HOME") {
         PathBuf::from(xdg).join("scribl")
     } else if let Some(home) = dirs::home_dir() {
@@ -279,4 +303,64 @@ pub fn spawn_config_watcher(app_handle: AppHandle) {
             }
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    static ENV_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+    #[test]
+    fn test_portable_data_dir_none_when_no_data_folder() {
+        let temp = std::env::temp_dir().join("scribl_test_non_portable");
+        let _ = fs::create_dir_all(&temp);
+        let fake_exe = temp.join("scribl.exe");
+        let _ = fs::write(&fake_exe, b"");
+
+        let portable = get_portable_data_dir_from(Some(&fake_exe));
+        assert!(portable.is_none(), "expected None when data/ does not exist");
+        let _ = fs::remove_dir_all(&temp);
+    }
+
+    #[test]
+    fn test_portable_data_dir_detected_when_data_folder_exists() {
+        let temp = std::env::temp_dir().join("scribl_test_portable");
+        let data_dir = temp.join("data");
+        let _ = fs::create_dir_all(&data_dir);
+        let fake_exe = temp.join("scribl.exe");
+        let _ = fs::write(&fake_exe, b"");
+
+        let portable = get_portable_data_dir_from(Some(&fake_exe));
+        assert_eq!(portable, Some(data_dir.clone()));
+
+        let _ = fs::remove_dir_all(&temp);
+    }
+
+    #[test]
+    fn test_portable_mode_config_dir_resolution() {
+        let _guard = ENV_MUTEX.lock().unwrap();
+        let temp = std::env::temp_dir().join("scribl_test_portable_config");
+        let data_dir = temp.join("data");
+        let _ = fs::create_dir_all(&data_dir);
+
+        unsafe {
+            std::env::set_var("SCRIBL_PORTABLE_DATA_DIR", &data_dir);
+        }
+
+        let config_dir = get_config_dir();
+        assert_eq!(config_dir, data_dir.join("config"));
+
+        let init_lua = get_init_lua_path();
+        assert_eq!(init_lua, data_dir.join("config").join("init.lua"));
+
+        let themes_dir = get_themes_dir();
+        assert_eq!(themes_dir, data_dir.join("config").join("themes"));
+
+        unsafe {
+            std::env::remove_var("SCRIBL_PORTABLE_DATA_DIR");
+        }
+        let _ = fs::remove_dir_all(&temp);
+    }
 }

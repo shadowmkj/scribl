@@ -255,6 +255,55 @@ jobs:
           prerelease: ${{ inputs.prerelease }}
           args: ${{ matrix.args }}
 
+      - name: Package portable Windows archive
+        if: matrix.platform == 'windows-latest'
+        shell: bash
+        run: |
+          VERSION="${{ needs.prepare-release.outputs.version }}"
+          TAG="${{ needs.prepare-release.outputs.tag }}"
+
+          echo "Packaging portable Windows x64 zip for Scribl $VERSION ($TAG)..."
+
+          EXE_PATH=""
+          if [ -f "src-tauri/target/release/scribl.exe" ]; then
+            EXE_PATH="src-tauri/target/release/scribl.exe"
+          elif [ -f "target/release/scribl.exe" ]; then
+            EXE_PATH="target/release/scribl.exe"
+          else
+            EXE_PATH=$(find . -type f -name "scribl.exe" | grep -v "bundle" | head -n 1 || true)
+          fi
+
+          if [ -z "$EXE_PATH" ] || [ ! -f "$EXE_PATH" ]; then
+            echo "::error::Could not find scribl.exe in target release directories"
+            exit 1
+          fi
+          echo "Found scribl.exe at: $EXE_PATH"
+
+          PORTABLE_DIR="scribl_${VERSION}_x64_portable"
+          rm -rf "$PORTABLE_DIR"
+          mkdir -p "$PORTABLE_DIR/data/config/themes"
+
+          cp "$EXE_PATH" "$PORTABLE_DIR/"
+          [ -f "LICENSE" ] && cp "LICENSE" "$PORTABLE_DIR/"
+          [ -f "README.md" ] && cp "README.md" "$PORTABLE_DIR/"
+
+          echo "Scribl Portable Mode" > "$PORTABLE_DIR/data/README.txt"
+          echo "====================" >> "$PORTABLE_DIR/data/README.txt"
+          echo "This folder contains all configuration files and local webview cache/storage." >> "$PORTABLE_DIR/data/README.txt"
+          echo "- data/config/init.lua: Lua configuration & keybindings" >> "$PORTABLE_DIR/data/README.txt"
+          echo "- data/config/themes/: Custom themes" >> "$PORTABLE_DIR/data/README.txt"
+          echo "- data/EBWebView/ or data/Local Storage/: Webview cache and autosaved canvas drawings" >> "$PORTABLE_DIR/data/README.txt"
+          echo "" >> "$PORTABLE_DIR/data/README.txt"
+          echo "Keep the 'data' folder in the same directory as scribl.exe to remain completely self-contained." >> "$PORTABLE_DIR/data/README.txt"
+
+          ZIP_NAME="scribl_${VERSION}_x64_portable.zip"
+          7z a "$ZIP_NAME" "$PORTABLE_DIR"
+
+          echo "Uploading $ZIP_NAME to release $TAG..."
+          gh release upload "$TAG" "$ZIP_NAME" --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   publish-release:
     name: Publish Release
     needs: [prepare-release, build-tauri]
