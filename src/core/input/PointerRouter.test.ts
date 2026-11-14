@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCameraStore } from '../../stores/useCameraStore';
+import { DEFAULT_CONFIG, useConfigStore } from '../../stores/useConfigStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
 import { ShapeElement, StrokeElement } from '../../types/canvas';
@@ -586,6 +587,8 @@ describe('PointerRouter - Shape Drawing', () => {
       strokeStyle: 'solid',
       editingText: null,
     });
+
+    useConfigStore.setState({ config: DEFAULT_CONFIG });
   });
 
   it('draws a rectangle and commits to document store on pointer up', () => {
@@ -645,6 +648,54 @@ describe('PointerRouter - Shape Drawing', () => {
 
     // Shape should be selected and tool transitioned to select (visual mode)
     expect(doc.selectedIds).toEqual([element.id]);
+    expect(useToolStore.getState().currentTool).toBe('select');
+  });
+
+  it('switches tool to select but leaves shape unselected when select_after_create is false', () => {
+    useConfigStore.setState({
+      config: {
+        ...DEFAULT_CONFIG,
+        options: {
+          ...DEFAULT_CONFIG.options,
+          select_after_create: false,
+        },
+      },
+    });
+
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 600,
+        clientY: 500,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+      container,
+    );
+
+    router.handlePointerMove(
+      new PointerEvent('pointermove', {
+        clientX: 750,
+        clientY: 600,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      }),
+    );
+
+    router.handlePointerUp(
+      new PointerEvent('pointerup', {
+        clientX: 750,
+        clientY: 600,
+        pointerId: 1,
+        pointerType: 'mouse',
+      }),
+      container,
+    );
+
+    const doc = useDocumentStore.getState();
+    expect(doc.elementIds.length).toBe(1);
+    expect(doc.selectedIds).toEqual([]);
     expect(useToolStore.getState().currentTool).toBe('select');
   });
 

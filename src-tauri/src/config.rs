@@ -11,10 +11,16 @@ pub struct AppOptions {
     pub auto_save: bool,
     #[serde(default = "default_pen_color_val")]
     pub default_pen_color: String,
+    #[serde(default = "default_select_after_create_val")]
+    pub select_after_create: bool,
 }
 
 fn default_pen_color_val() -> String {
     "#0284c7".to_string()
+}
+
+fn default_select_after_create_val() -> bool {
+    true
 }
 
 impl Default for AppOptions {
@@ -27,6 +33,7 @@ impl Default for AppOptions {
             stroke_thinning: 0.6,
             auto_save: true,
             default_pen_color: "#0284c7".to_string(),
+            select_after_create: true,
         }
     }
 }

@@ -33,4 +33,18 @@ describe('GeneralTab', () => {
     expect(useConfigStore.getState().config.options.default_pen_color).toBe('#e11d48');
     expect(useToolStore.getState().color).toBe('#e11d48');
   });
+
+  it('toggles select after create option', () => {
+    render(<GeneralTab />);
+    const toggle = screen.getByRole('switch', { name: /select element after creation/i });
+    expect(toggle.getAttribute('aria-checked')).toBe('true');
+
+    fireEvent.click(toggle);
+    expect(useConfigStore.getState().config.options.select_after_create).toBe(false);
+    expect(toggle.getAttribute('aria-checked')).toBe('false');
+
+    fireEvent.click(toggle);
+    expect(useConfigStore.getState().config.options.select_after_create).toBe(true);
+    expect(toggle.getAttribute('aria-checked')).toBe('true');
+  });
 });

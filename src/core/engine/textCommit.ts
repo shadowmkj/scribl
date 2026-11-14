@@ -1,3 +1,4 @@
+import { useConfigStore } from '../../stores/useConfigStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 import { useToolStore } from '../../stores/useToolStore';
 import { TextElement } from '../../types/canvas';
@@ -86,7 +87,12 @@ export function commitEditingText(overrideText?: string): boolean {
     };
 
     doc.executeCommand(new AddElementCommand(newEl));
-    doc.setSelected([newId]);
+    const selectAfterCreate = useConfigStore.getState().config.options.select_after_create ?? true;
+    if (selectAfterCreate) {
+      doc.setSelected([newId]);
+    } else {
+      doc.setSelected([]);
+    }
   }
 
   if (toolStore.currentTool === 'text') {
