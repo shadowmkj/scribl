@@ -570,5 +570,20 @@ describe('HitTester', () => {
       });
       expect(selected).toEqual(['unlocked_stroke']);
     });
+
+    it('includes locked elements in marquee selection when includeLocked is true', () => {
+      const selected = hitTestMarquee(
+        lockedElements,
+        lockedElementIds,
+        {
+          minX: 0,
+          minY: 0,
+          maxX: 200,
+          maxY: 200,
+        },
+        { includeLocked: true },
+      );
+      expect(selected).toEqual(['unlocked_stroke', 'locked_shape']);
+    });
   });
 });

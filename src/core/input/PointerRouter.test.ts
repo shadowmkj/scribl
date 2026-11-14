@@ -1097,4 +1097,165 @@ describe('PointerRouter - Shape Drawing', () => {
     expect(useDocumentStore.getState().elements['locked_box'].x).toBe(100);
     expect(useDocumentStore.getState().elements['locked_box'].y).toBe(100);
   });
+
+  it('skips locked elements during standard marquee selection and includes them when Shift is held', () => {
+    const lockedRect: ShapeElement = {
+      id: 'locked_box',
+      type: 'shape',
+      shapeType: 'rectangle',
+      x: 100,
+      y: 100,
+      width: 100,
+      height: 100,
+      zIndex: 1,
+      strokeColor: '#000000',
+      strokeWidth: 2,
+      strokeStyle: 'solid',
+      locked: true,
+    };
+
+    const unlockedRect: ShapeElement = {
+      id: 'unlocked_box',
+      type: 'shape',
+      shapeType: 'rectangle',
+      x: 300,
+      y: 100,
+      width: 100,
+      height: 100,
+      zIndex: 2,
+      strokeColor: '#000000',
+      strokeWidth: 2,
+      strokeStyle: 'solid',
+      locked: false,
+    };
+
+    useDocumentStore.setState({
+      elements: { locked_box: lockedRect, unlocked_box: unlockedRect },
+      elementIds: ['locked_box', 'unlocked_box'],
+      selectedIds: [],
+    });
+
+    useToolStore.setState({ currentTool: 'select' });
+
+    // 1. Marquee drag WITHOUT Shift across the whole canvas (0,0) to (500,300)
+    // Screen coords: world (0,0) -> (500, 400), world (500, 300) -> (1000, 700)
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 500,
+        clientY: 400,
+        pointerId: 13,
+        pointerType: 'mouse',
+        buttons: 1,
+        shiftKey: false,
+      }),
+      container,
+    );
+
+    router.handlePointerMove(
+      new PointerEvent('pointermove', {
+        clientX: 1000,
+        clientY: 700,
+        pointerId: 13,
+        pointerType: 'mouse',
+        buttons: 1,
+        shiftKey: false,
+      }),
+    );
+
+    // Only unlocked element should be selected
+    expect(useDocumentStore.getState().selectedIds).toEqual(['unlocked_box']);
+
+    router.handlePointerUp(
+      new PointerEvent('pointerup', {
+        clientX: 1000,
+        clientY: 700,
+        pointerId: 13,
+        pointerType: 'mouse',
+        shiftKey: false,
+      }),
+      container,
+    );
+
+    // Clear selection
+    useDocumentStore.setState({ selectedIds: [] });
+
+    // 2. Marquee drag WITH Shift held across (0,0) to (500,300)
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 500,
+        clientY: 400,
+        pointerId: 14,
+        pointerType: 'mouse',
+        buttons: 1,
+        shiftKey: true,
+      }),
+      container,
+    );
+
+    router.handlePointerMove(
+      new PointerEvent('pointermove', {
+        clientX: 1000,
+        clientY: 700,
+        pointerId: 14,
+        pointerType: 'mouse',
+        buttons: 1,
+        shiftKey: true,
+      }),
+    );
+
+    // Both unlocked and locked elements should be selected
+    expect(useDocumentStore.getState().selectedIds).toEqual(['locked_box', 'unlocked_box']);
+
+    router.handlePointerUp(
+      new PointerEvent('pointerup', {
+        clientX: 1000,
+        clientY: 700,
+        pointerId: 14,
+        pointerType: 'mouse',
+        shiftKey: true,
+      }),
+      container,
+    );
+
+    // 3. Additive Shift-marquee with pre-existing selection
+    useDocumentStore.setState({ selectedIds: ['unlocked_box'] });
+
+    // Drag marquee only over the locked box (world 50,50 to 250,250 -> screen 550,450 to 750,650)
+    router.handlePointerDown(
+      new PointerEvent('pointerdown', {
+        clientX: 550,
+        clientY: 450,
+        pointerId: 15,
+        pointerType: 'mouse',
+        buttons: 1,
+        shiftKey: true,
+      }),
+      container,
+    );
+
+    router.handlePointerMove(
+      new PointerEvent('pointermove', {
+        clientX: 750,
+        clientY: 650,
+        pointerId: 15,
+        pointerType: 'mouse',
+        buttons: 1,
+        shiftKey: true,
+      }),
+    );
+
+    // Should include previous selection plus newly enclosed locked box
+    expect(useDocumentStore.getState().selectedIds).toEqual(['unlocked_box', 'locked_box']);
+
+    router.handlePointerUp(
+      new PointerEvent('pointerup', {
+        clientX: 750,
+        clientY: 650,
+        pointerId: 15,
+        pointerType: 'mouse',
+        shiftKey: true,
+      }),
+      container,
+    );
+  });
 });

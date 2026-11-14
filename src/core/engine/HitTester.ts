@@ -263,10 +263,15 @@ function isShapeFilled(shape: ShapeElement): boolean {
   );
 }
 
+export interface HitTestMarqueeOptions {
+  includeLocked?: boolean;
+}
+
 export function hitTestMarquee(
   elements: Record<string, CanvasElement>,
   elementIds: string[],
   bounds: BoundingBox,
+  options?: HitTestMarqueeOptions,
 ): string[] {
   const result: string[] = [];
   const minX = Math.min(bounds.minX, bounds.maxX);
@@ -276,7 +281,8 @@ export function hitTestMarquee(
 
   for (const id of elementIds) {
     const el = elements[id];
-    if (!el || el.locked) continue;
+    if (!el) continue;
+    if (el.locked && !options?.includeLocked) continue;
 
     let elMinX = Math.min(el.x, el.x + el.width);
     let elMaxX = Math.max(el.x, el.x + el.width);
