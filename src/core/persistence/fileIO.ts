@@ -1,5 +1,11 @@
 import { Camera, CanvasElement } from '../../types/canvas';
-import { renderShape, renderStroke, renderText } from '../engine/CanvasRenderer';
+import {
+  imageCache,
+  renderImage,
+  renderShape,
+  renderStroke,
+  renderText,
+} from '../engine/CanvasRenderer';
 import { ThemeMode } from '../theme/themeManager';
 
 export * from './importers';
@@ -73,17 +79,28 @@ export function triggerDownload(
   URL.revokeObjectURL(url);
 }
 
-export function exportToPng(
+export async function exportToPng(
   elements: Record<string, CanvasElement>,
   elementIds: string[],
   themeMode?: ThemeMode,
 ): Promise<string> {
-  return new Promise((resolve, reject) => {
-    if (elementIds.length === 0) {
-      reject(new Error('Canvas is empty'));
-      return;
-    }
+  if (elementIds.length === 0) {
+    throw new Error('Canvas is empty');
+  }
 
+  // Pre-load all image elements to ensure export has all bitmaps decoded
+  const imagePromises: Promise<any>[] = [];
+  for (const id of elementIds) {
+    const el = elements[id];
+    if (el && el.type === 'image' && el.src) {
+      imagePromises.push(imageCache.loadImage(el.src).catch(() => {}));
+    }
+  }
+  if (imagePromises.length > 0) {
+    await Promise.all(imagePromises);
+  }
+
+  return new Promise((resolve, reject) => {
     let minX = Infinity;
     let minY = Infinity;
     let maxX = -Infinity;
@@ -125,6 +142,8 @@ export function exportToPng(
         renderShape(ctx, el, themeMode);
       } else if (el.type === 'text') {
         renderText(ctx, el, themeMode);
+      } else if (el.type === 'image') {
+        renderImage(ctx, el);
       }
     }
 

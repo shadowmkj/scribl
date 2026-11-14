@@ -142,7 +142,7 @@ export function App() {
         return;
       }
       e.preventDefault();
-      paste();
+      paste(e.clipboardData);
     };
 
     window.addEventListener('copy', handleCopy);
@@ -152,6 +152,22 @@ export function App() {
       window.removeEventListener('copy', handleCopy);
       window.removeEventListener('cut', handleCut);
       window.removeEventListener('paste', handlePaste);
+    };
+  }, []);
+
+  // Prevent default browser dragover/drop navigation behavior across window
+  useEffect(() => {
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+    };
+    const handleDrop = (e: DragEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('dragover', handleDragOver);
+    window.addEventListener('drop', handleDrop);
+    return () => {
+      window.removeEventListener('dragover', handleDragOver);
+      window.removeEventListener('drop', handleDrop);
     };
   }, []);
 

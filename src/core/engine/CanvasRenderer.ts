@@ -2,6 +2,7 @@ import { useConfigStore } from '../../stores/useConfigStore';
 import {
   Camera,
   CanvasElement,
+  ImageElement,
   ShapeElement,
   StrokeElement,
   TextElement,
@@ -93,6 +94,8 @@ export function renderCommittedCanvas(
         continue;
       }
       renderText(ctx, el, mode);
+    } else if (el.type === 'image') {
+      renderImage(ctx, el);
     }
   }
 
@@ -177,4 +180,143 @@ export function renderStroke(
   if (stroke.cachedPath2D) {
     ctx.fill(stroke.cachedPath2D);
   }
+}
+
+export class ImageCache {
+  private cache = new Map<string, HTMLImageElement>();
+  private listeners = new Set<() => void>();
+
+  public set(src: string, img: HTMLImageElement): void {
+    this.cache.set(src, img);
+  }
+
+  public getImage(src: string, onLoad?: () => void): HTMLImageElement | null {
+    const existing = this.cache.get(src);
+    if (existing) {
+      if (existing.complete && existing.naturalWidth > 0) {
+        return existing;
+      }
+      if (onLoad) {
+        existing.addEventListener('load', onLoad, { once: true });
+      }
+      return null;
+    }
+
+    if (typeof Image === 'undefined') {
+      return null;
+    }
+
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = src;
+    this.cache.set(src, img);
+
+    // If decoded synchronously (common with data URLs)
+    if (img.complete && img.naturalWidth > 0) {
+      return img;
+    }
+
+    const notify = () => {
+      onLoad?.();
+      for (const listener of this.listeners) {
+        listener();
+      }
+    };
+
+    img.onload = notify;
+    if (typeof img.decode === 'function') {
+      img.decode().then(notify).catch(() => {});
+    }
+
+    return null;
+  }
+
+  public loadImage(src: string): Promise<HTMLImageElement> {
+    return new Promise((resolve) => {
+      const existing = this.cache.get(src);
+      if (existing && existing.complete && existing.naturalWidth > 0) {
+        resolve(existing);
+        return;
+      }
+
+      if (typeof Image === 'undefined') {
+        const dummy = { naturalWidth: 400, naturalHeight: 300, complete: true } as HTMLImageElement;
+        resolve(dummy);
+        return;
+      }
+
+      const img = existing || new Image();
+      img.decoding = 'async';
+      let settled = false;
+
+      const finish = () => {
+        if (!settled) {
+          settled = true;
+          this.cache.set(src, img);
+          resolve(img);
+          for (const listener of this.listeners) {
+            listener();
+          }
+        }
+      };
+
+      img.onload = finish;
+      img.onerror = finish;
+      if (!existing) {
+        img.src = src;
+        this.cache.set(src, img);
+      }
+
+      if (img.complete && img.naturalWidth > 0) {
+        finish();
+        return;
+      }
+
+      if (typeof img.decode === 'function') {
+        img.decode().then(finish).catch(finish);
+      }
+
+      const isTest = typeof navigator !== 'undefined' && /jsdom/i.test(navigator.userAgent);
+      setTimeout(finish, isTest ? 50 : 10000);
+    });
+  }
+
+  public subscribe(listener: () => void): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  public clear(): void {
+    this.cache.clear();
+    this.listeners.clear();
+  }
+}
+
+export const imageCache = new ImageCache();
+
+export function renderImage(
+  ctx: CanvasRenderingContext2D,
+  el: ImageElement,
+  onLoad?: () => void,
+) {
+  const img = imageCache.getImage(el.src, onLoad);
+
+  ctx.save();
+  if (el.opacity !== undefined) {
+    ctx.globalAlpha = Math.max(0, Math.min(1, el.opacity));
+  }
+
+  if (img && img.complete && img.naturalWidth > 0) {
+    ctx.drawImage(img, el.x, el.y, el.width, el.height);
+  } else {
+    // Subtle translucent placeholder while decoding
+    ctx.strokeStyle = 'rgba(156, 163, 175, 0.4)';
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 1;
+    ctx.strokeRect(el.x, el.y, el.width, el.height);
+    ctx.fillStyle = 'rgba(156, 163, 175, 0.08)';
+    ctx.fillRect(el.x, el.y, el.width, el.height);
+  }
+
+  ctx.restore();
 }

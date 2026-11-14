@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { imageCache } from '../core/engine/CanvasRenderer';
 import { getFontFamilyId, getFontFamilyString } from '../core/engine/fontConstants';
 import { measureTextBounds } from '../core/engine/textMeasurement';
 import {
@@ -332,6 +333,13 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       canUndo: false,
       canRedo: false,
     });
+    // Pre-warm image cache in background for all images in the loaded document
+    for (const id of data.elementIds) {
+      const el = data.elements[id];
+      if (el && el.type === 'image' && el.src) {
+        imageCache.loadImage(el.src).catch(() => {});
+      }
+    }
   },
 
   clearDocument: () => {

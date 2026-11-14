@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useDocumentStore } from '../../stores/useDocumentStore';
-import { StrokeElement } from '../../types/canvas';
+import { ImageElement, StrokeElement } from '../../types/canvas';
 import {
   copyCanvasAsPng,
   copySelected,
@@ -253,6 +253,63 @@ describe('Clipboard Module', () => {
       expect(res.success).toBe(false);
       expect(res.error).toBe('Canvas is empty');
       expect(navigator.clipboard.write).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Image Clipboard Handling', () => {
+    it('copies selected ImageElement to system clipboard as both raster blob and JSON payload', async () => {
+      const img: ImageElement = {
+        id: 'img-1',
+        type: 'image',
+        x: 50,
+        y: 50,
+        width: 100,
+        height: 100,
+        naturalWidth: 200,
+        naturalHeight: 200,
+        aspectRatio: 1,
+        src:
+          'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+        zIndex: 1,
+      };
+
+      useDocumentStore.getState().addElements([img]);
+      useDocumentStore.getState().setSelected(['img-1']);
+
+      const success = await copySelected();
+      expect(success).toBe(true);
+      expect(navigator.clipboard.write).toHaveBeenCalled();
+      const callArgs = vi.mocked(navigator.clipboard.write).mock.calls[0][0];
+      expect(callArgs[0].types).toContain('image/png');
+      expect(callArgs[0].types).toContain('text/plain');
+    });
+
+    it('pastes image file from clipboardData and creates ImageElement', async () => {
+      const fakeBlob = new Blob(['fakepngbytes'], { type: 'image/png' });
+      const fakeFile = new File([fakeBlob], 'screenshot.png', { type: 'image/png' });
+
+      const mockDataTransfer = {
+        items: [
+          {
+            type: 'image/png',
+            getAsFile: () => fakeFile,
+          },
+        ],
+        files: [fakeFile],
+      } as unknown as DataTransfer;
+
+      const success = await paste(mockDataTransfer);
+      expect(success).toBe(true);
+
+      const state = useDocumentStore.getState();
+      expect(state.selectedIds).toHaveLength(1);
+      const pastedId = state.selectedIds[0];
+      const pastedEl = state.elements[pastedId];
+      expect(pastedEl.type).toBe('image');
+      if (pastedEl.type === 'image') {
+        expect(pastedEl.mimeType).toBe('image/png');
+        expect(pastedEl.fileName).toBe('screenshot.png');
+      }
     });
   });
 });

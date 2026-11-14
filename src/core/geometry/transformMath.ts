@@ -1,4 +1,4 @@
-import { CanvasElement, ShapeElement, StrokePoint } from '../../types/canvas';
+import { CanvasElement, ImageElement, ShapeElement, StrokePoint } from '../../types/canvas';
 import { getFontFamilyString } from '../engine/fontConstants';
 import { measureTextBounds } from '../engine/textMeasurement';
 
@@ -296,7 +296,36 @@ export function scaleElement(
     return scaleShape(element, anchor, sx, sy);
   }
 
+  if (element.type === 'image') {
+    return scaleImage(element, anchor, sx, sy);
+  }
+
   return element;
+}
+
+export function scaleImage(
+  element: ImageElement,
+  anchor: { x: number; y: number; },
+  sx: number,
+  sy: number,
+): ImageElement {
+  const p1x = anchor.x + (element.x - anchor.x) * sx;
+  const p1y = anchor.y + (element.y - anchor.y) * sy;
+  const p2x = anchor.x + (element.x + element.width - anchor.x) * sx;
+  const p2y = anchor.y + (element.y + element.height - anchor.y) * sy;
+
+  const minX = Math.min(p1x, p2x);
+  const minY = Math.min(p1y, p2y);
+  const maxX = Math.max(p1x, p2x);
+  const maxY = Math.max(p1y, p2y);
+
+  return {
+    ...element,
+    x: Math.round(minX),
+    y: Math.round(minY),
+    width: Math.max(1, Math.round(maxX - minX)),
+    height: Math.max(1, Math.round(maxY - minY)),
+  };
 }
 
 export function rotateElement(
@@ -338,7 +367,7 @@ export function rotateElement(
       points: newPoints,
       cachedPath2D: undefined,
     };
-  } else if (element.type === 'text') {
+  } else if (element.type === 'text' || element.type === 'image') {
     const cos = Math.cos(rad);
     const sin = Math.sin(rad);
     const elCenterX = element.x + element.width / 2;

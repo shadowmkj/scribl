@@ -10,9 +10,13 @@ export function setupAutoSave() {
   useDocumentStore.subscribe((state) => {
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
-      const camera = useCameraStore.getState().camera;
-      const json = serializeScriblDoc(state.elements, state.elementIds, camera);
-      localStorage.setItem(AUTOSAVE_KEY, json);
+      try {
+        const camera = useCameraStore.getState().camera;
+        const json = serializeScriblDoc(state.elements, state.elementIds, camera);
+        localStorage.setItem(AUTOSAVE_KEY, json);
+      } catch (err) {
+        console.warn('AutoSave skipped (quota exceeded or storage unavailable):', err);
+      }
     }, 400);
   });
 }
