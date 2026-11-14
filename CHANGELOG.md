@@ -1,3 +1,16 @@
+## [v0.1.2-beta.1](https://github.com/shadowmkj/scribl/releases/tag/v0.1.2-beta.1) - 2026-11-14
+
+### 🚀 Features
+
+- _(config)_ Add select_after_create option for shape and text creation ([#37](https://github.com/shadowmkj/scribl/pull/37)) - ([3ef6ece](https://github.com/shadowmkj/scribl/commit/3ef6ece3be4c323b395909ddd13e76c83c933f14)) (from [`@shadowmkj`](https://github.com/shadowmkj))
+- _(canvas)_ Implement core element locking with eraser immunity ([#38](https://github.com/shadowmkj/scribl/pull/38)) - ([1545467](https://github.com/shadowmkj/scribl/commit/15454677acf29d4d3b8ba90791d978a6d4a4d29d)) (from [`@shadowmkj`](https://github.com/shadowmkj))
+- _(canvas)_ Implement image element with drag-and-drop, clipboard paste, and canvas rendering ([#39](https://github.com/shadowmkj/scribl/pull/39)) - ([1eb5f97](https://github.com/shadowmkj/scribl/commit/1eb5f9720d77921337da73e89e43fd3fa95d3f9b)) (from [`@shadowmkj`](https://github.com/shadowmkj))
+- _(portable)_ Support portable windows x64 distribution with isolated data folder ([#40](https://github.com/shadowmkj/scribl/pull/40)) - ([99261d9](https://github.com/shadowmkj/scribl/commit/99261d93462ccc7620ff48376b5146881473e677)) (from [`@shadowmkj`](https://github.com/shadowmkj))
+
+### 👷 CI
+
+- Decouple CI jobs into parallel test, lint, and build checks for frontend and rust - ([887dcb9](https://github.com/shadowmkj/scribl/commit/887dcb95edb1ac708c5d2b701cf18f1866927ae1)) (from [`@shadowmkj`](https://github.com/shadowmkj))
+
 ## [v0.1.1](https://github.com/shadowmkj/scribl/releases/tag/v0.1.1) - 2026-11-09
 
 ### 🚀 Features
