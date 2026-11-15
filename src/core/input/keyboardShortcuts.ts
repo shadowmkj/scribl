@@ -1,5 +1,5 @@
 import { useCameraStore } from '../../stores/useCameraStore';
-import { DEFAULT_CONFIG } from '../../stores/useConfigStore';
+import { DEFAULT_CONFIG, useConfigStore } from '../../stores/useConfigStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 import { commandRegistry } from '../commands/CommandRegistry';
 import { KeybindingEngine } from './KeybindingEngine';
@@ -11,6 +11,13 @@ export const keybindingEngine = new KeybindingEngine({
 
 // Initialize with default keymaps
 keybindingEngine.registerKeymaps(DEFAULT_CONFIG.keymaps);
+
+// Keep keybindingEngine in continuous reactive sync with config changes
+useConfigStore.subscribe((state, prevState) => {
+  if (state.config.keymaps !== prevState.config.keymaps) {
+    keybindingEngine.registerKeymaps(state.config.keymaps);
+  }
+});
 
 export function handleGlobalKeyDown(e: KeyboardEvent): void {
   // Ignore if typing in text inputs or textareas

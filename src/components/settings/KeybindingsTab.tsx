@@ -156,6 +156,13 @@ const ALL_ACTIONS: ActionDefinition[] = [
     mode: 'n',
   },
   {
+    id: 'file.export_png',
+    label: 'Export as PNG',
+    category: 'Canvas & File',
+    defaultLhs: '',
+    mode: 'n',
+  },
+  {
     id: 'canvas.clear',
     label: 'Clear Entire Canvas',
     category: 'Canvas & File',
@@ -222,6 +229,14 @@ const ALL_ACTIONS: ActionDefinition[] = [
     label: 'Select All Elements (Visual Mode)',
     category: 'Visual Mode (Selection)',
     defaultLhs: '<D-a>',
+    mode: 'v',
+  },
+  {
+    id: 'edit.copy_png_visual',
+    targetId: 'edit.copy_png',
+    label: 'Copy as PNG (Visual Mode)',
+    category: 'Visual Mode (Selection)',
+    defaultLhs: '<D-S-c>',
     mode: 'v',
   },
   {

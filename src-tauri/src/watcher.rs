@@ -133,7 +133,9 @@ scribl.keymap.set("n", "f", "zoom.fit_all", { desc = "Fit Drawing" })
 scribl.keymap.set("n", "<D-,>", "app.settings", { desc = "Open Settings" })
 
 -- Edit & Clipboard
+scribl.keymap.set("n", "<D-a>", "selection.select_all", { desc = "Select All Elements" })
 scribl.keymap.set("n", "<D-c>", "edit.copy", { desc = "Copy" })
+scribl.keymap.set("n", "<D-S-c>", "edit.copy_png", { desc = "Copy as PNG" })
 scribl.keymap.set("n", "<D-v>", "edit.paste", { desc = "Paste" })
 scribl.keymap.set("n", "<D-x>", "edit.cut", { desc = "Cut" })
 scribl.keymap.set("n", "<D-d>", "edit.duplicate", { desc = "Duplicate" })
@@ -144,7 +146,9 @@ scribl.keymap.set("v", "<Esc>", "selection.deselect", { desc = "Deselect" })
 scribl.keymap.set("v", "<Del>", "selection.delete", { desc = "Delete Selected" })
 scribl.keymap.set("v", "y", "edit.copy", { desc = "Yank (Copy)" })
 scribl.keymap.set("v", "p", "edit.paste", { desc = "Put (Paste)" })
+scribl.keymap.set("v", "<D-a>", "selection.select_all", { desc = "Select All Elements" })
 scribl.keymap.set("v", "<D-c>", "edit.copy", { desc = "Copy" })
+scribl.keymap.set("v", "<D-S-c>", "edit.copy_png", { desc = "Copy as PNG" })
 scribl.keymap.set("v", "<D-v>", "edit.paste", { desc = "Paste" })
 scribl.keymap.set("v", "<D-x>", "edit.cut", { desc = "Cut" })
 scribl.keymap.set("v", "<D-d>", "edit.duplicate", { desc = "Duplicate" })
@@ -217,7 +221,7 @@ pub fn ensure_default_config_exists() -> Result<PathBuf, String> {
         }
 
         if !content.is_empty() && !content.contains("edit.copy") {
-            let clipboard_block = "\n-- Edit & Clipboard\nscribl.keymap.set(\"n\", \"<D-c>\", \"edit.copy\", { desc = \"Copy\" })\nscribl.keymap.set(\"n\", \"<D-v>\", \"edit.paste\", { desc = \"Paste\" })\nscribl.keymap.set(\"n\", \"<D-x>\", \"edit.cut\", { desc = \"Cut\" })\nscribl.keymap.set(\"n\", \"<D-d>\", \"edit.duplicate\", { desc = \"Duplicate\" })\nscribl.keymap.set(\"v\", \"y\", \"edit.copy\", { desc = \"Yank (Copy)\" })\nscribl.keymap.set(\"v\", \"p\", \"edit.paste\", { desc = \"Put (Paste)\" })\nscribl.keymap.set(\"v\", \"<D-c>\", \"edit.copy\", { desc = \"Copy\" })\nscribl.keymap.set(\"v\", \"<D-v>\", \"edit.paste\", { desc = \"Paste\" })\nscribl.keymap.set(\"v\", \"<D-x>\", \"edit.cut\", { desc = \"Cut\" })\nscribl.keymap.set(\"v\", \"<D-d>\", \"edit.duplicate\", { desc = \"Duplicate\" })\n";
+            let clipboard_block = "\n-- Edit & Clipboard\nscribl.keymap.set(\"n\", \"<D-a>\", \"selection.select_all\", { desc = \"Select All Elements\" })\nscribl.keymap.set(\"n\", \"<D-c>\", \"edit.copy\", { desc = \"Copy\" })\nscribl.keymap.set(\"n\", \"<D-S-c>\", \"edit.copy_png\", { desc = \"Copy as PNG\" })\nscribl.keymap.set(\"n\", \"<D-v>\", \"edit.paste\", { desc = \"Paste\" })\nscribl.keymap.set(\"n\", \"<D-x>\", \"edit.cut\", { desc = \"Cut\" })\nscribl.keymap.set(\"n\", \"<D-d>\", \"edit.duplicate\", { desc = \"Duplicate\" })\nscribl.keymap.set(\"v\", \"y\", \"edit.copy\", { desc = \"Yank (Copy)\" })\nscribl.keymap.set(\"v\", \"p\", \"edit.paste\", { desc = \"Put (Paste)\" })\nscribl.keymap.set(\"v\", \"<D-a>\", \"selection.select_all\", { desc = \"Select All Elements\" })\nscribl.keymap.set(\"v\", \"<D-c>\", \"edit.copy\", { desc = \"Copy\" })\nscribl.keymap.set(\"v\", \"<D-S-c>\", \"edit.copy_png\", { desc = \"Copy as PNG\" })\nscribl.keymap.set(\"v\", \"<D-v>\", \"edit.paste\", { desc = \"Paste\" })\nscribl.keymap.set(\"v\", \"<D-x>\", \"edit.cut\", { desc = \"Cut\" })\nscribl.keymap.set(\"v\", \"<D-d>\", \"edit.duplicate\", { desc = \"Duplicate\" })\n";
             content.push_str(clipboard_block);
             modified = true;
         }

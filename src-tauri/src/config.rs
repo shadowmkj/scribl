@@ -518,9 +518,21 @@ impl Default for ScriblConfig {
                 },
                 KeymapEntry {
                     mode: "n".into(),
+                    lhs: "<D-a>".into(),
+                    rhs: "selection.select_all".into(),
+                    desc: Some("Select All Elements".into()),
+                },
+                KeymapEntry {
+                    mode: "n".into(),
                     lhs: "<D-c>".into(),
                     rhs: "edit.copy".into(),
                     desc: Some("Copy".into()),
+                },
+                KeymapEntry {
+                    mode: "n".into(),
+                    lhs: "<D-S-c>".into(),
+                    rhs: "edit.copy_png".into(),
+                    desc: Some("Copy as PNG".into()),
                 },
                 KeymapEntry {
                     mode: "n".into(),
@@ -572,9 +584,21 @@ impl Default for ScriblConfig {
                 },
                 KeymapEntry {
                     mode: "v".into(),
+                    lhs: "<D-a>".into(),
+                    rhs: "selection.select_all".into(),
+                    desc: Some("Select All Elements".into()),
+                },
+                KeymapEntry {
+                    mode: "v".into(),
                     lhs: "<D-c>".into(),
                     rhs: "edit.copy".into(),
                     desc: Some("Copy".into()),
+                },
+                KeymapEntry {
+                    mode: "v".into(),
+                    lhs: "<D-S-c>".into(),
+                    rhs: "edit.copy_png".into(),
+                    desc: Some("Copy as PNG".into()),
                 },
                 KeymapEntry {
                     mode: "v".into(),
