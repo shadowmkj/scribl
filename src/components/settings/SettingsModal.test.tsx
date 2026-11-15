@@ -108,6 +108,30 @@ describe('SettingsModal', () => {
     expect(footer.textContent).toContain('v0.1.0+9a7a796');
   });
 
+  it('displays pre-release tag badge in sidebar footer for beta', () => {
+    useConfigStore.setState({ appVersion: '0.1.2-beta.1' });
+    useConfigStore.getState().openSettings();
+    render(<SettingsModal />);
+
+    const footer = screen.getByTestId('settings-version-footer');
+    expect(footer).toBeTruthy();
+    expect(footer.textContent).toContain('v0.1.2-beta.1');
+    const tag = screen.getByTestId('settings-prerelease-tag');
+    expect(tag.textContent).toBe('BETA');
+  });
+
+  it('displays pre-release tag badge in sidebar footer for alpha', () => {
+    useConfigStore.setState({ appVersion: '0.1.2-alpha.1' });
+    useConfigStore.getState().openSettings();
+    render(<SettingsModal />);
+
+    const footer = screen.getByTestId('settings-version-footer');
+    expect(footer).toBeTruthy();
+    expect(footer.textContent).toContain('v0.1.2-alpha.1');
+    const tag = screen.getByTestId('settings-prerelease-tag');
+    expect(tag.textContent).toBe('ALPHA');
+  });
+
   it('does not render sidebar footer when appVersion is null', () => {
     useConfigStore.setState({ appVersion: null });
     useConfigStore.getState().openSettings();

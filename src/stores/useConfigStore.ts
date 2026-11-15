@@ -141,6 +141,23 @@ export function isDevVersion(version: string | null | undefined): boolean {
   return version.includes('+');
 }
 
+export function isPreReleaseVersion(version: string | null | undefined): boolean {
+  if (!version) return false;
+  return version.includes('-') || version.includes('+');
+}
+
+export function getPreReleaseTag(version: string | null | undefined): string | null {
+  if (!version) return null;
+  const match = version.match(/-([a-zA-Z0-9]+)/);
+  if (match) {
+    return match[1].toUpperCase();
+  }
+  if (version.includes('+')) {
+    return 'DEV';
+  }
+  return null;
+}
+
 interface ConfigState {
   config: ScriblConfig;
   configPath: string | null;

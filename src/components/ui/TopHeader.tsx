@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { isDevVersion, useConfigStore } from '../../stores/useConfigStore';
+import { getPreReleaseTag, isPreReleaseVersion, useConfigStore } from '../../stores/useConfigStore';
 import { useDocumentStore } from '../../stores/useDocumentStore';
 
 interface TopHeaderProps {
@@ -23,7 +23,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
     }
   }, [appVersion]);
 
-  const isDev = isDevVersion(appVersion);
+  const isPreRelease = isPreReleaseVersion(appVersion);
+  const preReleaseTag = getPreReleaseTag(appVersion);
 
   const canUndo = useDocumentStore((s) => s.canUndo);
   const canRedo = useDocumentStore((s) => s.canRedo);
@@ -103,10 +104,10 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
           >
             Scribl
           </span>
-          {isDev && appVersion && (
+          {isPreRelease && appVersion && (
             <span
               data-testid='dev-version-badge'
-              title={`Development build (${appVersion})`}
+              title={`${preReleaseTag || 'Pre-release'} build (${appVersion})`}
               style={{
                 fontSize: 10,
                 fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
@@ -121,7 +122,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
                 userSelect: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 4,
+                gap: 5,
               }}
             >
               <span
@@ -129,11 +130,46 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onSave, onOpen, onExportPN
                   width: 5,
                   height: 5,
                   borderRadius: '50%',
-                  background: 'var(--color-accent-light, #38bdf8)',
+                  background: preReleaseTag === 'BETA'
+                    ? '#f59e0b'
+                    : preReleaseTag === 'ALPHA'
+                    ? '#ef4444'
+                    : preReleaseTag === 'RC'
+                    ? '#a855f7'
+                    : 'var(--color-accent-light, #38bdf8)',
                   display: 'inline-block',
                 }}
               />
-              {appVersion.startsWith('v') ? appVersion : `v${appVersion}`}
+              {preReleaseTag && preReleaseTag !== 'DEV' && (
+                <span
+                  data-testid='prerelease-tag-badge'
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                    padding: '0 3px',
+                    borderRadius: 3,
+                    background: preReleaseTag === 'BETA'
+                      ? 'rgba(245, 158, 11, 0.22)'
+                      : preReleaseTag === 'ALPHA'
+                      ? 'rgba(239, 68, 68, 0.22)'
+                      : preReleaseTag === 'RC'
+                      ? 'rgba(168, 85, 247, 0.22)'
+                      : 'rgba(56, 189, 248, 0.22)',
+                    color: preReleaseTag === 'BETA'
+                      ? '#fbbf24'
+                      : preReleaseTag === 'ALPHA'
+                      ? '#f87171'
+                      : preReleaseTag === 'RC'
+                      ? '#c084fc'
+                      : 'var(--color-accent-light, #38bdf8)',
+                  }}
+                >
+                  {preReleaseTag}
+                </span>
+              )}
+              <span>{appVersion.startsWith('v') ? appVersion : `v${appVersion}`}</span>
             </span>
           )}
         </div>

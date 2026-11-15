@@ -33,6 +33,7 @@ jobs:
     outputs:
       tag: ${{ steps.version.outputs.tag }}
       version: ${{ steps.version.outputs.version }}
+      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
       release_id: ${{ steps.create_release.outputs.release_id }}
     steps:
       - name: Checkout repository
@@ -60,9 +61,16 @@ jobs:
           PLAIN_VERSION="${VERSION#v}"
           TAG="v${PLAIN_VERSION}"
 
+          # Detect pre-release from version string or workflow input
+          IS_PRERELEASE="false"
+          if [ "${{ inputs.prerelease }}" = "true" ] || [[ "$PLAIN_VERSION" == *"-"* ]]; then
+            IS_PRERELEASE="true"
+          fi
+
           echo "version=${PLAIN_VERSION}" >> "$GITHUB_OUTPUT"
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
-          echo "Target Release: $TAG (version: $PLAIN_VERSION)"
+          echo "is_prerelease=${IS_PRERELEASE}" >> "$GITHUB_OUTPUT"
+          echo "Target Release: $TAG (version: $PLAIN_VERSION, pre-release: $IS_PRERELEASE)"
 
       - name: Generate release notes from changelog / git-cliff
         id: release_notes
@@ -143,8 +151,9 @@ jobs:
         id: create_release
         run: |
           TAG="${{ steps.version.outputs.tag }}"
+          IS_PRERELEASE="${{ steps.version.outputs.is_prerelease }}"
           PRERELEASE_FLAG=""
-          if [ "${{ inputs.prerelease }}" = "true" ]; then
+          if [ "$IS_PRERELEASE" = "true" ]; then
             PRERELEASE_FLAG="--prerelease"
           fi
 
@@ -243,6 +252,31 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Adjust bundle targets for pre-release builds
+        shell: bash
+        run: |
+          VERSION="${{ needs.prepare-release.outputs.version }}"
+          if [[ "$VERSION" == *"-"* ]]; then
+            echo "Pre-release version detected ($VERSION). Adjusting bundle targets for OS package limitations..."
+            # Windows MSI requires numeric-only versions. Use NSIS installer for pre-releases.
+            # Linux RPM forbids hyphens in version. Use deb and appimage for pre-releases.
+            node -e '
+              const fs = require("fs");
+              const configPath = "src-tauri/tauri.conf.json";
+              const conf = JSON.parse(fs.readFileSync(configPath, "utf8"));
+              const platform = process.env.RUNNER_OS;
+              if (platform === "Windows") {
+                conf.bundle.targets = ["nsis"];
+              } else if (platform === "Linux") {
+                conf.bundle.targets = ["deb", "appimage"];
+              }
+              fs.writeFileSync(configPath, JSON.stringify(conf, null, 2));
+              console.log("Adjusted tauri.conf.json bundle targets to:", conf.bundle.targets);
+            '
+          else
+            echo "Stable release version ($VERSION). Keeping standard bundle targets ('all')."
+          fi
+
       - name: Build Tauri and upload to Release
         uses: tauri-apps/tauri-action@v0
         env:
@@ -252,7 +286,7 @@ jobs:
           releaseId: ${{ needs.prepare-release.outputs.release_id }}
           tagName: ${{ needs.prepare-release.outputs.tag }}
           releaseDraft: true
-          prerelease: ${{ inputs.prerelease }}
+          prerelease: ${{ needs.prepare-release.outputs.is_prerelease == 'true' }}
           args: ${{ matrix.args }}
 
       - name: Package portable Windows archive
@@ -316,6 +350,12 @@ jobs:
         run: |
           TAG="${{ needs.prepare-release.outputs.tag }}"
           IS_DRAFT="${{ inputs.draft }}"
+          IS_PRERELEASE="${{ needs.prepare-release.outputs.is_prerelease }}"
+
+          PRERELEASE_OPT=""
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            PRERELEASE_OPT="--prerelease"
+          fi
 
           if [ "$IS_DRAFT" = "true" ]; then
             echo "Release $TAG kept in DRAFT status as requested in workflow inputs."
@@ -323,7 +363,7 @@ jobs:
             gh release view "$TAG" --web || gh release view "$TAG"
           else
             echo "Publishing release $TAG..."
-            gh release edit "$TAG" --draft=false
+            gh release edit "$TAG" --draft=false $PRERELEASE_OPT
             echo "Successfully published release $TAG!"
           fi
         env:

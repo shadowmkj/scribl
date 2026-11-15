@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { SettingsTab, useConfigStore } from '../../stores/useConfigStore';
+import { getPreReleaseTag, SettingsTab, useConfigStore } from '../../stores/useConfigStore';
 import { GeneralTab } from './GeneralTab';
 import { InkingTab } from './InkingTab';
 import { KeybindingsTab } from './KeybindingsTab';
@@ -222,42 +222,76 @@ export const SettingsModal: React.FC = () => {
             </div>
 
             {/* Sidebar Footer with App Version */}
-            {appVersion && (
-              <div
-                data-testid='settings-version-footer'
-                style={{
-                  padding: '10px 8px 4px',
-                  borderTop: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 2,
-                }}
-              >
+            {appVersion && (() => {
+              const preReleaseTag = getPreReleaseTag(appVersion);
+              return (
                 <div
+                  data-testid='settings-version-footer'
                   style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    color: 'var(--color-text-secondary, #64748b)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
+                    padding: '10px 8px 4px',
+                    borderTop: '1px solid var(--color-panel-border, rgba(255, 255, 255, 0.08))',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
                   }}
                 >
-                  Scribl
+                  <div
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: 'var(--color-text-secondary, #64748b)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    <span>Scribl</span>
+                    {preReleaseTag && preReleaseTag !== 'DEV' && (
+                      <span
+                        data-testid='settings-prerelease-tag'
+                        style={{
+                          fontSize: 9,
+                          padding: '1px 5px',
+                          borderRadius: 3,
+                          fontWeight: 700,
+                          background: preReleaseTag === 'BETA'
+                            ? 'rgba(245, 158, 11, 0.22)'
+                            : preReleaseTag === 'ALPHA'
+                            ? 'rgba(239, 68, 68, 0.22)'
+                            : preReleaseTag === 'RC'
+                            ? 'rgba(168, 85, 247, 0.22)'
+                            : 'rgba(56, 189, 248, 0.22)',
+                          color: preReleaseTag === 'BETA'
+                            ? '#fbbf24'
+                            : preReleaseTag === 'ALPHA'
+                            ? '#f87171'
+                            : preReleaseTag === 'RC'
+                            ? '#c084fc'
+                            : 'var(--color-accent-light, #38bdf8)',
+                        }}
+                      >
+                        {preReleaseTag}
+                      </span>
+                    )}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontFamily:
+                        'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                      color: 'var(--color-text-secondary, #94a3b8)',
+                      wordBreak: 'break-all',
+                      lineHeight: '1.25',
+                    }}
+                    title={appVersion}
+                  >
+                    {appVersion.startsWith('v') ? appVersion : `v${appVersion}`}
+                  </div>
                 </div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                    color: 'var(--color-text-secondary, #94a3b8)',
-                    wordBreak: 'break-all',
-                    lineHeight: '1.25',
-                  }}
-                  title={appVersion}
-                >
-                  {appVersion.startsWith('v') ? appVersion : `v${appVersion}`}
-                </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
 
           {/* Content Pane */}
