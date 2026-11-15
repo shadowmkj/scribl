@@ -1,7 +1,7 @@
 {
   "name": "scribl",
   "private": true,
-  "version": "0.1.2-beta.1",
+  "version": "0.1.2",
   "description": "Minimal, modal, keyboard-centric canvas for infinite thinking",
   "type": "module",
   "author": "Milan Pramod",

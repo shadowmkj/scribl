@@ -1,4 +1,4 @@
-## [v0.1.2-beta.1](https://github.com/shadowmkj/scribl/releases/tag/v0.1.2-beta.1) - 2026-11-14
+## [v0.1.2](https://github.com/shadowmkj/scribl/releases/tag/v0.1.2) - 2026-11-15
 
 ### 🚀 Features
 
@@ -7,9 +7,19 @@
 - _(canvas)_ Implement image element with drag-and-drop, clipboard paste, and canvas rendering ([#39](https://github.com/shadowmkj/scribl/pull/39)) - ([1eb5f97](https://github.com/shadowmkj/scribl/commit/1eb5f9720d77921337da73e89e43fd3fa95d3f9b)) (from [`@shadowmkj`](https://github.com/shadowmkj))
 - _(portable)_ Support portable windows x64 distribution with isolated data folder ([#40](https://github.com/shadowmkj/scribl/pull/40)) - ([99261d9](https://github.com/shadowmkj/scribl/commit/99261d93462ccc7620ff48376b5146881473e677)) (from [`@shadowmkj`](https://github.com/shadowmkj))
 
+### 🐛 Bug Fixes
+
+- _(config)_ Synchronize default keymaps across Rust, Lua template, and Settings UI - ([4033e47](https://github.com/shadowmkj/scribl/commit/4033e47f2475a2d6f52aad89f513b69db1e16d7a)) (from [`@shadowmkj`](https://github.com/shadowmkj))
+
 ### 👷 CI
 
 - Decouple CI jobs into parallel test, lint, and build checks for frontend and rust - ([887dcb9](https://github.com/shadowmkj/scribl/commit/887dcb95edb1ac708c5d2b701cf18f1866927ae1)) (from [`@shadowmkj`](https://github.com/shadowmkj))
+- _(release)_ Add support for pre-release handling and UI version badges - ([e9d80a5](https://github.com/shadowmkj/scribl/commit/e9d80a59a688650a54ec31924aed1fe05a44f6d9)) (from [`@shadowmkj`](https://github.com/shadowmkj))
+
+### ⚙️ Misc
+
+- _(release)_ Bump version to v0.1.2-beta.1 - ([d902684](https://github.com/shadowmkj/scribl/commit/d902684b19e51a60ba9509e0d067d60d7e52447f)) (from [`@shadowmkj`](https://github.com/shadowmkj))
+- Update README with image support, portable distribution, and shortcuts - ([a17c761](https://github.com/shadowmkj/scribl/commit/a17c76153e165f1b8ef28dd712779a220db44910)) (from [`@shadowmkj`](https://github.com/shadowmkj))
 
 ## [v0.1.1](https://github.com/shadowmkj/scribl/releases/tag/v0.1.1) - 2026-11-09
 
